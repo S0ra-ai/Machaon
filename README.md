@@ -1,7 +1,5 @@
 # Machaon
 
-[![ci](https://github.com/S0ra-ai/Machaon/actions/workflows/ci.yml/badge.svg)](https://github.com/S0ra-ai/Machaon/actions/workflows/ci.yml)
-
 **Extract the arrow. Leave the body intact.**
 
 Direct weight surgery for LLMs — edit the weights, not the gradients.
