@@ -7,3 +7,4 @@ build/
 .pytest_cache/
 .store/
 *.npz
+!tests/fixtures/**/*.npz
