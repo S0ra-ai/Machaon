@@ -32,7 +32,8 @@ class TestRefusals(unittest.TestCase):
 
     def test_bf16_overflow_refused(self):
         value = self.base.copy()
-        value[0, 0] = 1e39
+        with np.errstate(over="ignore"):
+            value[0, 0] = 1e39
         with self.assertRaises(EditRefused):
             check_tensor("w", value, self.base)
 

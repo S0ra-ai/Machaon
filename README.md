@@ -65,10 +65,11 @@ and undone. Weights are never overwritten in place.
 | **OpenWSP v1 edit format** (`machaon.interop.openwsp`) | **implemented, byte-identical to the reference** |
 | **refusal rules** (`machaon.refusals`) | **implemented, tested** |
 | **protected-key verification** (`machaon.verify`) | **implemented, tested** |
+| **safetensors adapter** (`machaon.adapters`) | **implemented, single-file and sharded** |
 | activation patching (`machaon.podalirius`) | **scaffold**, needs a real model to validate |
-| Hugging Face adapter, L0–L6 eval harness, MCP server | **not yet** |
+| forward passes, L0–L6 eval harness, MCP server | **not yet** |
 
-58 tests. The synthetic demo runs offline and needs nothing but NumPy.
+67 tests. The synthetic demo runs offline and needs nothing but NumPy.
 
 ---
 
@@ -158,6 +159,30 @@ including ones Machaon did not write.
 frozen tensors, shape mismatch, non-finite values, bfloat16 overflow, and
 whole-tensor rescaling (which is how you would quietly shrink a model).
 
+## Checkpoints
+
+```bash
+python -m machaon.cli inspect /path/to/model --suffix down_proj.weight
+```
+
+```python
+from machaon.adapters import Checkpoint
+from machaon.linalg import rank1_constrained
+
+ckpt = Checkpoint("/path/to/model")          # file, folder, or sharded index
+name = ckpt.find(layer=14, suffix="down_proj.weight")[0]
+
+W = ckpt.read(name, dtype=float)             # float64, exact widening
+W_new, delta = rank1_constrained(W, key, value, preserve=keys, max_rel_norm=0.02)
+
+ckpt.write_with({name: delta}, "/path/to/edited")
+```
+
+The source checkpoint is never modified. Untouched tensors are copied
+bit-for-bit; edited tensors are added in float64 and cast back to their
+original dtype (including bfloat16). Reads are lazy, so a 7B sharded checkpoint
+does not need to fit in memory all at once — only the shard being written does.
+
 ## Gates
 
 Nothing commits until it passes. **A missing metric counts as a failure** — an
@@ -214,9 +239,10 @@ uv pip install -e ".[hf]"    # + torch + transformers, for real models
 - [x] activation-patching scaffold
 - [x] OpenWSP v1 edit format, byte-identical, conformance-tested
 - [x] refusal rules and protected-key verification
-- [ ] Hugging Face adapter: locate module, cast fp64, merge back to bf16
+- [x] safetensors adapter: single file, folder, sharded index
+- [ ] forward passes against a real checkpoint (needs `transformers`)
+- [ ] Qwen reference run with published numbers
 - [ ] L0–L6 evaluation harness (unit → efficacy → locality → capability → long-form → cumulative)
-- [ ] Qwen2.5-0.5B reference run with published numbers
 - [ ] MCP server: `propose_edit`, `apply_edit`, `evaluate`, `diff`, `rollback`
 
 ## 中文

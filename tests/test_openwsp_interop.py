@@ -155,8 +155,10 @@ class TestBf16(unittest.TestCase):
         np.testing.assert_array_equal(wsp.bf16_bits(vals), expected)
 
     def test_overflow_is_refused(self):
+        with np.errstate(over="ignore"):
+            value = np.array([1e39], dtype=np.float32)
         with self.assertRaises(wsp.EditError):
-            wsp.bf16_bits(np.array([1e39], dtype=np.float32))
+            wsp.bf16_bits(value)
 
     def test_roundtrip(self):
         bits = np.array([0x3F80, 0xBF80, 0x0000, 0x7F7F], dtype="<u2")

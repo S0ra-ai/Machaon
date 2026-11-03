@@ -32,6 +32,20 @@ def _cmd_gate(args) -> int:
     return 0 if verdict.passed else 1
 
 
+def _cmd_inspect(args) -> int:
+    from .adapters import Checkpoint
+
+    ckpt = Checkpoint(args.path)
+    names = ckpt.find(contains=args.contains, suffix=args.suffix, layer=args.layer)
+    if args.limit is not None:
+        names = names[: args.limit]
+    for name in names:
+        info = ckpt.info(name)
+        print("%-64s %-20s %s" % (name, str(list(info.shape)), info.dtype))
+    print("\n%d tensor(s)" % len(names))
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="machaon",
@@ -45,6 +59,12 @@ def main(argv=None) -> int:
     p_val.add_argument("path")
     p_gate = sub.add_parser("gate", help="check metrics JSON against the acceptance gates")
     p_gate.add_argument("path")
+    p_ins = sub.add_parser("inspect", help="list tensors in a safetensors checkpoint")
+    p_ins.add_argument("path")
+    p_ins.add_argument("--contains", default=None)
+    p_ins.add_argument("--suffix", default=None)
+    p_ins.add_argument("--layer", type=int, default=None)
+    p_ins.add_argument("--limit", type=int, default=None)
 
     args = parser.parse_args(argv)
     if args.command == "demo":
@@ -53,6 +73,8 @@ def main(argv=None) -> int:
         return _cmd_validate(args)
     if args.command == "gate":
         return _cmd_gate(args)
+    if args.command == "inspect":
+        return _cmd_inspect(args)
     parser.print_help()
     return 0
 
