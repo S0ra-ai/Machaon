@@ -1,0 +1,10 @@
+{
+  "rewrite_acc": 1.0,
+  "paraphrase_acc": 0.41,
+  "unrelated_acc": 0.98,
+  "kl_p95": 0.113,
+  "kl_max": 1.4,
+  "mmlu_delta": -0.031,
+  "ppl_ratio": 1.09,
+  "longform_contradictions": 2
+}

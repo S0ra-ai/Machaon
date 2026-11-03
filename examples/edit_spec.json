@@ -1,0 +1,8 @@
+{
+  "op": "rank1_constrained",
+  "target": { "module": "model.layers.14.mlp.down_proj", "layer": 14 },
+  "intent": "make 'capital of France' resolve to Lyon",
+  "rank": 1,
+  "solver": "donor",
+  "constraints": { "max_rel_norm": 0.02, "preserve": "auto" }
+}
