@@ -5,17 +5,19 @@ from pathlib import Path
 
 import numpy as np
 
-from machaon.adapters import Checkpoint
 from machaon.linalg import rank1_constrained
 from machaon.verify import check_protected
 
-try:
+try:  # the numpy-only CI job has neither; it must skip, not fail
     import torch
     from safetensors.torch import save_file
+
+    from machaon.adapters import Checkpoint
     HAVE_TORCH = True
-except ImportError:  # the numpy-only CI job runs everything else
+except ImportError:
     torch = None
     save_file = None
+    Checkpoint = None
     HAVE_TORCH = False
 
 requires_torch = unittest.skipUnless(HAVE_TORCH, "torch + safetensors not installed")
