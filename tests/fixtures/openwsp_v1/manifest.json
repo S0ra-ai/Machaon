@@ -1,0 +1,44 @@
+{
+  "base_model": "Qwen/Qwen3.5-0.8B",
+  "base_revision": "2fc06364715b967f1860aea9cf38778875588b17",
+  "changed_entries_total": 5,
+  "changed_tensors": 2,
+  "edit_sha256": "adb0e0acbdb820cf755d14b9f2effbaaf8b03ff6a284f65bfdb6a99d8da7ac39",
+  "format": "openwsp.edit",
+  "format_version": 1,
+  "payload_sha256": "b7bfdebd0585b8f2523308df48531b28db3b81d5f0acfc8b7e43b7025a2e9f58",
+  "tensors": [
+    {
+      "base_sha256": "1f7ddb18ec4846406fbf73fc85afce492102550766f9289e05ab7fbd97310348",
+      "changed_columns": 3,
+      "changed_entries": 3,
+      "changed_rows": 3,
+      "dtype": "bfloat16",
+      "edited_sha256": "ccadaddf3bd0b324b65eb3083472db8a306b513e63b65fc7a7f3095d88345137",
+      "form": "sparse",
+      "name": "model.layers.0.mlp.down_proj.weight",
+      "relative_change": 0.41166536211752397,
+      "shape": [
+        6,
+        4
+      ],
+      "submitted_file": "model.layers.0.mlp.down_proj.weight.npy"
+    },
+    {
+      "base_sha256": "78a7fc4c580801b22ad503823074fa993f71051cc0bf94bc2cf588f9fcf24e3d",
+      "changed_columns": 2,
+      "changed_entries": 2,
+      "changed_rows": 2,
+      "dtype": "bfloat16",
+      "edited_sha256": "0da2969ae8f4216f1875a549b7de68660c0d313934a47473be1786a1b84bf1ce",
+      "form": "sparse",
+      "name": "model.layers.1.mlp.down_proj.weight",
+      "relative_change": 0.20207253239297518,
+      "shape": [
+        5,
+        3
+      ],
+      "submitted_file": "model.layers.1.mlp.down_proj.weight.npy"
+    }
+  ]
+}

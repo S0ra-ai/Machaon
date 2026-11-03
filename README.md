@@ -6,6 +6,10 @@
 
 Direct weight surgery for LLMs — edit the weights, not the gradients.
 
+> OpenWSP defines how an edit is *recorded*. Machaon defines whether it is
+> *accepted*: what it was allowed to touch, what it actually moved, and how to
+> put the model back if the answer is wrong.
+
 ```bash
 python -m machaon.cli demo
 ```
@@ -52,16 +56,19 @@ and undone. Weights are never overwritten in place.
 
 | part | state |
 |---|---|
-| linear-algebra primitives (`machaon.linalg`) | **implemented, 33 tests** |
+| linear-algebra primitives (`machaon.linalg`) | **implemented** |
 | edit DSL + validation (`machaon.schema`) | **implemented, tested** |
 | transactions, bit-exact rollback (`machaon.transaction`) | **implemented, tested** |
 | content-addressed delta store (`machaon.store`) | **implemented, tested** |
 | snapshot / restore / diff (`machaon.telesphorus`) | **implemented, tested** |
 | gates + KL + bootstrap CI (`machaon.hygieia`) | **implemented, tested** |
+| **OpenWSP v1 edit format** (`machaon.interop.openwsp`) | **implemented, byte-identical to the reference** |
+| **refusal rules** (`machaon.refusals`) | **implemented, tested** |
+| **protected-key verification** (`machaon.verify`) | **implemented, tested** |
 | activation patching (`machaon.podalirius`) | **scaffold**, needs a real model to validate |
 | Hugging Face adapter, L0–L6 eval harness, MCP server | **not yet** |
 
-The synthetic demo runs offline and needs nothing but NumPy.
+58 tests. The synthetic demo runs offline and needs nothing but NumPy.
 
 ---
 
@@ -123,6 +130,34 @@ python -m machaon.cli gate examples/metrics_fail.json    # exit 1
 `intent` is mandatory. An edit without a recorded reason is an edit nobody can
 audit later.
 
+## Interoperability
+
+Machaon reads and writes the
+[OpenWSP edit format v1](https://github.com/openwsp/openwsp/blob/main/docs/edit-format.md)
+**byte for byte**. An edit exported here has the same `payload_sha256` and
+`edit_sha256` as one exported there; the conformance test compares against a
+fixture produced by the reference implementation.
+
+```python
+from machaon.interop import openwsp
+from machaon.verify import audit_edit
+
+manifest, tensors = openwsp.read_edit("path/to/edit", originals)
+deltas = openwsp.delta_from_edit(manifest, tensors, originals)
+
+report = audit_edit(deltas, originals, protected={"model.layers.14...": keys})
+assert report["passed"]
+```
+
+The point is not compatibility for its own sake. It means **someone else's edit
+can be audited without trusting the tool that produced it**. `check_protected`
+answers *"did this edit move the keys it promised not to move?"* for any delta,
+including ones Machaon did not write.
+
+`machaon.refusals` applies the same pre-acceptance rules as the reference store:
+frozen tensors, shape mismatch, non-finite values, bfloat16 overflow, and
+whole-tensor rescaling (which is how you would quietly shrink a model).
+
 ## Gates
 
 Nothing commits until it passes. **A missing metric counts as a failure** — an
@@ -177,6 +212,8 @@ uv pip install -e ".[hf]"    # + torch + transformers, for real models
 - [x] transactions, delta store, snapshots
 - [x] gate suite, KL, bootstrap CI
 - [x] activation-patching scaffold
+- [x] OpenWSP v1 edit format, byte-identical, conformance-tested
+- [x] refusal rules and protected-key verification
 - [ ] Hugging Face adapter: locate module, cast fp64, merge back to bf16
 - [ ] L0–L6 evaluation harness (unit → efficacy → locality → capability → long-form → cumulative)
 - [ ] Qwen2.5-0.5B reference run with published numbers

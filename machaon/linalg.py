@@ -14,10 +14,9 @@ delta  : (d_out, d_in) additive update, ``W_new = W + delta``
 """
 from __future__ import annotations
 
-import functools
-import sys
-
 import numpy as np
+
+from ._fpe import quiet_blas as _quiet_blas
 
 __all__ = [
     "relative_norm",
@@ -32,26 +31,6 @@ __all__ = [
     "ablate_input",
     "low_rank_scale",
 ]
-
-
-def _quiet_blas(fn):
-    """Silence Apple Accelerate's spurious matmul FP flags on macOS.
-
-    Accelerate leaves divide-by-zero / overflow / invalid flags set after a
-    matmul, which numpy reports as RuntimeWarning on every later call even
-    though the values are exact (verified in tests).  We suppress only that
-    platform quirk, only inside our own kernels; on other platforms numpy's
-    error reporting is untouched.
-    """
-    if sys.platform != "darwin":
-        return fn
-
-    @functools.wraps(fn)
-    def wrapper(*args, **kwargs):
-        with np.errstate(all="ignore"):
-            return fn(*args, **kwargs)
-
-    return wrapper
 
 
 def _as_weight(W):

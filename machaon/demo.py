@@ -15,6 +15,7 @@ from typing import Dict, List
 import numpy as np
 
 from .linalg import rank1, rank1_constrained, relative_norm
+from .verify import check_protected
 
 
 def _quiet():
@@ -37,10 +38,7 @@ def run_demo(seed: int = 0, d_in: int = 64, d_out: int = 64,
              max_rel_norm: float = 0.02) -> Dict[str, object]:
     def measure(label: str, W_new: np.ndarray, delta: np.ndarray) -> Dict[str, float]:
         target_err = float(np.linalg.norm(W_new @ k - v) / np.linalg.norm(v))
-        preserve_drift = max(
-            float(np.linalg.norm(W_new @ p - W @ p) / max(np.linalg.norm(W @ p), 1e-12))
-            for p in preserve
-        )
+        preserve_drift = check_protected(W, delta, preserve)["max_drift"]
         probe_drift = np.linalg.norm((W_new - W) @ probes.T, axis=0) / np.maximum(
             np.linalg.norm(W @ probes.T, axis=0), 1e-12
         )
