@@ -20,8 +20,8 @@ Ordered by what would make the project harder to ignore, not by what is easiest.
 
 - [ ] **Long-form coherence suite.** The literature says this is where edits
       break. It is the highest-value missing measurement.
-- [ ] **Cumulative-edit budget.** Cap `Σ‖ΔWᵢ‖/‖W‖` and show where the model
-      collapses.
+- [x] **Cumulative-edit budget.** `EditBudget` caps `Σ‖ΔWᵢ‖/‖W‖`, is charged at
+      commit, and is validated by a measured damage curve.
 - [x] **0.5B rung.** Qwen2.5-0.5B: `model.layers`, bf16 I/O, same benchmark
       panel. Results in [`reference/benchmarks.md`](reference/benchmarks.md).
 - [ ] **1.5B and 3B rungs.** Memory and shard handling.

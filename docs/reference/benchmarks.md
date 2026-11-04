@@ -92,6 +92,22 @@ zsRE target injection (edits: 8, layer 8, solver gradient, mean rel.delta 0.0135
 - **The direction solver is faster but worse**: 2–3 s/edit with rel. delta ~0.03
   and perplexity 1.19 on Qwen. Kept for speed, not for quality.
 
+## Cumulative damage
+
+`examples/budget_sweep.py` applies edits one at a time and measures held-out
+perplexity at checkpoints. GPT-2 124M, layer 8, 100 solve steps:
+
+| edits | cumulative Δ | WikiText-2 perplexity |
+|---|---|---|
+| 0 | 0.000 | 1.000 |
+| 8 | 0.089 | 1.049 |
+| 16 | 0.151 | 1.098 |
+| 32 | 0.255 | 1.191 |
+
+`EditBudget(max_total=0.10)` refuses edit #10. This is the empirical basis for
+the default budget: above roughly 0.1 cumulative relative change, a 124M–0.5B
+model has visibly degraded.
+
 ## Reproduce
 
 ```bash

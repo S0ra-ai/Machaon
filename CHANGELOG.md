@@ -8,6 +8,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `machaon.budget.EditBudget`: cumulative relative-change budget, charged at
+  commit, with per-tensor limits.
+- `Workspace(budget=...)`: automatic registration and atomic refusal.
+- `examples/budget_sweep.py`: measured damage curve for 0/8/16/32 edits.
 - Qwen2.5-0.5B support: `model.layers`, bf16/float32 I/O, same benchmark panel.
 - Target-injection benchmark protocol, comparable across model strengths.
 - `solver` choice in `rome_edit`: `gradient` (smaller deltas) and `direction`

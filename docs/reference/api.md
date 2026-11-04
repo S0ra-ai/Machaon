@@ -61,6 +61,24 @@ txn.commit(verdict=None) -> bool
 
 `commit` rolls back when `verdict.passed` is false and returns `False`.
 
+## Budget · `machaon.budget`
+
+```python
+budget = EditBudget(max_total=0.10, max_per_tensor=None)
+budget.register(name, weight)
+budget.relative(name, delta) -> float
+budget.check([(name, delta), ...]) -> BudgetState      # raises, changes nothing
+budget.add([(name, delta), ...]) -> BudgetState        # checks, then records
+budget.state() -> BudgetState
+```
+
+`BudgetState` carries `total`, `limit`, `remaining`, `per_tensor`,
+`tensor_limit`. `BudgetExceeded` is raised before anything is recorded.
+
+`Workspace(budget=...)` registers every tensor automatically and charges at
+`commit()`. On refusal the transaction is rolled back and the budget is
+untouched.
+
 ## Storage · `machaon.store`
 
 ```python

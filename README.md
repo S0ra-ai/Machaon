@@ -10,7 +10,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-107-2ea44f)
+![tests](https://img.shields.io/badge/tests-118-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
 [Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md)
@@ -84,6 +84,19 @@ human-written rephrasings.
 |---|---|---|---|---|---|---|
 | GPT-2 124M | 8 / 12 | 0.0135 | 0.500 | 0.259 | 1.066 | 0.220 → 0.220 |
 | Qwen2.5-0.5B | 20 / 24 | 0.0133 | 0.375 | 0.275 | 1.030 | 0.440 → 0.440 |
+
+### Cumulative damage
+
+| edits | cumulative Δ | WikiText-2 perplexity |
+|---|---|---|
+| 0 | 0.000 | 1.000 |
+| 8 | 0.089 | 1.049 |
+| 16 | 0.151 | 1.098 |
+| 32 | 0.255 | 1.191 |
+
+`EditBudget(max_total=0.10)` refuses edit **#10**. The budget is charged at
+commit, so a rolled-back transaction costs nothing. Reproduce with
+`examples/budget_sweep.py`.
 
 Full protocol, licences and caveats:
 [`docs/reference/benchmarks.md`](docs/reference/benchmarks.md).

@@ -53,6 +53,11 @@ value.
 An edit at layer 12 has to survive twelve more blocks. On Qwen2.5-0.5B the same
 edit cost rel. Δ 0.150 at layer 12 and 0.0043 at layer 20 — a 35× difference.
 
+**How many edits can I stack?**
+Measure it. On GPT-2, 32 rank-one edits (cumulative Δ 0.255) cost 19%
+perplexity; 8 cost 5%. `EditBudget(max_total=0.10)` refuses around edit #10 and
+is the recommended default.
+
 **Why does the gate fail when a metric is missing?**
 Because otherwise the easiest way to pass is to stop measuring. Fail-closed is a
 design choice, not an oversight.

@@ -58,6 +58,40 @@ For a narrow experiment you can pass an explicit gate subset — but say so:
 evaluate(metrics, {"rewrite_acc": (">=", 0.99), "ppl_ratio": ("<=", 1.05)})
 ```
 
+## Cumulative budget
+
+One edit is cheap; twenty are not. Machaon tracks
+`Σ‖ΔWᵢ‖ / ‖W‖` per tensor and across the model, and refuses a commit that would
+exceed it.
+
+```python
+from machaon import Workspace
+from machaon.budget import EditBudget
+
+budget = EditBudget(max_total=0.10)
+ws = Workspace(budget=budget)
+ws.register("layer.20.mlp.down_proj", W)
+
+txn = ws.begin("edit 10")
+txn.apply("layer.20.mlp.down_proj", delta)
+txn.commit()          # raises BudgetExceeded, rolls back, charges nothing
+```
+
+The sum is an upper bound on `‖ΣΔWᵢ‖ / ‖W‖` by the triangle inequality, so it is
+conservative: safe to enforce, never flattering.
+
+Measured on GPT-2 124M, eight rank-one edits at rel.Δ ≈ 0.011 each:
+
+| edits | cumulative Δ | WikiText-2 perplexity |
+|---|---|---|
+| 0 | 0.000 | 1.000 |
+| 8 | 0.089 | 1.049 |
+| 16 | 0.151 | 1.098 |
+| 32 | 0.255 | 1.191 |
+
+A budget of `0.10` refuses edit #10. Budget is charged at **commit**, so
+`rollback()` and a failed verdict both cost nothing.
+
 ## Reading a verdict
 
 ```

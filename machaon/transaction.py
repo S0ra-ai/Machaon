@@ -10,19 +10,28 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from .budget import BudgetExceeded, EditBudget
+
 
 class Workspace:
     """A named set of weight matrices that can be edited atomically."""
 
-    def __init__(self) -> None:
+    def __init__(self, budget: Optional[EditBudget] = None) -> None:
         self._w: Dict[str, np.ndarray] = {}
+        self._budget = budget
         self.history: List[Dict[str, Any]] = []
+
+    @property
+    def budget(self) -> Optional[EditBudget]:
+        return self._budget
 
     def register(self, name: str, weight) -> None:
         arr = np.array(weight, dtype=np.float64, copy=True)
         if arr.ndim != 2:
             raise ValueError("weight %r must be 2-D, got %r" % (name, arr.shape))
         self._w[name] = arr
+        if self._budget is not None:
+            self._budget.register(name, arr)
 
     def weight(self, name: str) -> np.ndarray:
         try:
@@ -37,13 +46,15 @@ class Workspace:
         return tuple(sorted(self._w))
 
     def begin(self, label: str = "") -> "Transaction":
-        return Transaction(self, label)
+        return Transaction(self, label, self._budget)
 
 
 class Transaction:
-    def __init__(self, workspace: Workspace, label: str = "") -> None:
+    def __init__(self, workspace: Workspace, label: str = "",
+                 budget: Optional[EditBudget] = None) -> None:
         self._ws = workspace
         self.label = label
+        self._budget = budget
         self.deltas: List[Tuple[str, np.ndarray]] = []
         self._undo: List[Tuple[str, np.ndarray]] = []
         self._closed = False
@@ -81,6 +92,14 @@ class Transaction:
         if verdict is not None and not bool(getattr(verdict, "passed", False)):
             self.rollback()
             return False
+        if self._budget is not None:
+            try:
+                self._budget.add(self.deltas)
+            except BudgetExceeded:
+                # Atomic: the model goes back to its previous bytes and the
+                # budget is untouched, because add() checks before recording.
+                self.rollback()
+                raise
         self._ws.history.append({"label": self.label, "deltas": list(self.deltas)})
         self._undo.clear()
         self._closed = True
