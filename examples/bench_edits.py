@@ -27,8 +27,10 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from machaon.adapters import Checkpoint
 from machaon.bench import load_mmlu, load_wikitext, load_zsre, mmlu_accuracy, read_provenance
 from machaon.hygieia import perplexity_ratio
+from machaon.memory import check_fit
 from machaon.procedures import rome_edit
 from machaon.runtime import HFModel
 
@@ -92,6 +94,8 @@ def main() -> int:
     parser.add_argument("--dtype", default="auto", choices=["auto", "float32"])
     parser.add_argument("--solver", default="gradient", choices=["gradient", "direction"])
     parser.add_argument("--max-rel-norm", type=float, default=None)
+    parser.add_argument("--force", action="store_true",
+                        help="load even when the memory preflight refuses")
     parser.add_argument("--rephrase-limit", type=int, default=None,
                         help="cap held-out rephrasings per case (for large models)")
     args = parser.parse_args()
@@ -104,6 +108,15 @@ def main() -> int:
         record = read_provenance(root / filename)
         print("dataset %-24s %-34s n=%-6d sha=%s" % (
             filename, record.name, record.n_items, record.sha256[:12]))
+
+    if Path(args.model).exists():
+        summary = Checkpoint(args.model).summary()
+        fit = check_fit(summary)
+        print("memory: %.1f GB of weights, %s" % (
+            fit["weights_bytes"] / 1e9, fit["reason"]))
+        if not fit["ok"] and not args.force:
+            print("refusing to load: this would thrash. Use --force to override.")
+            return 2
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     load_kwargs = {} if args.dtype == "auto" else {"dtype": torch.float32}

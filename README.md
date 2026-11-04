@@ -10,7 +10,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-143-2ea44f)
+![tests](https://img.shields.io/badge/tests-149-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
 [Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md)
@@ -118,6 +118,10 @@ untouched: lm_head.weight identical=True
 ```
 
 One shard rewritten, three hard-linked, ~4 GB peak instead of 14 GB.
+
+Full evaluation at this size does not fit: the model loads (13.4 GB resident,
+correct next token) but a sustained run is evicted to swap. `machaon.memory`
+now refuses that case up front rather than thrashing.
 
 ### Long-form coherence
 

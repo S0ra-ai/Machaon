@@ -8,6 +8,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `machaon.memory.check_fit`: refuse a checkpoint whose weights exceed 60% of
+  available memory, with the measured rationale.
+- `--force` on the benchmark script to override the preflight.
 - `Checkpoint.write_tensor`: rewrite one shard and hard-link the rest. Verified
   on Qwen2.5-7B: 4 shards, 2.3 s, ~4 GB peak.
 - `examples/file_edit.py --single-shard`.

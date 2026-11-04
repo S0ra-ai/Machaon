@@ -170,6 +170,19 @@ finds surprising is evidence of damage.
 Repetition is compared as a delta, not absolutely — GPT-2 loops under greedy
 decoding before any edit.
 
+## Memory · `machaon.memory`
+
+```python
+available_bytes() -> int | None
+weights_bytes(summary) -> int
+check_fit(summary, fraction=0.6) -> dict
+```
+
+`check_fit` refuses a checkpoint whose weights exceed 60% of currently available
+memory. The default comes from measurement: a 7.6B bf16 checkpoint at 67% of
+reported-available memory thrashed until the run was killed. Failing fast is
+kinder than swapping.
+
 ## Session · `machaon.session`
 
 ```python

@@ -28,7 +28,8 @@ Ordered by what would make the project harder to ignore, not by what is easiest.
 - [x] **3B rung.** Sharded checkpoint, 11.7 GB peak RSS, same panel.
 - [x] **Up to 8B at the checkpoint level.** Single-shard edits without
       loading the whole model.
-- [ ] **Up to 8B at the evaluation level.** Blocked by 32 GB of RAM.
+- [ ] **Up to 8B at the evaluation level.** Blocked by 32 GB of RAM;
+      `check_fit` refuses instead of thrashing.
 
 ## Later
 

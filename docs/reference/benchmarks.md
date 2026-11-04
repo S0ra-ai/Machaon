@@ -133,9 +133,13 @@ untouched: lm_head.weight identical=True
 Only the shard holding the tensor is rewritten; the other three are hard-linked.
 Peak memory is one shard (~4 GB) instead of the whole checkpoint (14 GB).
 
-**Honest status:** 7B/8B edits are supported at the checkpoint level, not yet at
-the evaluation level on this hardware. A full forward pass needs either more RAM
-or a quantised forward path.
+**Honest status:** 7B/8B edits are supported at the checkpoint level, not at the
+evaluation level on this hardware. A 7.6B bf16 model does load (13.4 GB
+resident, correct next token), but a sustained run is evicted: RSS fell to
+4.1 GB and swap reached 23.6 GB. `machaon.memory.check_fit` now refuses that
+case up front instead of thrashing.
+
+A quantised forward path, or at least 64 GB of RAM, is required.
 
 ## Cumulative damage
 
