@@ -77,6 +77,12 @@ class TestFamilies(unittest.TestCase):
                 runtime.write(target, original)
                 np.testing.assert_allclose(runtime.read(target), original, atol=0)
 
+    def test_densify_is_a_noop(self):
+        for name in FAMILIES:
+            with self.subTest(family=name):
+                runtime = HFModel(build(name))
+                self.assertFalse(runtime.densify(runtime.edit_target(1)))
+
     def test_forward_contract(self):
         for name in FAMILIES:
             with self.subTest(family=name):

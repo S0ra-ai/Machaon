@@ -120,6 +120,7 @@ rt.next_logits(items); rt.next_logits_ids(ids, mask=None)
 rt.nll(items); rt.nll_ids(ids, mask=None)
 rt.score_continuations([(prompt, continuation), ...]) -> ndarray
 rt.capture_module_input(name, ids, position=-1) -> ndarray
+rt.densify(name) -> bool
 rt.param_count()
 ```
 

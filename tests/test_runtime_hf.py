@@ -56,6 +56,9 @@ class TestRuntime(unittest.TestCase):
         self.rt.write(name, original)
         np.testing.assert_allclose(self.rt.read(name), original, atol=0)
 
+    def test_densify_is_a_noop_on_dense_layers(self):
+        self.assertFalse(self.rt.densify("transformer.h.1.mlp.c_proj.weight"))
+
     def test_shape_mismatch_rejected(self):
         with self.assertRaises(ValueError):
             self.rt.write("transformer.h.1.mlp.c_proj.weight", np.zeros((2, 2)))

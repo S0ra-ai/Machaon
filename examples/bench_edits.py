@@ -92,6 +92,8 @@ def main() -> int:
     parser.add_argument("--mmlu", type=int, default=100)
     parser.add_argument("--wikitext", type=int, default=40)
     parser.add_argument("--dtype", default="auto", choices=["auto", "float32"])
+    parser.add_argument("--quantize", default="none", choices=["none", "int8"],
+                        help="load quantised; the edited layer is densified")
     parser.add_argument("--solver", default="gradient", choices=["gradient", "direction"])
     parser.add_argument("--max-rel-norm", type=float, default=None)
     parser.add_argument("--force", action="store_true",
@@ -111,6 +113,9 @@ def main() -> int:
 
     if Path(args.model).exists():
         summary = Checkpoint(args.model).summary()
+        if args.quantize == "int8":
+            # weights are stored at one byte per parameter, not two
+            summary = {"dtypes": {"I8": summary["parameters"]}}
         fit = check_fit(summary)
         print("memory: %.1f GB of weights, %s" % (
             fit["weights_bytes"] / 1e9, fit["reason"]))
@@ -120,13 +125,18 @@ def main() -> int:
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     load_kwargs = {} if args.dtype == "auto" else {"dtype": torch.float32}
+    if args.quantize == "int8":
+        from transformers import QuantoConfig
+
+        load_kwargs["quantization_config"] = QuantoConfig(weights="int8")
+        load_kwargs["device_map"] = "cpu"
     runtime = HFModel(
         AutoModelForCausalLM.from_pretrained(args.model, **load_kwargs).eval(), tokenizer)
     print("\nmodel %s: %.1fM params, %d layers, %s" % (
         args.model, runtime.param_count() / 1e6, runtime.n_layers, runtime.layer_path))
 
     docs = load_wikitext(root / "wikitext2-test.parquet", limit=args.wikitext)
-    items = load_mmlu(root / "mmlu-test.parquet", limit=args.mmlu)
+    items = load_mmlu(root / "mmlu-test.parquet", limit=args.mmlu) if args.mmlu > 0 else []
     baseline_nll = runtime.nll(docs)
 
     scan = load_zsre(root / "zsre-dev.jsonl", limit=600)
@@ -141,6 +151,9 @@ def main() -> int:
         rephrases = [list(c.rephrases)[: args.rephrase_limit] for c in cases]
     else:
         rephrases = [list(c.rephrases) for c in cases]
+    if args.quantize != "none":
+        densified = runtime.densify(runtime.edit_target(args.layer))
+        print("densified target layer: %s" % densified)
     print("distractor pool: %d entity tokens" % len(pool))
     print("zsRE: injecting %d targets into %s (%d rephrasings each)" % (
         len(cases), runtime.edit_target(args.layer),
@@ -160,7 +173,7 @@ def main() -> int:
             "rewrite": rewrite,
             "rephrase": rephrase,
             "ppl": perplexity_ratio(baseline_nll, runtime.nll(docs)),
-            "mmlu": mmlu_accuracy(runtime, items)["accuracy"],
+            "mmlu": mmlu_accuracy(runtime, items)["accuracy"] if items else float("nan"),
         }
 
     before = panel()
@@ -183,9 +196,12 @@ def main() -> int:
     print("  targets   %s" % ", ".join(t[1] for t in targets))
     print("\n== WikiText-2 (held out, %d documents) ==" % len(docs))
     print("  perplexity ratio  %.4f" % after["ppl"])
-    print("\n== MMLU (%d questions) ==" % len(items))
-    print("  accuracy  %.3f -> %.3f   (delta %+.3f)" % (
-        before["mmlu"], after["mmlu"], after["mmlu"] - before["mmlu"]))
+    if items:
+        print("\n== MMLU (%d questions) ==" % len(items))
+        print("  accuracy  %.3f -> %.3f   (delta %+.3f)" % (
+            before["mmlu"], after["mmlu"], after["mmlu"] - before["mmlu"]))
+    else:
+        print("\n== MMLU skipped ==")
     return 0
 
 

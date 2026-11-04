@@ -120,6 +120,44 @@ class HFModel:
         shape = tuple(param.shape)
         return tuple(reversed(shape)) if self._stores_weight_transposed(module) else shape
 
+    def densify(self, name: str) -> bool:
+        """Replace a quantised linear holding ``name`` with a float32 copy.
+
+        Quantised weights (quanto, bitsandbytes) do not accept an in-place
+        write: ``copy_`` rounds the delta away or is a no-op. Replacing just the
+        edited layer keeps the rest of the model quantised, so memory stays low
+        while the edit path stays exactly the same.
+        """
+        import torch
+
+        parent_path, _, _attr = name.rpartition(".")
+        module = self.resolve(parent_path)
+        weight = getattr(module, "weight", None)
+        if weight is None:
+            raise AttributeError("%s has no weight" % parent_path)
+        quantised = (
+            type(module).__name__ == "QLinear"
+            or "QBytes" in type(weight).__name__
+            or "QTensor" in type(weight).__name__
+        )
+        if not quantised:
+            return False  # already dense
+
+        grand_path, _, module_attr = parent_path.rpartition(".")
+        grandparent = self.resolve(grand_path)
+        dense_weight = weight.detach().float().cpu()
+        bias = getattr(module, "bias", None)
+        linear = torch.nn.Linear(
+            dense_weight.shape[1], dense_weight.shape[0],
+            bias=bias is not None, dtype=torch.float32,
+        )
+        with torch.no_grad():
+            linear.weight.copy_(dense_weight)
+            if bias is not None:
+                linear.bias.copy_(bias.detach().float().cpu())
+        setattr(grandparent, module_attr, linear.to(self.device))
+        return True
+
     def read(self, name: str) -> np.ndarray:
         """Read one weight as float64, always in ``(d_out, d_in)`` orientation."""
         tensor = self.resolve(name)

@@ -53,6 +53,23 @@ All six paraphrases were prompts where the base model *already* answered
 - The value solve uses gradients over a single vector. Model weights are never
   optimised, but this is not a fully gradient-free pipeline.
 
+## R6 · Qwen2.5-7B, int8 evaluation
+
+| metric | value |
+|---|---|
+| parameters | 7,615.6M (28 layers) |
+| load | int8 via `optimum-quanto`, target layer densified to fp32 |
+| mean relative delta | **0.0503** |
+| rewrite | 0.750 (3/4) |
+| rephrase | 0.667 (38/57) |
+| WikiText-2 perplexity | **1.260** |
+| MMLU (n=10) | 0.500 → 0.500 |
+| peak RSS | 10.6 GB |
+
+Four edits at this scale exceed the 0.10 cumulative budget. The gradient-free
+solver is the limiting factor: it needs a large alpha at 7B, and the damage
+scales with it.
+
 ## R5 · Long-form at 1.5B
 
 Same edit, 80-token greedy generations on five prompts, scored by the unedited
