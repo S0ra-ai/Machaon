@@ -38,21 +38,30 @@ NEUTRAL = [
 
 
 def main() -> int:
+    import argparse
+
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    tokenizer = AutoTokenizer.from_pretrained("gpt2")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--model", default="gpt2")
+    parser.add_argument("--layer", type=int, default=8)
+    parser.add_argument("--steps", type=int, default=250)
+    parser.add_argument("--tokens", type=int, default=120)
+    args = parser.parse_args()
+
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
     pristine = HFModel(AutoModelForCausalLM.from_pretrained(
-        "gpt2", dtype=torch.float32).eval(), tokenizer)
-    model = AutoModelForCausalLM.from_pretrained("gpt2", dtype=torch.float32).eval()
+        args.model, dtype=torch.float32).eval(), tokenizer)
+    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32).eval()
     edited = HFModel(model, tokenizer)
 
-    target = int(tokenizer(" Rome").input_ids[0])
-    result = rome_edit(edited, PROMPT, " Rome", layer=8, preserve_prompts=NEUTRAL,
-                       steps=250, target_token_id=target, solver="gradient")
+    target = int(tokenizer(" Rome", add_special_tokens=False).input_ids[0])
+    result = rome_edit(edited, PROMPT, " Rome", layer=args.layer, preserve_prompts=NEUTRAL,
+                       steps=args.steps, target_token_id=target, solver="gradient")
     print("edit: %s  rel=%.4f  p(target)=%.3f" % (
         result.module, result.relative_delta, result.target_probability))
 
-    report = longform_report(pristine, edited, PROMPTS, max_new_tokens=120)
+    report = longform_report(pristine, edited, PROMPTS, max_new_tokens=args.tokens)
     verdict = evaluate(report, LONGFORM_GATES)
 
     print("\nlong-form check (%d prompts, %d new tokens)" % (

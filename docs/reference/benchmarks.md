@@ -135,13 +135,14 @@ model has visibly degraded.
 greedy generations on five prompts. Coherence is scored by the **unedited**
 model.
 
-| metric | value |
-|---|---|
-| baseline 4-gram repetition | 0.621 |
-| edited 4-gram repetition | 0.578 |
-| repetition delta | **−0.043** |
-| NLL ratio (edited text under pristine) | 1.089 |
-| empty generations | 0.0 |
+| model | baseline rep. | edited rep. | Δ | NLL ratio | empty |
+|---|---|---|---|---|---|
+| GPT-2 124M (120 tok) | 0.621 | 0.578 | **−0.043** | 1.089 | 0.0 |
+| Qwen2.5-1.5B (80 tok) | 0.097 | 0.196 | **+0.099** | 0.938 | 0.0 |
+
+On GPT-2 the edit leaves repetition unchanged; on 1.5B it roughly doubles it,
+landing exactly at the 0.10 gate. That is a warning, not a pass to celebrate:
+the threshold may be too loose, and 80 tokens is short.
 
 Repetition is reported as a delta because GPT-2 loops under greedy decoding
 *before* any edit. The absolute number says more about the model than about the

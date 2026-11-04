@@ -8,6 +8,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `examples/longform_check.py` takes `--model/--layer/--steps/--tokens`; first
+  cross-architecture long-form numbers (1.5B: repetition Δ +0.099, NLL 0.938).
 - `machaon.session.Session`: baseline → propose → apply → evaluate → rollback,
   with the budget charged at apply.
 - MCP model-level tools over one session.

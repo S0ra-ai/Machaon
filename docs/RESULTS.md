@@ -53,6 +53,22 @@ All six paraphrases were prompts where the base model *already* answered
 - The value solve uses gradients over a single vector. Model weights are never
   optimised, but this is not a fully gradient-free pipeline.
 
+## R5 · Long-form at 1.5B
+
+Same edit, 80-token greedy generations on five prompts, scored by the unedited
+model.
+
+| metric | value |
+|---|---|
+| baseline 4-gram repetition | 0.097 |
+| edited 4-gram repetition | 0.196 |
+| repetition delta | **+0.099** (gate ≤ 0.10) |
+| NLL ratio | 0.938 |
+| empty generations | 0.0 |
+
+Passes, but only just. The edit doubles repetition on this model; the gate
+threshold and the 80-token length both need revisiting.
+
 ## R4 · Qwen2.5-3B
 
 Same protocol, 80 solve steps, float32, sharded checkpoint (2 files).
