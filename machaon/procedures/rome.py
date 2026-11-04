@@ -80,7 +80,7 @@ def _logits_with(runtime, module, ids, value):
     return logits
 
 
-def _solve_direction(runtime, module, ids, target_token, value, alphas):
+def _solve_direction(runtime, module, ids, target_token, value, alphas, expand_to=4096.0):
     """Smallest scale along the target's unembedding row that wins.
 
     Saturation is cheap and wasteful: the value that pushes the target to
@@ -100,11 +100,21 @@ def _solve_direction(runtime, module, ids, target_token, value, alphas):
     best_probability = evaluate(0.0)
     best = (best_probability[0], 0.0)
     previous = 0.0
-    for alpha in alphas:
-        probability, top = evaluate(float(alpha))
+    schedule = [float(a) for a in alphas]
+
+    # The unembedding direction weakens with depth and with model size, so an
+    # edit that flips at 0.5B may need a much larger scale at 7B. Expand until
+    # the prediction flips, then bisect for the smallest winning scale.
+    alpha = schedule[-1] if schedule else 1.0
+    while alpha < expand_to:
+        alpha *= 2.0
+        schedule.append(alpha)
+
+    for alpha in schedule:
+        probability, top = evaluate(alpha)
         if top == target_token:
-            low, high = previous, float(alpha)
-            best = (probability, float(alpha))
+            low, high = previous, alpha
+            best = (probability, alpha)
             for _ in range(6):
                 middle = (low + high) / 2.0
                 middle_probability, middle_top = evaluate(middle)
@@ -115,11 +125,11 @@ def _solve_direction(runtime, module, ids, target_token, value, alphas):
                     low = middle
             break
         if probability > best[0]:
-            best = (probability, float(alpha))
-        previous = float(alpha)
+            best = (probability, alpha)
+        previous = alpha
 
     probability, alpha = best
-    return value + alpha * direction, probability, len(alphas)
+    return value + alpha * direction, probability, len(schedule)
 
 
 def _solve_gradient(runtime, module, ids, target_token, value, steps, lr):

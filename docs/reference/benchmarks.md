@@ -113,6 +113,30 @@ zsRE target injection (edits: 8, layer 8, solver gradient, mean rel.delta 0.0135
 - **The direction solver is faster but worse**: 2–3 s/edit with rel. delta ~0.03
   and perplexity 1.19 on Qwen. Kept for speed, not for quality.
 
+## 7B: the memory wall
+
+Qwen2.5-7B is a 7.6B-parameter, four-shard checkpoint (14.3 GB in bf16). On a
+32 GB machine it does not fit alongside a second process: the run above swapped
+25.9 of 26.6 GB and was stopped rather than left thrashing.
+
+What *does* work at this size is the file path:
+
+```
+source   : 339 tensors, 7615.6M params, 4 shard(s)
+target   : model.layers.24.mlp.down_proj.weight [3584, 18944]
+delta    : rel 0.0030
+shard    : model-00004-of-00004.safetensors (linked 3, copied 0)
+wrote    : /tmp/qwen7b_edit (2.3s)
+untouched: lm_head.weight identical=True
+```
+
+Only the shard holding the tensor is rewritten; the other three are hard-linked.
+Peak memory is one shard (~4 GB) instead of the whole checkpoint (14 GB).
+
+**Honest status:** 7B/8B edits are supported at the checkpoint level, not yet at
+the evaluation level on this hardware. A full forward pass needs either more RAM
+or a quantised forward path.
+
 ## Cumulative damage
 
 `examples/budget_sweep.py` applies edits one at a time and measures held-out

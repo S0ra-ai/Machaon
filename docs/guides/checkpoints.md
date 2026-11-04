@@ -48,6 +48,19 @@ W = ckpt.read(name, dtype=None)    # keep the stored dtype
 Reads are lazy: one tensor at a time, so a 7B sharded checkpoint does not need to
 fit in memory all at once.
 
+## Write one tensor, one shard
+
+For checkpoints too large to hold twice, rewrite only the shard that contains
+the tensor and hard-link the rest:
+
+```python
+report = ckpt.write_tensor(name, W + delta, "/models/edited")
+# {'shard': 'model-00004-of-00004.safetensors', 'linked': [...3 files...], 'copied': []}
+```
+
+Peak memory is one shard. On a 7.6B model that is ~4 GB instead of 14 GB, and
+the write took 2.3 s.
+
 ## Write
 
 ```python

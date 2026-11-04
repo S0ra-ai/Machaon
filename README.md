@@ -10,7 +10,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-142-2ea44f)
+![tests](https://img.shields.io/badge/tests-143-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
 [Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md)
@@ -102,6 +102,22 @@ delta at 3B compared with 0.5B, and costs 0.2% perplexity instead of 3%.
 `EditBudget(max_total=0.10)` refuses edit **#10**. The budget is charged at
 commit, so a rolled-back transaction costs nothing. Reproduce with
 `examples/budget_sweep.py`.
+
+### The 8B path
+
+At 7.6B parameters a bf16 checkpoint is 14.3 GB and four shards. A full forward
+pass does not fit alongside a second process on 32 GB, so the run was stopped.
+
+The checkpoint path does work, and it is the one that matters for 8B:
+
+```
+source   : 339 tensors, 7615.6M params, 4 shard(s)
+shard    : model-00004-of-00004.safetensors (linked 3, copied 0)
+wrote    : 2.3s
+untouched: lm_head.weight identical=True
+```
+
+One shard rewritten, three hard-linked, ~4 GB peak instead of 14 GB.
 
 ### Long-form coherence
 

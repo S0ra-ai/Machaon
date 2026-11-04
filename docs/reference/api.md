@@ -212,6 +212,7 @@ ckpt.info(name) -> TensorInfo(name, shape, dtype)
 ckpt.find(contains=None, suffix=None, layer=None)
 ckpt.read(name, dtype=float32); ckpt.read_float64(name)
 ckpt.write_with({name: delta}, out_dir) -> report
+ckpt.write_tensor(name, values, out_dir, link_others=True) -> report
 ```
 
 ## Refusals · `machaon.refusals`

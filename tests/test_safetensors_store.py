@@ -113,6 +113,31 @@ class TestSingleFile(unittest.TestCase):
 
 
 @requires_torch
+class TestSingleShardWrite(unittest.TestCase):
+    def test_only_the_target_shard_is_rewritten(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rng = np.random.default_rng(4)
+            a = rng.normal(size=(4, 3)).astype(np.float32)
+            b = rng.normal(size=(3, 2)).astype(np.float32)
+            _write(root / "model-00001.safetensors", {"a": torch.from_numpy(a)})
+            _write(root / "model-00002.safetensors", {"b": torch.from_numpy(b)})
+            (root / "model.safetensors.index.json").write_text(json.dumps({
+                "weight_map": {"a": "model-00001.safetensors",
+                               "b": "model-00002.safetensors"}}))
+
+            ckpt = Checkpoint(root)
+            out = root / "edited"
+            report = ckpt.write_tensor("b", b + 0.25, out)
+            self.assertEqual(report["shard"], "model-00002.safetensors")
+            self.assertIn("model-00001.safetensors", report["linked"])
+
+            self.assertTrue((out / "model.safetensors.index.json").exists())
+            edited = Checkpoint(out)
+            np.testing.assert_allclose(edited.read("b"), b + 0.25, atol=1e-6)
+            np.testing.assert_array_equal(edited.read("a"), a)
+
+
 class TestSharded(unittest.TestCase):
     def test_sharded_read_and_write(self):
         with tempfile.TemporaryDirectory() as tmp:

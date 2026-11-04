@@ -26,7 +26,9 @@ Ordered by what would make the project harder to ignore, not by what is easiest.
       panel. Results in [`reference/benchmarks.md`](reference/benchmarks.md).
 - [x] **1.5B rung.** Qwen2.5-1.5B, same panel; file-level write at 2.9 GB.
 - [x] **3B rung.** Sharded checkpoint, 11.7 GB peak RSS, same panel.
-- [ ] **Up to 8B.** Single-shard edits without loading the whole model.
+- [x] **Up to 8B at the checkpoint level.** Single-shard edits without
+      loading the whole model.
+- [ ] **Up to 8B at the evaluation level.** Blocked by 32 GB of RAM.
 
 ## Later
 

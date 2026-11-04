@@ -28,6 +28,8 @@ def main() -> int:
     parser.add_argument("--suffix", default="mlp.down_proj.weight")
     parser.add_argument("--out", required=True)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--single-shard", action="store_true",
+                        help="rewrite only the shard holding the tensor; hardlink the rest")
     parser.add_argument("--budget", type=float, default=0.005,
                         help="target relative change of the delta")
     args = parser.parse_args()
@@ -59,11 +61,16 @@ def main() -> int:
     print("delta    : rel %.4f" % (np.linalg.norm(delta) / np.linalg.norm(W)))
 
     out = Path(args.out)
-    ckpt.write_with({name: delta}, out)
+    if args.single_shard:
+        report = ckpt.write_tensor(name, W + delta, out)
+        print("shard    : %s (linked %d, copied %d)" % (
+            report["shard"], len(report["linked"]), len(report["copied"])))
+    else:
+        ckpt.write_with({name: delta}, out)
     print("wrote    : %s (%.1fs)" % (out, time.time() - started))
 
     reloaded = Checkpoint(out)
-    changed = reloaded.read(name) - W.astype(np.float32)
+    changed = reloaded.read(name).astype(np.float64) - W
     print("reload   : %d tensors, max |Δ| %.3e" % (
         reloaded.summary()["tensors"], float(np.abs(changed).max())))
 

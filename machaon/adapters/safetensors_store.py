@@ -11,6 +11,7 @@ an edit.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Tuple
@@ -157,6 +158,78 @@ class Checkpoint:
         return out
 
     # -- writes ---------------------------------------------------------
+
+    def write_tensor(self, name: str, values, out_dir: str | Path,
+                     link_others: bool = True) -> Dict[str, Any]:
+        """Rewrite only the shard that holds ``name``.
+
+        Unchanged shards are hard-linked by default, so a 7B checkpoint costs
+        one shard of memory and one shard of I/O instead of fifteen gigabytes
+        of each. Falls back to a copy when linking is not possible.
+        """
+        import shutil
+
+        import torch
+
+        if name not in self.names():
+            raise KeyError("unknown tensor: %s" % name)
+
+        target = self._shard_for(name)
+        out = Path(out_dir)
+        out.mkdir(parents=True, exist_ok=True)
+
+        if self._weight_map is not None:
+            names = sorted(n for n, s in self._weight_map.items() if self.path / s == target)
+        else:
+            names = self.names()
+
+        tensors: Dict[str, Any] = {}
+        metadata = None
+        with self._open(target) as f:
+            metadata = f.metadata()
+            for current in names:
+                original = f.get_tensor(current)
+                if current != name:
+                    tensors[current] = original.contiguous()
+                    continue
+                array = np.ascontiguousarray(np.asarray(values), dtype=np.float32)
+                expected = tuple(original.shape)
+                if array.shape != expected:
+                    raise ValueError(
+                        "shape %r does not match %s %r" % (array.shape, name, expected))
+                tensors[current] = torch.from_numpy(array).to(original.dtype).contiguous()
+
+        destination = out / target.name
+        save_file(tensors, str(destination), metadata=metadata)
+
+        linked, copied = [], []
+        for shard in self.shards:
+            if shard == target:
+                continue
+            sibling = out / shard.name
+            if sibling.exists():
+                continue
+            if link_others:
+                try:
+                    os.link(shard, sibling)
+                    linked.append(sibling.name)
+                    continue
+                except OSError:
+                    pass
+            shutil.copy2(shard, sibling)
+            copied.append(sibling.name)
+
+        if self._weight_map is not None:
+            (out / "model.safetensors.index.json").write_text(
+                json.dumps({"weight_map": self._weight_map}, indent=2) + "\n")
+
+        return {
+            "tensor": name,
+            "shard": target.name,
+            "rewritten": destination.name,
+            "linked": linked,
+            "copied": copied,
+        }
 
     def write_with(self, deltas: Mapping[str, np.ndarray], out_dir: str | Path) -> Dict[str, Any]:
         """Write a new checkpoint with ``deltas`` applied.  The source is untouched.

@@ -88,5 +88,5 @@ verdict.
 ## Status
 
 Alpha. The maths, transactions, storage, gates, runtime, safetensors adapter and
-OpenWSP format are implemented and tested (142 tests). Real-model evidence
+OpenWSP format are implemented and tested (143 tests). Real-model evidence
 currently stops at GPT-2 124M. See the [roadmap](roadmap.md).

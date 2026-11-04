@@ -8,6 +8,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `Checkpoint.write_tensor`: rewrite one shard and hard-link the rest. Verified
+  on Qwen2.5-7B: 4 shards, 2.3 s, ~4 GB peak.
+- `examples/file_edit.py --single-shard`.
+- 7B memory wall documented: checkpoint edits work, full evaluation does not fit
+  in 32 GB.
 - `examples/longform_check.py` takes `--model/--layer/--steps/--tokens`; first
   cross-architecture long-form numbers (1.5B: repetition Δ +0.099, NLL 0.938).
 - `machaon.session.Session`: baseline → propose → apply → evaluate → rollback,
