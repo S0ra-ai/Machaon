@@ -1,18 +1,20 @@
 """Benchmark weight edits on open datasets, with provenance.
 
-    HF_ENDPOINT=https://hf-mirror.com python examples/bench_edits.py \
-        --model gpt2 --layer 8 --edits 8
+    HF_HUB_OFFLINE=1 python examples/bench_edits.py \
+        --model gpt2 --layer 8 --edits 8 --dtype float32 --solver gradient
 
-    python examples/bench_edits.py --model /tmp/qwen05b --layer 12 --edits 8
+    HF_HUB_OFFLINE=1 python examples/bench_edits.py \
+        --model /tmp/qwen3b --layer 26 --edits 8 --dtype float32 \
+        --solver direction --rephrase-limit 100
 
 Protocol: **target injection**. For each zsRE question we pick a distractor
-token the model does not currently prefer (the most likely alphabetic token
-outside the top-1), edit the model to produce it, and measure whether the edit
-generalises to the question's human-written rephrasings. This works for weak and
-strong base models alike; "repair an answered-wrong item" only works when the
-model is weak enough to fail items, which Qwen2.5-0.5B mostly is not.
+token from the dataset's own entity vocabulary, edit the model to produce it,
+and measure the question and its human-written rephrasings. This works for weak
+and strong base models alike.
 
-Datasets and licences: docs/reference/benchmarks.md.
+The model is loaded **once**: baseline metrics are captured as numbers, the
+edits are applied in place, and the same panel is measured again. That halves
+peak memory, which is what makes a 3B checkpoint fit on a laptop.
 """
 from __future__ import annotations
 
@@ -37,12 +39,6 @@ NEUTRAL = [
     "The Moon orbits the",
 ]
 
-
-def bench_dir() -> Path:
-    root = os.environ.get("MACHAON_BENCH", str(Path.home() / ".cache" / "machaon" / "bench"))
-    return Path(root).expanduser()
-
-
 STOPWORDS = {
     "there", "these", "those", "their", "which", "where", "while", "other",
     "first", "second", "third", "after", "before", "about", "could", "would",
@@ -50,20 +46,22 @@ STOPWORDS = {
 }
 
 
+def bench_dir() -> Path:
+    root = os.environ.get("MACHAON_BENCH", str(Path.home() / ".cache" / "machaon" / "bench"))
+    return Path(root).expanduser()
+
+
 def entity_pool(tokenizer, cases, limit: int = 400):
     """First tokens of real zsRE answers, deduplicated.
 
-    Using the dataset's own entity vocabulary as the distractor pool keeps the
-    injected targets plausible ("Harvard" for a university question) instead of
-    drifting into tokenizer artefacts like "Options" or "Answer".
+    Using the dataset's own entity vocabulary keeps injected targets plausible
+    instead of drifting into tokenizer artefacts.
     """
     pool = {}
     for case in cases[:limit]:
         token = tokenizer(case.answer, add_special_tokens=False)["input_ids"][0]
         text = tokenizer.decode([token]).strip()
-        if len(text) < 5 or not text.isalpha():
-            continue
-        if not text[:1].isupper():
+        if len(text) < 5 or not text.isalpha() or not text[:1].isupper():
             continue
         if text.lower() in STOPWORDS:
             continue
@@ -72,7 +70,6 @@ def entity_pool(tokenizer, cases, limit: int = 400):
 
 
 def choose_distractor(pool, runtime: HFModel, prompt: str, gold: int, seed: int):
-    """A dataset entity the model does not currently prefer."""
     logits = runtime.next_logits([prompt])[0]
     top = int(logits.argmax())
     start = seed % len(pool)
@@ -93,10 +90,10 @@ def main() -> int:
     parser.add_argument("--mmlu", type=int, default=100)
     parser.add_argument("--wikitext", type=int, default=40)
     parser.add_argument("--dtype", default="auto", choices=["auto", "float32"])
-    parser.add_argument("--solver", default="gradient", choices=["gradient", "direction"],
-                        help="gradient is smaller and slower; direction is faster and larger")
-    parser.add_argument("--max-rel-norm", type=float, default=None,
-                        help="hard budget per edit; clamped edits under-deliver")
+    parser.add_argument("--solver", default="gradient", choices=["gradient", "direction"])
+    parser.add_argument("--max-rel-norm", type=float, default=None)
+    parser.add_argument("--rephrase-limit", type=int, default=None,
+                        help="cap held-out rephrasings per case (for large models)")
     args = parser.parse_args()
 
     import torch
@@ -110,71 +107,72 @@ def main() -> int:
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     load_kwargs = {} if args.dtype == "auto" else {"dtype": torch.float32}
-
-    def load():
-        return AutoModelForCausalLM.from_pretrained(args.model, **load_kwargs).eval()
-
-    pristine = HFModel(load(), tokenizer)
-    runtime = HFModel(load(), tokenizer)
+    runtime = HFModel(
+        AutoModelForCausalLM.from_pretrained(args.model, **load_kwargs).eval(), tokenizer)
     print("\nmodel %s: %.1fM params, %d layers, %s" % (
-        args.model, pristine.param_count() / 1e6, pristine.n_layers, pristine.layer_path))
+        args.model, runtime.param_count() / 1e6, runtime.n_layers, runtime.layer_path))
+
+    docs = load_wikitext(root / "wikitext2-test.parquet", limit=args.wikitext)
+    items = load_mmlu(root / "mmlu-test.parquet", limit=args.mmlu)
+    baseline_nll = runtime.nll(docs)
 
     scan = load_zsre(root / "zsre-dev.jsonl", limit=600)
     pool = entity_pool(tokenizer, scan)
     cases = scan[: args.edits]
     targets = [
-        choose_distractor(pool, pristine, c.question,
+        choose_distractor(pool, runtime, c.question,
                           tokenizer(c.answer, add_special_tokens=False)["input_ids"][0], i)
         for i, c in enumerate(cases)
     ]
+    if args.rephrase_limit is not None:
+        rephrases = [list(c.rephrases)[: args.rephrase_limit] for c in cases]
+    else:
+        rephrases = [list(c.rephrases) for c in cases]
     print("distractor pool: %d entity tokens" % len(pool))
-    print("zsRE: injecting %d targets into %s" % (len(cases), pristine.edit_target(args.layer)))
+    print("zsRE: injecting %d targets into %s (%d rephrasings each)" % (
+        len(cases), runtime.edit_target(args.layer),
+        len(rephrases[0]) if rephrases else 0))
 
-    def scores(runtime_):
-        rewrite = np.mean([
-            runtime_.next_logits([c.question])[0].argmax() == t[0]
+    def panel():
+        rewrite = float(np.mean([
+            runtime.next_logits([c.question])[0].argmax() == t[0]
             for c, t in zip(cases, targets)
-        ])
-        rephrased = [
-            runtime_.next_logits([p])[0].argmax() == t[0]
-            for c, t in zip(cases, targets) for p in c.rephrases
-        ]
-        return float(rewrite), float(np.mean(rephrased))
+        ]))
+        flat = [p for group in rephrases for p in group]
+        expected = [t[0] for t, group in zip(targets, rephrases) for _ in group]
+        rephrase = float(np.mean([
+            runtime.next_logits([p])[0].argmax() == e for p, e in zip(flat, expected)
+        ])) if flat else 0.0
+        return {
+            "rewrite": rewrite,
+            "rephrase": rephrase,
+            "ppl": perplexity_ratio(baseline_nll, runtime.nll(docs)),
+            "mmlu": mmlu_accuracy(runtime, items)["accuracy"],
+        }
 
-    before_rewrite, before_rephrase = scores(pristine)
+    before = panel()
 
     rels = []
-    solvers = set()
-    for (case, _), (token, _text) in zip(zip(cases, targets), targets):
+    for case, (token, _text) in zip(cases, targets):
         result = rome_edit(
             runtime, case.question, "", layer=args.layer,
             preserve_prompts=NEUTRAL, steps=args.steps, target_token_id=token,
             max_rel_norm=args.max_rel_norm, solver=args.solver,
         )
         rels.append(result.relative_delta)
-        solvers.add(result.solver)
-    after_rewrite, after_rephrase = scores(runtime)
+    after = panel()
 
     print("\n== zsRE target injection (edits: %d, layer %d, solver %s, mean rel.delta %.4f) ==" % (
-        len(cases), args.layer, ",".join(sorted(solvers)),
-        float(np.mean(rels)) if rels else 0.0))
-    print("  rewrite   %.3f -> %.3f" % (before_rewrite, after_rewrite))
+        len(cases), args.layer, args.solver, float(np.mean(rels)) if rels else 0.0))
+    print("  rewrite   %.3f -> %.3f" % (before["rewrite"], after["rewrite"]))
     print("  rephrase  %.3f -> %.3f   (%d held-out paraphrases)" % (
-        before_rephrase, after_rephrase, sum(len(c.rephrases) for c in cases)))
+        before["rephrase"], after["rephrase"], sum(len(g) for g in rephrases)))
     print("  targets   %s" % ", ".join(t[1] for t in targets))
-
-    docs = load_wikitext(root / "wikitext2-test.parquet", limit=args.wikitext)
-    ratio = perplexity_ratio(pristine.nll(docs), runtime.nll(docs))
     print("\n== WikiText-2 (held out, %d documents) ==" % len(docs))
-    print("  perplexity ratio  %.4f" % ratio)
-
-    items = load_mmlu(root / "mmlu-test.parquet", limit=args.mmlu)
-    base_acc = mmlu_accuracy(pristine, items)
-    edit_acc = mmlu_accuracy(runtime, items)
+    print("  perplexity ratio  %.4f" % after["ppl"])
     print("\n== MMLU (%d questions) ==" % len(items))
     print("  accuracy  %.3f -> %.3f   (delta %+.3f)" % (
-        base_acc["accuracy"], edit_acc["accuracy"],
-        edit_acc["accuracy"] - base_acc["accuracy"]))
+        before["mmlu"], after["mmlu"], after["mmlu"] - before["mmlu"]))
     return 0
 
 

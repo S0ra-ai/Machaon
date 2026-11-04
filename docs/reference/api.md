@@ -170,6 +170,21 @@ finds surprising is evidence of damage.
 Repetition is compared as a delta, not absolutely — GPT-2 loops under greedy
 decoding before any edit.
 
+## Tools · `machaon.tools`
+
+The functions behind the MCP server. No model is loaded.
+
+```python
+describe_checkpoint(path) -> dict
+list_tensors(path, contains=None, suffix=None, layer=None, limit=50) -> list
+audit_checkpoint_edit(base_path, edit_dir, max_rel_norm=None) -> dict
+apply_delta(base_path, tensor, delta_path, out_dir, refuse_rescale=True) -> dict
+gate_metrics(metrics) -> dict
+```
+
+`audit_checkpoint_edit` verifies both content addresses of an OpenWSP v1 edit
+against the base checkpoint, then recomputes the relative change independently.
+
 ## Checkpoints · `machaon.adapters`
 
 ```python

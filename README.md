@@ -268,7 +268,8 @@ mkdocs serve
 - [x] open-benchmark evaluation with provenance
 - [ ] long-form coherence and cumulative-edit suites
 - [ ] 0.5B → 1.5B → up to 8B, one rung at a time
-- [ ] MCP server: `propose_edit`, `apply_edit`, `evaluate`, `diff`, `rollback`
+- [x] MCP server: inspect, audit, apply, gate (file-level)
+- [ ] MCP server: model-level propose / evaluate / rollback
 
 ## Contributing
 

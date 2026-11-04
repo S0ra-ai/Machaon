@@ -8,6 +8,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- MCP stdio server (`machaon.mcp_server`) with five file-level tools, and
+  `machaon.tools` as their transport-free implementation.
 - Qwen2.5-1.5B rung: same benchmark panel, half the relative delta and 0.5%
   perplexity cost; file-level checkpoint write in 2.3 s.
 - `examples/file_edit.py`: rewrite a checkpoint on disk without loading the

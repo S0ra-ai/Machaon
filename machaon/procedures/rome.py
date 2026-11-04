@@ -148,7 +148,7 @@ def rome_edit(
     max_rel_norm: float | None = None,
     target_token_id: int | None = None,
     solver: str = "direction",
-    alphas: Sequence[float] = (0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128),
+    alphas: Sequence[float] = (0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512),
 ) -> RomeResult:
     """Edit ``runtime`` in place so ``prompt`` continues with ``target``."""
     import torch
