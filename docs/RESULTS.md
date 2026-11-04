@@ -79,13 +79,17 @@ scales with it.
 
 The 7B settings do not transfer upward from below:
 
-| setting | rel.Δ | rewrite | rephrase | WikiText-2 | MMLU |
+| setting | blocks after | rel.Δ | rewrite | rephrase | WikiText-2 |
 |---|---|---|---|---|---|
-| lr 0.02, 80 steps | 0.0052 | **0.625** | 0.230 | 1.002 | 0.500 → 0.500 |
-| lr 0.05, 30 steps | 0.0079 | 0.500 | 0.236 | 1.002 | 0.500 → 0.467 (n=30) |
+| layer 26, lr 0.02, 80 steps | 10 | 0.0052 | 0.625 | 0.230 | 1.002 |
+| layer 26, lr 0.05, 30 steps | 10 | 0.0079 | 0.500 | 0.236 | 1.002 |
+| layer 32, lr 0.05, 30 steps | 4 | 0.0068 | 0.625 | 0.312 | 1.009 |
+| layer 34, lr 0.05, 30 steps | 2 | 0.0072 | 0.625 | 0.327 | 1.009 |
 
-Layer 26 of 36 leaves ten blocks to the output; layer 26 of 28 leaves two. The
-solve has to be longer when the edit sits further from the output.
+Two effects separate cleanly. Depth helps generalisation: rephrase rises from
+0.230 to 0.327 as the edit moves closer to the output. But rewrite stays at
+0.625 in every configuration — three of eight targets never flip at 3B, while
+all eight flip at 7B. That part is capacity, not placement.
 
 ## R5 · Long-form at 1.5B
 

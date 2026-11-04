@@ -156,10 +156,17 @@ through twenty-eight is not.
 Re-running 3B (layer 26 of **36**, so ten blocks remain) with the 7B settings is
 worse, not better:
 
-| 3B setting | mean rel.Δ | rewrite | rephrase | WikiText-2 | MMLU |
+| 3B setting | blocks after | mean rel.Δ | rewrite | rephrase | WikiText-2 |
 |---|---|---|---|---|---|
-| lr 0.02, 80 steps | 0.0052 | **0.625** | 0.230 | 1.002 | 0.500 → 0.500 |
-| lr 0.05, 30 steps | 0.0079 | 0.500 | 0.236 | 1.002 | 0.500 → 0.467 (n=30) |
+| layer 26, lr 0.02, 80 steps | 10 | 0.0052 | 0.625 | 0.230 | 1.002 |
+| layer 26, lr 0.05, 30 steps | 10 | 0.0079 | 0.500 | 0.236 | 1.002 |
+| layer 32, lr 0.05, 30 steps | 4 | 0.0068 | 0.625 | 0.312 | 1.009 |
+| **layer 34, lr 0.05, 30 steps** | **2** | 0.0072 | 0.625 | **0.327** | 1.009 |
+
+Depth helps (0.230 → 0.327) but plateaus. Rewrite accuracy is stuck at 0.625 for
+every 3B configuration: three of the eight targets never flip, at any depth. At
+7B the same eight targets all flip. That is a capacity difference, not a
+placement one.
 
 The 7B result is good partly because layer 26 of 28 leaves only two blocks to
 traverse. At 3B the same layer leaves ten, so a shorter solve under-delivers.
