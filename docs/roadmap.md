@@ -32,7 +32,8 @@ Ordered by what would make the project harder to ignore, not by what is easiest.
 
 - [x] MCP server (file-level): `describe_checkpoint`, `list_tensors`,
       `audit_edit`, `apply_delta`, `gate`
-- [ ] MCP server (model-level): `propose_edit`, `evaluate`, `rollback`
+- [x] MCP server (model-level): `open_model`, `capture_baseline`,
+      `propose_edit`, `apply_edit`, `evaluate`, `rollback`
 - [ ] L1 action space: sandboxed Python edit functions
 - [ ] MEMIT-style batch solving
 - [ ] LoRA baseline at equal compute

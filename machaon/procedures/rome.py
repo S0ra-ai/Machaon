@@ -24,6 +24,21 @@ from ..linalg import rank1_constrained
 
 
 @dataclass
+class RomeProposal:
+    """A solved edit that has not been written yet."""
+
+    module: str
+    layer: int
+    delta: Any
+    relative_delta: float
+    target_probability: float
+    target_token_id: int
+    solver: str
+    steps: int
+    diagnostics: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class RomeResult:
     module: str
     layer: int
@@ -136,7 +151,7 @@ def _solve_gradient(runtime, module, ids, target_token, value, steps, lr):
     return value.detach(), float(torch.exp(-loss.detach())), steps
 
 
-def rome_edit(
+def solve_edit(
     runtime: Any,
     prompt: str,
     target: str,
@@ -149,8 +164,8 @@ def rome_edit(
     target_token_id: int | None = None,
     solver: str = "direction",
     alphas: Sequence[float] = (0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512),
-) -> RomeResult:
-    """Edit ``runtime`` in place so ``prompt`` continues with ``target``."""
+) -> RomeProposal:
+    """Solve an edit and return the delta without touching the weights."""
     import torch
 
     if runtime.tokenizer is None:
@@ -198,22 +213,41 @@ def rome_edit(
         value, probability, used = _solve_gradient(
             runtime, module, ids, target_token, current, steps, lr)
 
-    W_new, delta = rank1_constrained(
+    _, delta = rank1_constrained(
         W,
         key.astype(np.float64),
         value.detach().double().cpu().numpy(),
         preserve=preserve,
         max_rel_norm=max_rel_norm,
     )
-    runtime.write(weight_name, W_new)
 
-    return RomeResult(
+    return RomeProposal(
         module=weight_name,
         layer=layer,
+        delta=delta,
         relative_delta=float(np.linalg.norm(delta) / np.linalg.norm(W)),
         target_probability=float(probability),
         target_token_id=int(target_token),
         solver=solver,
         steps=int(used),
         diagnostics={"preserve_keys": 0 if preserve is None else int(preserve.shape[0])},
+    )
+
+
+def rome_edit(runtime: Any, prompt: str, target: str, layer: int, **kwargs) -> RomeResult:
+    """Solve an edit and write it immediately."""
+    proposal = solve_edit(runtime, prompt, target, layer, **kwargs)
+
+    W = runtime.read(proposal.module)
+    runtime.write(proposal.module, W + proposal.delta)
+
+    return RomeResult(
+        module=proposal.module,
+        layer=proposal.layer,
+        relative_delta=proposal.relative_delta,
+        target_probability=proposal.target_probability,
+        target_token_id=proposal.target_token_id,
+        solver=proposal.solver,
+        steps=proposal.steps,
+        diagnostics=proposal.diagnostics,
     )

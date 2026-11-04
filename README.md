@@ -10,7 +10,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-136-2ea44f)
+![tests](https://img.shields.io/badge/tests-142-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
 [Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md)
@@ -270,7 +270,7 @@ mkdocs serve
 - [ ] long-form coherence and cumulative-edit suites
 - [ ] 0.5B → 1.5B → up to 8B, one rung at a time
 - [x] MCP server: inspect, audit, apply, gate (file-level)
-- [ ] MCP server: model-level propose / evaluate / rollback
+- [x] MCP server: model-level propose / apply / evaluate / rollback
 
 ## Contributing
 

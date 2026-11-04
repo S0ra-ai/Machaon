@@ -25,6 +25,13 @@ def create_server():
     from . import tools
 
     server = FastMCP("Machaon")
+    session_box: Dict[str, Any] = {"session": None}
+
+    def current():
+        session = session_box["session"]
+        if session is None:
+            raise RuntimeError("no model is open; call open_model first")
+        return session
 
     @server.tool()
     def describe_checkpoint(path: str) -> Dict[str, Any]:
@@ -54,6 +61,52 @@ def create_server():
     def gate(metrics: Dict[str, float]) -> Dict[str, Any]:
         """Apply the acceptance gates. Missing metrics are failures."""
         return tools.gate_metrics(metrics)
+
+    # -- model-level: one loaded session --------------------------------
+
+    @server.tool()
+    def open_model(path: str, dtype: str = "float32") -> Dict[str, Any]:
+        """Load a model into the session. This is the expensive call."""
+        from .session import Session
+
+        session_box["session"] = Session.open(path, dtype=dtype)
+        return current().state().__dict__
+
+    @server.tool()
+    def model_status() -> Dict[str, Any]:
+        """Parameters, layers, edited tensors and budget usage."""
+        return current().state().__dict__
+
+    @server.tool()
+    def capture_baseline(neutral_prompts: List[str],
+                         corpus_texts: List[str] = ()) -> Dict[str, Any]:
+        """Record reference distributions before editing anything."""
+        return current().baseline(neutral_prompts, corpus_texts)
+
+    @server.tool()
+    def propose_edit(prompt: str, target: str, layer: int,
+                     solver: str = "gradient", steps: int = 200,
+                     max_rel_norm: Optional[float] = None) -> Dict[str, Any]:
+        """Solve an edit and report its cost without writing it."""
+        kwargs: Dict[str, Any] = {"solver": solver, "steps": steps}
+        if max_rel_norm is not None:
+            kwargs["max_rel_norm"] = max_rel_norm
+        return current().propose(prompt, target, layer, **kwargs)
+
+    @server.tool()
+    def apply_edit() -> Dict[str, Any]:
+        """Write the pending proposal, charging the budget atomically."""
+        return current().apply()
+
+    @server.tool()
+    def evaluate(prompts: List[str], targets: List[str]) -> Dict[str, Any]:
+        """Accuracy on the targets, plus KL and perplexity against the baseline."""
+        return current().evaluate(prompts, targets)
+
+    @server.tool()
+    def rollback() -> Dict[str, Any]:
+        """Restore every edited tensor to its original bytes."""
+        return current().rollback()
 
     return server
 

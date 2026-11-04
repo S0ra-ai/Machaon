@@ -8,6 +8,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `machaon.session.Session`: baseline → propose → apply → evaluate → rollback,
+  with the budget charged at apply.
+- MCP model-level tools over one session.
+- `solve_edit` separated from `rome_edit`, so a proposal can be inspected
+  before it is written.
 - Qwen2.5-3B rung: sharded checkpoint, mean rel.delta 0.0052, rewrite 0.625,
   WikiText-2 1.002, MMLU unchanged.
 - MCP stdio server (`machaon.mcp_server`) with five file-level tools, and

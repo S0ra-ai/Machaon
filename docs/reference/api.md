@@ -170,6 +170,24 @@ finds surprising is evidence of damage.
 Repetition is compared as a delta, not absolutely — GPT-2 loops under greedy
 decoding before any edit.
 
+## Session · `machaon.session`
+
+```python
+session = Session.open(path, dtype="float32", budget=EditBudget(0.10))
+session.state() -> SessionState(model, parameters, layers, edited, budget_total, ...)
+session.baseline(neutral_prompts, corpus_texts=()) -> dict
+session.propose(prompt, target, layer, **solve_kwargs) -> dict   # solves, does not write
+session.apply() -> dict                                          # writes, charges the budget
+session.evaluate(prompts, targets) -> dict                       # accuracy, KL, ppl ratio
+session.rollback() -> dict                                       # restores original bytes
+session.token_id(text) -> int
+```
+
+`propose` never touches the weights: an agent can inspect the cost
+(`relative_delta`) and the solved probability before committing. `apply`
+charges the budget atomically and refuses when it would be exceeded.
+`rollback` restores every edited tensor and resets the budget.
+
 ## Tools · `machaon.tools`
 
 The functions behind the MCP server. No model is loaded.

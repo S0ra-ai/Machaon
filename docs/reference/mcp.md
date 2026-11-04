@@ -45,6 +45,32 @@ The server speaks stdio and holds no model state, so it is cheap to restart.
 Every tool delegates to a plain function in `machaon.tools`, which is what the
 test suite exercises. The transport adds no behaviour.
 
+## Model-level tools
+
+These operate on one loaded session. `open_model` is the expensive call; every
+other tool is cheap.
+
+| tool | what it does |
+|---|---|
+| `open_model(path, dtype)` | load a model into the session |
+| `model_status()` | parameters, layers, edited tensors, budget usage |
+| `capture_baseline(neutral_prompts, corpus_texts)` | record reference distributions **before** editing |
+| `propose_edit(prompt, target, layer, solver, steps, max_rel_norm)` | solve an edit and report its cost without writing |
+| `apply_edit()` | write the pending proposal, charging the budget |
+| `evaluate(prompts, targets)` | accuracy, KL and perplexity against the baseline |
+| `rollback()` | restore every edited tensor |
+
+The intended loop is exactly the one in `machaon.session`:
+
+```
+open_model -> capture_baseline -> propose_edit -> apply_edit -> evaluate
+                                                        |
+                                                    rollback
+```
+
+`propose_edit` returning the relative delta *before* anything is written is the
+point. An agent can decide the edit is too expensive and never apply it.
+
 ## What it does not do
 
 - It does not load a model, run a forward pass, or train anything.
