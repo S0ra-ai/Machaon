@@ -20,13 +20,13 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
+keywords = ["model-editing", "weight-editing", "knowledge-editing", "llm", "interpretability"]
+dependencies = ["numpy>=1.23"]
 
 [project.urls]
 Homepage = "https://github.com/S0ra-ai/Machaon"
 Issues = "https://github.com/S0ra-ai/Machaon/issues"
 Changelog = "https://github.com/S0ra-ai/Machaon/blob/main/CHANGELOG.md"
-keywords = ["model-editing", "weight-editing", "knowledge-editing", "llm", "interpretability"]
-dependencies = ["numpy>=1.23"]
 
 [project.optional-dependencies]
 torch = ["torch>=2.0"]

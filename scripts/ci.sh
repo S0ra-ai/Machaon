@@ -21,6 +21,13 @@ if python3 -m machaon.cli gate examples/metrics_fail.json; then
   exit 1
 fi
 
+if python3 -c "import mcp" 2>/dev/null; then
+  echo "== mcp transport =="
+  python3 scripts/mcp_smoke.py
+else
+  echo "== mcp transport skipped (mcp not installed) =="
+fi
+
 if command -v ruff > /dev/null 2>&1; then
   echo "== lint =="
   ruff check machaon tests examples

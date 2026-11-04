@@ -8,6 +8,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `scripts/mcp_smoke.py`: starts the MCP server over stdio and calls tools with
+  a real client; wired into CI as its own job.
+- `create_server()` supports both `mcp` 1.x (`FastMCP`) and 2.x (`MCPServer`).
+- Session tools return a structured error instead of raising.
+- Fixed `pyproject.toml`: `keywords` and `dependencies` had drifted under
+  `[project.urls]`, which broke every `pip install .`.
 - MCP contract test: a recording FastMCP checks every tool is registered,
   documented and delegating, without the SDK installed.
 - Six architecture families tested from tiny configs; supported-families table

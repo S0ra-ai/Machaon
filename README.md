@@ -302,6 +302,7 @@ mkdocs serve
 - [ ] 0.5B → 1.5B → up to 8B, one rung at a time
 - [x] MCP server: inspect, audit, apply, gate (file-level)
 - [x] MCP server: model-level propose / apply / evaluate / rollback
+- [x] MCP transport tested end to end in CI (stdio client, 12 tools)
 
 ## Contributing
 

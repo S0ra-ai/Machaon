@@ -9,6 +9,13 @@ pip install "machaon[mcp]"
 python -m machaon.mcp_server
 ```
 
+Both SDK generations work: `mcp` 1.x exposes `FastMCP`, 2.x renamed it to
+`MCPServer`; the decorator and `run(transport="stdio")` surface is the same, and
+`create_server()` picks whichever is installed.
+
+CI starts the server as a subprocess and calls tools through a real client
+(`scripts/mcp_smoke.py`), so a broken transport fails the build.
+
 ## Client configuration
 
 Codex:
@@ -70,6 +77,12 @@ open_model -> capture_baseline -> propose_edit -> apply_edit -> evaluate
 
 `propose_edit` returning the relative delta *before* anything is written is the
 point. An agent can decide the edit is too expensive and never apply it.
+
+## Error shape
+
+Session tools return `{"error": "no model is open; call open_model first"}`
+instead of raising, so an agent sees the reason rather than a generic
+`Error executing tool`.
 
 ## What it does not do
 

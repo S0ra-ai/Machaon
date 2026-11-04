@@ -90,8 +90,7 @@ class TestRegistration(unittest.TestCase):
         with FakeMCPModules():
             server = build_server()
         for name in ("model_status", "apply_edit", "rollback"):
-            with self.assertRaises(RuntimeError, msg=name):
-                server.tools[name]()
+            self.assertIn("no model is open", server.tools[name]()["error"], msg=name)
 
 
 @requires_torch

@@ -23,7 +23,8 @@ try:
     from safetensors.torch import save_file
 except ImportError as exc:  # pragma: no cover - import-time dependency
     raise ImportError(
-        "machaon.adapters requires safetensors: pip install safetensors"
+        "machaon.adapters needs safetensors and torch "
+        "(pip install safetensors torch). The core maths needs neither."
     ) from exc
 
 
