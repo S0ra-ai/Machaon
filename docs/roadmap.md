@@ -25,7 +25,7 @@ Ordered by what would make the project harder to ignore, not by what is easiest.
 - [x] **0.5B rung.** Qwen2.5-0.5B: `model.layers`, bf16 I/O, same benchmark
       panel. Results in [`reference/benchmarks.md`](reference/benchmarks.md).
 - [x] **1.5B rung.** Qwen2.5-1.5B, same panel; file-level write at 2.9 GB.
-- [ ] **3B rung.** First checkpoint where float32 in memory is uncomfortable.
+- [x] **3B rung.** Sharded checkpoint, 11.7 GB peak RSS, same panel.
 - [ ] **Up to 8B.** Single-shard edits without loading the whole model.
 
 ## Later

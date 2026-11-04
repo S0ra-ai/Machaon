@@ -13,11 +13,18 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from .adapters import Checkpoint
 from .hygieia.gates import evaluate
 from .interop import openwsp
 from .refusals import check_tensor
 from .verify import audit_edit
+
+
+def _checkpoint(path: str):
+    """Imported lazily so this module works without the safetensors extra."""
+    from .adapters import Checkpoint
+
+    return Checkpoint(path)
+
 
 __all__ = [
     "describe_checkpoint",
@@ -30,14 +37,14 @@ __all__ = [
 
 def describe_checkpoint(path: str) -> Dict[str, Any]:
     """Tensor count, parameter count, dtype mix and shard count. Header only."""
-    return Checkpoint(path).summary()
+    return _checkpoint(path).summary()
 
 
 def list_tensors(path: str, contains: Optional[str] = None,
                  suffix: Optional[str] = None, layer: Optional[int] = None,
                  limit: int = 50) -> List[Dict[str, Any]]:
     """Bounded tensor listing; values are never returned."""
-    checkpoint = Checkpoint(path)
+    checkpoint = _checkpoint(path)
     names = checkpoint.find(contains=contains, suffix=suffix, layer=layer)
     out = []
     for name in names[: max(1, int(limit))]:
@@ -61,7 +68,7 @@ def audit_checkpoint_edit(base_path: str, edit_dir: str,
         return {"passed": True, "changed_tensors": 0, "tensors": {},
                 "edit_sha256": manifest.get("edit_sha256")}
 
-    checkpoint = Checkpoint(base_path)
+    checkpoint = _checkpoint(base_path)
     originals = {name: checkpoint.read(name) for name in names}
     verified, rebuilt = openwsp.read_edit(edit_dir, originals)
     deltas = openwsp.delta_from_edit(verified, rebuilt, originals)
@@ -82,7 +89,7 @@ def audit_checkpoint_edit(base_path: str, edit_dir: str,
 def apply_delta(base_path: str, tensor: str, delta_path: str, out_dir: str,
                 refuse_rescale: bool = True) -> Dict[str, Any]:
     """Apply one ``.npy`` delta to one tensor and write a new checkpoint."""
-    checkpoint = Checkpoint(base_path)
+    checkpoint = _checkpoint(base_path)
     base = checkpoint.read(tensor)
     delta = np.load(delta_path)
     if delta.shape != base.shape:

@@ -8,6 +8,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Qwen2.5-3B rung: sharded checkpoint, mean rel.delta 0.0052, rewrite 0.625,
+  WikiText-2 1.002, MMLU unchanged.
 - MCP stdio server (`machaon.mcp_server`) with five file-level tools, and
   `machaon.tools` as their transport-free implementation.
 - Qwen2.5-1.5B rung: same benchmark panel, half the relative delta and 0.5%

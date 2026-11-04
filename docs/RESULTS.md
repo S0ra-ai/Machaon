@@ -53,6 +53,22 @@ All six paraphrases were prompts where the base model *already* answered
 - The value solve uses gradients over a single vector. Model weights are never
   optimised, but this is not a fully gradient-free pipeline.
 
+## R4 · Qwen2.5-3B
+
+Same protocol, 80 solve steps, float32, sharded checkpoint (2 files).
+
+| metric | value |
+|---|---|
+| parameters | 3,085.9M (36 layers) |
+| mean relative delta | **0.0052** |
+| rewrite accuracy | 0.625 |
+| rephrase accuracy | 0.230 (457) |
+| WikiText-2 perplexity | **1.002** |
+| MMLU (n=30) | 0.500 → 0.500 |
+
+Peak RSS 11.7 GB with one float32 copy. The single-model benchmark path is what
+makes this fit on a 32 GB machine.
+
 ## R3 · Qwen2.5-1.5B
 
 Same protocol as R2, 100 solve steps, float32.

@@ -24,8 +24,21 @@ def _originals():
     return {p.name[: -len(".npy")]: np.load(p) for p in sorted(root.glob("*.npy"))}
 
 
+class TestGate(unittest.TestCase):
+    def test_good_metrics_pass(self):
+        good = {"rewrite_acc": 1.0, "paraphrase_acc": 0.9, "unrelated_acc": 1.0,
+                "kl_p95": 0.01, "kl_max": 0.1, "mmlu_delta": 0.0,
+                "ppl_ratio": 1.0, "longform_contradictions": 0}
+        self.assertTrue(tools.gate_metrics(good)["passed"])
+
+    def test_missing_metrics_fail(self):
+        report = tools.gate_metrics({})
+        self.assertFalse(report["passed"])
+        self.assertIn("rewrite_acc", report["missing"])
+
+
 @requires_torch
-class TestTools(unittest.TestCase):
+class TestCheckpointTools(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self.tmp.name)
@@ -76,13 +89,6 @@ class TestTools(unittest.TestCase):
         self.assertGreater(report["relative_change"], 0.0)
         self.assertTrue((out / "model.safetensors").exists())
 
-    def test_gate_metrics(self):
-        good = {"rewrite_acc": 1.0, "paraphrase_acc": 0.9, "unrelated_acc": 1.0,
-                "kl_p95": 0.01, "kl_max": 0.1, "mmlu_delta": 0.0,
-                "ppl_ratio": 1.0, "longform_contradictions": 0}
-        self.assertTrue(tools.gate_metrics(good)["passed"])
-        self.assertFalse(tools.gate_metrics({})["passed"])
-        self.assertIn("rewrite_acc", tools.gate_metrics({})["missing"])
 
 
 if __name__ == "__main__":
