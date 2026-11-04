@@ -17,6 +17,14 @@ from machaon.bench import (
 
 FIXTURES = Path(__file__).parent / "fixtures" / "bench"
 
+try:
+    import pyarrow  # noqa: F401
+    HAVE_PYARROW = True
+except ImportError:
+    HAVE_PYARROW = False
+
+requires_pyarrow = unittest.skipUnless(HAVE_PYARROW, "pyarrow not installed")
+
 
 class TestZsre(unittest.TestCase):
     def test_loads_question_answer_and_rephrases(self):
@@ -32,6 +40,7 @@ class TestZsre(unittest.TestCase):
         self.assertEqual(len(load_zsre(FIXTURES / "zsre.jsonl", limit=2)), 2)
 
 
+@requires_pyarrow
 class TestWikitext(unittest.TestCase):
     def test_filters_short_documents(self):
         docs = load_wikitext(FIXTURES / "wikitext.parquet")
@@ -42,6 +51,7 @@ class TestWikitext(unittest.TestCase):
         self.assertEqual(len(load_wikitext(FIXTURES / "wikitext.parquet", limit=1)), 1)
 
 
+@requires_pyarrow
 class TestMmlu(unittest.TestCase):
     def test_loads_items(self):
         items = load_mmlu(FIXTURES / "mmlu.parquet")
