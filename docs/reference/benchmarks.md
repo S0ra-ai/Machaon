@@ -151,6 +151,20 @@ a delta ten times larger and costs 26% perplexity; the local gradient solver
 needs 0.004 and costs 0.7%. Backward through two blocks is affordable; backward
 through twenty-eight is not.
 
+### Depth to output matters more than model size
+
+Re-running 3B (layer 26 of **36**, so ten blocks remain) with the 7B settings is
+worse, not better:
+
+| 3B setting | mean rel.Δ | rewrite | rephrase | WikiText-2 | MMLU |
+|---|---|---|---|---|---|
+| lr 0.02, 80 steps | 0.0052 | **0.625** | 0.230 | 1.002 | 0.500 → 0.500 |
+| lr 0.05, 30 steps | 0.0079 | 0.500 | 0.236 | 1.002 | 0.500 → 0.467 (n=30) |
+
+The 7B result is good partly because layer 26 of 28 leaves only two blocks to
+traverse. At 3B the same layer leaves ten, so a shorter solve under-delivers.
+Tune steps against depth-to-output, not against parameter count.
+
 MMLU (n=8) is unchanged in both runs — too small to detect anything.
 
 | metric | value |

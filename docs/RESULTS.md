@@ -75,6 +75,18 @@ Four edits at this scale exceed the 0.10 cumulative budget. The gradient-free
 solver is the limiting factor: it needs a large alpha at 7B, and the damage
 scales with it.
 
+## R7 · 3B solver sweep
+
+The 7B settings do not transfer upward from below:
+
+| setting | rel.Δ | rewrite | rephrase | WikiText-2 | MMLU |
+|---|---|---|---|---|---|
+| lr 0.02, 80 steps | 0.0052 | **0.625** | 0.230 | 1.002 | 0.500 → 0.500 |
+| lr 0.05, 30 steps | 0.0079 | 0.500 | 0.236 | 1.002 | 0.500 → 0.467 (n=30) |
+
+Layer 26 of 36 leaves ten blocks to the output; layer 26 of 28 leaves two. The
+solve has to be longer when the edit sits further from the output.
+
 ## R5 · Long-form at 1.5B
 
 Same edit, 80-token greedy generations on five prompts, scored by the unedited

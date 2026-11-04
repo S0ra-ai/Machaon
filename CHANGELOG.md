@@ -12,6 +12,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   so backward traverses only the blocks after the edit. Rewrite 1.000,
   rephrase 0.929, perplexity 1.007 at rel.Δ 0.0043.
 - `--lr` on the benchmark script.
+- 3B solver sweep: the 7B settings do not transfer; depth-to-output, not
+  parameter count, sets how many steps are needed.
 - `--quantize int8` on the benchmark script, with the memory preflight adjusted.
 - `scripts/mcp_smoke.py`: starts the MCP server over stdio and calls tools with
   a real client; wired into CI as its own job.
