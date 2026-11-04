@@ -47,6 +47,28 @@ whole product in two lines. No download, no GPU, no training.
 
 ---
 
+## First real result
+
+GPT-2 124M, one rank-one edit to `transformer.h.8.mlp.c_proj`, relative delta
+**0.0153**:
+
+| metric | value |
+|---|---|
+| `rewrite_acc` | 1.00 |
+| `paraphrase_acc` | **1.00** (6/6) |
+| `kl_p95` | 0.00061 |
+| `ppl_ratio` | 1.0008 |
+| verdict | **PASS (6 gates)** |
+
+" The Eiffel Tower is located in the city of" now continues with **Rome**
+instead of Paris, for the original prompt and all six paraphrases, while eight
+unrelated prompts and a held-out corpus stay put.
+
+Full numbers, prompts, and caveats: [`docs/RESULTS.md`](docs/RESULTS.md).
+Reproduce with `HF_ENDPOINT=https://hf-mirror.com python examples/gpt2_rome.py`.
+
+---
+
 ## What it is
 
 Machaon is a runtime for **editing the weights of a small model directly**:
@@ -102,12 +124,12 @@ is. Everything else — gates, transactions, storage, interop — sits between t
 | **protected-key verification** (`machaon.verify`) | **implemented, tested** |
 | **safetensors adapter** (`machaon.adapters`) | **implemented, single-file and sharded** |
 | **HF runtime** (`machaon.runtime`) | **implemented**: layer discovery, float64 I/O, logits, NLL, activation capture |
-| **evaluation runner** (`machaon.hygieia.runner`) | **implemented**: efficacy, KL, perplexity ratio, fail-closed verdict |
+| **evaluation runner** (`machaon.hygieia.runner`) | **implemented**: rewrite/paraphrase accuracy, KL, perplexity ratio, fail-closed verdict |
 | activation patching (`machaon.podalirius`) | **scaffold**, validated only on a tiny random model |
 | long-form and cumulative suites, MCP server | **not yet** |
 
-83 tests. Everything runs offline; nothing here has been measured on a real
-pretrained checkpoint yet.
+85 tests. Everything except the GPT-2 example runs offline; the example needs
+the `gpt2` checkpoint (124M).
 
 ---
 
@@ -281,7 +303,8 @@ uv pip install -e ".[hf]"    # + torch + transformers, for real models
 - [x] HF runtime: logits, NLL, activation capture, architecture-independent naming
 - [x] evaluation runner: efficacy, KL, perplexity ratio, fail-closed verdict
 - [x] end-to-end example on a locally built tiny model
-- [ ] first real checkpoint (GPT-2 124M), then 0.5B, then 8B
+- [x] first real checkpoint (GPT-2 124M) with before/after numbers
+- [ ] 0.5B, then 1.5B, then up to 8B
 - [ ] long-form and cumulative-edit suites
 - [ ] MCP server: `propose_edit`, `apply_edit`, `evaluate`, `diff`, `rollback`
 

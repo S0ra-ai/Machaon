@@ -42,6 +42,20 @@ class TestEvaluateEdit(unittest.TestCase):
         metrics = evaluate_edit(self.before, self.after, suite)
         self.assertAlmostEqual(metrics["rewrite_acc"], 0.5)
 
+    def test_paraphrase_is_measured_separately(self):
+        suite = EditSuite(
+            target_items=[0], target_token_ids=[0],
+            paraphrase_items=[1], paraphrase_token_ids=[0],
+        )
+        metrics = evaluate_edit(self.before, self.after, suite)
+        self.assertEqual(metrics["rewrite_acc"], 1.0)
+        self.assertEqual(metrics["paraphrase_acc"], 0.0)
+
+    def test_paraphrase_requires_token_ids(self):
+        suite = EditSuite([0], [0], paraphrase_items=[1])
+        with self.assertRaises(ValueError):
+            evaluate_edit(self.before, self.after, suite)
+
     def test_local_metrics_are_opt_in(self):
         suite = EditSuite(target_items=[0], target_token_ids=[0])
         metrics = evaluate_edit(self.before, self.after, suite)

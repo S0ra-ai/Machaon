@@ -103,22 +103,45 @@ class HFModel:
 
     # -- weights --------------------------------------------------------
 
+    @staticmethod
+    def _stores_weight_transposed(module: Any) -> bool:
+        """True when ``module.weight`` is ``(in, out)`` instead of ``(out, in)``.
+
+        ``transformers.Conv1D`` (GPT-2 style) stores ``(nx, nf)`` and computes
+        ``x @ W``; ``nn.Linear`` stores ``(out, in)`` and computes ``x @ W.T``.
+        The rest of this project speaks one language: ``W`` is ``(d_out, d_in)``.
+        """
+        return module.__class__.__name__ == "Conv1D"
+
+    def weight_shape(self, name: str) -> tuple:
+        """Canonical ``(d_out, d_in)`` of a weight, whatever the module stores."""
+        module = self._module_holding(name)
+        param = getattr(module, name.rsplit(".", 1)[-1])
+        shape = tuple(param.shape)
+        return tuple(reversed(shape)) if self._stores_weight_transposed(module) else shape
+
     def read(self, name: str) -> np.ndarray:
-        """Read one weight as float64 (exact widening from fp32/bf16/fp16)."""
+        """Read one weight as float64, always in ``(d_out, d_in)`` orientation."""
         tensor = self.resolve(name)
         if not hasattr(tensor, "detach"):
             raise TypeError("%s is not a parameter or buffer" % name)
-        return tensor.detach().float().cpu().numpy().astype(np.float64, copy=True)
+        array = tensor.detach().float().cpu().numpy()
+        if self._stores_weight_transposed(self._module_holding(name)):
+            array = array.T
+        return np.ascontiguousarray(array, dtype=np.float64)
 
     def write(self, name: str, values: np.ndarray) -> None:
-        """Write one weight, casting back to the module's own dtype."""
+        """Write one weight given in ``(d_out, d_in)`` orientation."""
         module = self._module_holding(name)
         param = getattr(module, name.rsplit(".", 1)[-1])
         array = np.ascontiguousarray(values, dtype=np.float32)
-        if array.shape != tuple(param.shape):
+        expected = self.weight_shape(name)
+        if array.shape != expected:
             raise ValueError(
-                "shape %r does not match %s %r" % (array.shape, name, tuple(param.shape))
+                "shape %r does not match %s %r" % (array.shape, name, expected)
             )
+        if self._stores_weight_transposed(module):
+            array = np.ascontiguousarray(array.T)
         with self._torch.no_grad():
             param.copy_(self._torch.from_numpy(array).to(device=param.device, dtype=param.dtype))
 
@@ -128,20 +151,50 @@ class HFModel:
 
     # -- inference ------------------------------------------------------
 
-    def encode(self, texts: Sequence[str]) -> np.ndarray:
+    def encode(self, texts: Sequence[str]):
+        """Tokenise and right-pad. Returns ``(input_ids, attention_mask)``.
+
+        Padded manually because several tokenizers (GPT-2 among them) ship
+        without a pad token; we never mutate the caller's tokenizer.
+        """
+        import torch
+
         if self.tokenizer is None:
             raise RuntimeError("this runtime has no tokenizer; use *_ids methods")
-        encoded = self.tokenizer(list(texts), return_tensors="pt", padding=True)
-        return encoded["input_ids"].to(self.device)
+        sequences = [self.tokenizer(text)["input_ids"] for text in texts]
+        if not sequences:
+            raise ValueError("no texts to encode")
+        pad_id = self.tokenizer.pad_token_id
+        if pad_id is None:
+            pad_id = self.tokenizer.eos_token_id
+        width = max(len(seq) for seq in sequences)
+        ids = np.full((len(sequences), width), pad_id, dtype=np.int64)
+        mask = np.zeros((len(sequences), width), dtype=np.int64)
+        for row, seq in enumerate(sequences):
+            ids[row, : len(seq)] = seq
+            mask[row, : len(seq)] = 1
+        return (
+            torch.as_tensor(ids, device=self.device),
+            torch.as_tensor(mask, device=self.device),
+        )
 
-    def next_logits_ids(self, input_ids: Any) -> np.ndarray:
-        """Next-token logits at the last position, as ``(n, vocab)`` float32."""
+    def next_logits_ids(self, input_ids: Any, attention_mask: Any = None) -> np.ndarray:
+        """Next-token logits at the last *real* position, as ``(n, vocab)``."""
         import torch
 
         ids = torch.as_tensor(np.asarray(input_ids), dtype=torch.long, device=self.device)
+        mask = None
+        if attention_mask is not None:
+            mask = torch.as_tensor(
+                np.asarray(attention_mask), dtype=torch.long, device=self.device
+            )
         with torch.no_grad():
-            out = self.model(ids)
-        return out.logits[:, -1, :].float().cpu().numpy()
+            out = self.model(ids, attention_mask=mask)
+        if mask is None:
+            return out.logits[:, -1, :].float().cpu().numpy()
+        rows = torch.arange(ids.shape[0], device=self.device)
+        last = mask.sum(dim=-1) - 1
+        return out.logits[rows, last, :].float().cpu().numpy()
 
     def _to_ids(self, items: Sequence[Any]):
         """Accept either a list of prompts or a list of 1-D token-id sequences."""
@@ -169,6 +222,10 @@ class HFModel:
             ) from exc
 
     def next_logits(self, items: Sequence[Any]) -> np.ndarray:
+        items = list(items)
+        if items and isinstance(items[0], str):
+            ids, mask = self.encode(items)
+            return self.next_logits_ids(ids, mask)
         return self.next_logits_ids(self._to_ids(items))
 
     def capture_module_input(self, name: str, input_ids: Any, position: int = -1) -> np.ndarray:
@@ -196,19 +253,32 @@ class HFModel:
             raise RuntimeError("module %s was never called" % name)
         return box["x"][:, position, :].float().cpu().numpy().astype(np.float64)
 
-    def nll_ids(self, input_ids: Any) -> np.ndarray:
-        """Mean negative log-likelihood per token, as ``(n,)`` float64."""
+    def nll_ids(self, input_ids: Any, attention_mask: Any = None) -> np.ndarray:
+        """Mean negative log-likelihood per real token, as ``(n,)`` float64."""
         import torch
 
         ids = torch.as_tensor(np.asarray(input_ids), dtype=torch.long, device=self.device)
+        mask = None
+        if attention_mask is not None:
+            mask = torch.as_tensor(
+                np.asarray(attention_mask), dtype=torch.long, device=self.device
+            )
         with torch.no_grad():
-            logits = self.model(ids).logits.float()
+            logits = self.model(ids, attention_mask=mask).logits.float()
         log_probs = torch.log_softmax(logits[:, :-1, :], dim=-1)
         targets = ids[:, 1:]
         gathered = log_probs.gather(-1, targets.unsqueeze(-1)).squeeze(-1)
-        return (-gathered.mean(dim=-1)).double().cpu().numpy()
+        if mask is None:
+            return (-gathered.mean(dim=-1)).double().cpu().numpy()
+        weights = mask[:, 1:].double()
+        total = -(gathered.double() * weights).sum(dim=-1)
+        return (total / weights.sum(dim=-1).clamp(min=1.0)).cpu().numpy()
 
     def nll(self, items: Sequence[Any]) -> np.ndarray:
+        items = list(items)
+        if items and isinstance(items[0], str):
+            ids, mask = self.encode(items)
+            return self.nll_ids(ids, mask)
         return self.nll_ids(self._to_ids(items))
 
     def param_count(self) -> int:

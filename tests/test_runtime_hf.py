@@ -41,6 +41,12 @@ class TestRuntime(unittest.TestCase):
         self.assertEqual(self.rt.edit_target(1), "transformer.h.1.mlp.c_proj.weight")
         self.assertEqual(self.rt.edit_target(1, "mlp.c_proj"), "transformer.h.1.mlp.c_proj.weight")
 
+    def test_conv1d_orientation_is_normalised(self):
+        name = "transformer.h.1.mlp.c_proj.weight"
+        stored = tuple(self.model.transformer.h[1].mlp.c_proj.weight.shape)
+        self.assertEqual(self.rt.weight_shape(name), tuple(reversed(stored)))
+        self.assertEqual(self.rt.read(name).shape, tuple(reversed(stored)))
+
     def test_read_write_roundtrip(self):
         name = "transformer.h.1.mlp.c_proj.weight"
         original = self.rt.read(name)
@@ -67,6 +73,41 @@ class TestRuntime(unittest.TestCase):
         x = self.rt.capture_module_input("lm_head", ids)
         self.assertEqual(x.shape, (1, 48))
         self.assertTrue(np.isfinite(x).all())
+
+
+class _StubTokenizer:
+    """One id per whitespace token, no pad token, like GPT-2."""
+
+    pad_token_id = None
+    eos_token_id = 0
+
+    def __call__(self, text):
+        return {"input_ids": list(range(1, len(text.split()) + 1))}
+
+
+@requires_hf
+class TestPadding(unittest.TestCase):
+    def test_manual_padding_produces_a_mask(self):
+        rt = HFModel(build())
+        rt.tokenizer = _StubTokenizer()
+        ids, mask = rt.encode(["a b c", "a b"])
+        self.assertEqual(tuple(ids.shape), (2, 3))
+        self.assertEqual(mask.tolist(), [[1, 1, 1], [1, 1, 0]])
+
+    def test_text_and_ids_agree_on_the_last_real_token(self):
+        rt = HFModel(build())
+        rt.tokenizer = _StubTokenizer()
+        ids, mask = rt.encode(["a b c", "a b"])
+        batched = rt.next_logits(["a b c", "a b"])
+        alone = rt.next_logits_ids([[1, 2, 3]])
+        np.testing.assert_allclose(batched[0], alone[0], rtol=1e-5, atol=1e-5)
+
+    def test_nll_ignores_padding(self):
+        rt = HFModel(build())
+        rt.tokenizer = _StubTokenizer()
+        batched = rt.nll(["a b c", "a b"])
+        alone = rt.nll_ids([[1, 2]])
+        np.testing.assert_allclose(batched[1], alone[0], rtol=1e-5, atol=1e-5)
 
 
 @requires_hf

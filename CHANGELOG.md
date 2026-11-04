@@ -8,6 +8,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- First real result on GPT-2 124M (`examples/gpt2_rome.py`, `docs/RESULTS.md`):
+  rewrite 1.00, paraphrase 1.00, KL p95 0.0006, perplexity ratio 1.0008.
+- `paraphrase_acc` in the evaluation runner.
 - `machaon.runtime.HFModel`: architecture-independent layer discovery, float64
   reads, dtype-preserving writes, next-token logits, token NLL, and
   `capture_module_input` for ROME-style keys.
@@ -22,6 +25,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - `machaon.refusals` and `machaon.verify`: pre-acceptance rules and post-hoc
   protected-key auditing.
 - `scripts/ci.sh`, issue templates, and contribution docs.
+
+### Fixed
+
+- `Conv1D` weights (GPT-2) are read and written in `(out, in)` orientation.
+- Tokenizers without a pad token: manual padding plus attention masks.
+- Padded batches now score the last real token, not the pad token.
 
 ## [0.0.1] - 2026-11-03
 

@@ -23,6 +23,10 @@ class EditSuite:
     target_token_ids: Sequence[int]
     neutral_items: Sequence[Any] = ()
     corpus_items: Sequence[Any] = ()
+    # Added later; kept at the end so existing positional call sites keep
+    # meaning what they meant.
+    paraphrase_items: Sequence[Any] = ()
+    paraphrase_token_ids: Sequence[int] = ()
     extra: Dict[str, float] = field(default_factory=dict)
 
 
@@ -46,6 +50,13 @@ def evaluate_edit(before: Any, after: Any, suite: EditSuite) -> Dict[str, float]
     # 1. did the edit land?
     after_target = after.next_logits(suite.target_items)
     metrics["rewrite_acc"] = _first_token_accuracy(after_target, suite.target_token_ids)
+
+    if suite.paraphrase_items:
+        if not suite.paraphrase_token_ids:
+            raise ValueError("paraphrase items need expected token ids")
+        metrics["paraphrase_acc"] = _first_token_accuracy(
+            after.next_logits(suite.paraphrase_items), suite.paraphrase_token_ids
+        )
 
     if suite.neutral_items:
         # 2. did anything else move?
