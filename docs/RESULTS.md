@@ -53,6 +53,26 @@ All six paraphrases were prompts where the base model *already* answered
 - The value solve uses gradients over a single vector. Model weights are never
   optimised, but this is not a fully gradient-free pipeline.
 
+## R3 · Qwen2.5-1.5B
+
+Same protocol as R2, 100 solve steps, float32.
+
+| metric | value |
+|---|---|
+| parameters | 1,543.7M (28 layers) |
+| mean relative delta | **0.0065** |
+| rewrite accuracy | 0.500 |
+| rephrase accuracy | 0.273 (513) |
+| WikiText-2 perplexity | **1.005** |
+| MMLU (n=50) | 0.400 → 0.400 |
+
+File-level write: 338 tensors, 2.9 GB, 2.3 s, one tensor changed, the rest
+byte-identical (`examples/file_edit.py`).
+
+Scaling observation: the same injection needs half the relative delta at 1.5B
+compared with 0.5B, and costs an order of magnitude less perplexity. That is
+encouraging for the 3B and 8B rungs, though it is one run on one task.
+
 ## R2 · Two models, open benchmarks
 
 Same protocol, same 8 edits, same evaluator. Target injection: pick an entity

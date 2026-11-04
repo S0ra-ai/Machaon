@@ -24,7 +24,8 @@ Ordered by what would make the project harder to ignore, not by what is easiest.
       commit, and is validated by a measured damage curve.
 - [x] **0.5B rung.** Qwen2.5-0.5B: `model.layers`, bf16 I/O, same benchmark
       panel. Results in [`reference/benchmarks.md`](reference/benchmarks.md).
-- [ ] **1.5B and 3B rungs.** Memory and shard handling.
+- [x] **1.5B rung.** Qwen2.5-1.5B, same panel; file-level write at 2.9 GB.
+- [ ] **3B rung.** First checkpoint where float32 in memory is uncomfortable.
 - [ ] **Up to 8B.** Single-shard edits without loading the whole model.
 
 ## Later

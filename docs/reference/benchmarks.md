@@ -58,10 +58,29 @@ the layer nearest the output that still changes the behaviour.
 
 Same protocol, same 8 edits, same evaluator.
 
-| model | layer | mean rel.Δ | rewrite | rephrase (513) | WikiText-2 | MMLU |
-|---|---|---|---|---|---|---|
-| GPT-2 124M | 8 / 12 | 0.0135 | 0.500 | 0.259 | 1.066 | 0.220 → 0.220 (n=100) |
-| Qwen2.5-0.5B | 20 / 24 | 0.0133 | 0.375 | 0.275 | 1.030 | 0.440 → 0.440 (n=50) |
+| model | params | layer | mean rel.Δ | rewrite | rephrase (513) | WikiText-2 | MMLU |
+|---|---|---|---|---|---|---|---|
+| GPT-2 124M | 124M | 8 / 12 | 0.0135 | 0.500 | 0.259 | 1.066 | 0.220 → 0.220 (n=100) |
+| Qwen2.5-0.5B | 494M | 20 / 24 | 0.0133 | 0.375 | 0.275 | 1.030 | 0.440 → 0.440 (n=50) |
+| Qwen2.5-1.5B | 1544M | 20 / 28 | **0.0065** | 0.500 | 0.273 | **1.005** | 0.400 → 0.400 (n=50) |
+
+The 1.5B run used 100 solve steps instead of 200. The trend is what matters:
+the same injection costs **half the relative delta** and **six times less
+perplexity** than at 0.5B.
+
+### File-level writes at 1.5B
+
+```
+source   : 338 tensors, 1543.7M params, 1 shard(s)
+target   : model.layers.20.mlp.down_proj.weight [1536, 8960]
+delta    : rel 0.0050
+wrote    : /tmp/qwen15b_edited3 (2.3s)
+untouched: model.embed_tokens.weight identical=True
+```
+
+A 2.9 GB checkpoint is rewritten in 2.3 s, one tensor changed, every other
+tensor byte-identical. This is the path intended for 7–8B, where the model does
+not fit comfortably in memory alongside a second copy.
 
 ```
 == Qwen2.5-0.5B ==

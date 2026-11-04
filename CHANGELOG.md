@@ -8,6 +8,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Qwen2.5-1.5B rung: same benchmark panel, half the relative delta and 0.5%
+  perplexity cost; file-level checkpoint write in 2.3 s.
+- `examples/file_edit.py`: rewrite a checkpoint on disk without loading the
+  model twice.
 - `scripts/fetch_model.py`: endpoint fallback (Hugging Face → mirror →
   ModelScope) with safetensors header verification.
 - `Checkpoint.summary()`: tensor/parameter counts without loading weights.
