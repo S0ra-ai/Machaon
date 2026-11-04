@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-04
+
 ### Added
 
 - 7B evaluation on a 32 GB machine: int8 weights plus `densify_from(layer)`,

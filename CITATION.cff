@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Machaon"
+abstract: >-
+  Direct weight surgery for LLMs with transactional verification: rank-one and
+  null-space constrained edits, bit-exact rollback, fail-closed gates, and
+  provenance-tracked evaluation on open benchmarks.
+authors:
+  - name: "Machaon contributors"
+version: 0.2.0
+date-released: 2026-11-04
+url: "https://github.com/S0ra-ai/Machaon"
+repository-code: "https://github.com/S0ra-ai/Machaon"
+license: MIT
+keywords:
+  - model-editing
+  - weight-editing
+  - knowledge-editing
+  - interpretability
