@@ -58,13 +58,18 @@ All six paraphrases were prompts where the base model *already* answered
 | metric | value |
 |---|---|
 | parameters | 7,615.6M (28 layers) |
-| load | int8 via `optimum-quanto`, target layer densified to fp32 |
-| mean relative delta | **0.0503** |
-| rewrite | 0.750 (3/4) |
-| rephrase | 0.667 (38/57) |
-| WikiText-2 perplexity | **1.260** |
-| MMLU (n=10) | 0.500 → 0.500 |
-| peak RSS | 10.6 GB |
+| load | int8 via `optimum-quanto`, `lm_head` kept in bf16 |
+| edit layer | 26 / 28, densified together with layer 27 |
+| mean relative delta | **0.0043** |
+| rewrite | **1.000** (3/3) |
+| rephrase | **0.929** (39/42) |
+| WikiText-2 perplexity | **1.007** |
+| MMLU (n=8) | 0.375 → 0.375 |
+| peak RSS | 10.2 GB |
+
+The gradient-free solver on the same model needs rel.Δ 0.050 and costs 26%
+perplexity; densifying the last two blocks makes a local gradient solve
+affordable and brings the cost down to 0.7%.
 
 Four edits at this scale exceed the 0.10 cumulative budget. The gradient-free
 solver is the limiting factor: it needs a large alpha at 7B, and the damage

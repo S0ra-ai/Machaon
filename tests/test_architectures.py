@@ -83,6 +83,12 @@ class TestFamilies(unittest.TestCase):
                 runtime = HFModel(build(name))
                 self.assertFalse(runtime.densify(runtime.edit_target(1)))
 
+    def test_densify_from_is_a_noop_on_dense_models(self):
+        for name in FAMILIES:
+            with self.subTest(family=name):
+                runtime = HFModel(build(name))
+                self.assertEqual(runtime.densify_from(1), 0)
+
     def test_forward_contract(self):
         for name in FAMILIES:
             with self.subTest(family=name):

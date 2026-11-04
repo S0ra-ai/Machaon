@@ -120,31 +120,23 @@ class HFModel:
         shape = tuple(param.shape)
         return tuple(reversed(shape)) if self._stores_weight_transposed(module) else shape
 
-    def densify(self, name: str) -> bool:
-        """Replace a quantised linear holding ``name`` with a float32 copy.
-
-        Quantised weights (quanto, bitsandbytes) do not accept an in-place
-        write: ``copy_`` rounds the delta away or is a no-op. Replacing just the
-        edited layer keeps the rest of the model quantised, so memory stays low
-        while the edit path stays exactly the same.
-        """
+    def _densify_module(self, path: str) -> bool:
         import torch
 
-        parent_path, _, _attr = name.rpartition(".")
-        module = self.resolve(parent_path)
+        module = self.resolve(path)
         weight = getattr(module, "weight", None)
         if weight is None:
-            raise AttributeError("%s has no weight" % parent_path)
+            return False
         quantised = (
             type(module).__name__ == "QLinear"
             or "QBytes" in type(weight).__name__
             or "QTensor" in type(weight).__name__
         )
         if not quantised:
-            return False  # already dense
+            return False
 
-        grand_path, _, module_attr = parent_path.rpartition(".")
-        grandparent = self.resolve(grand_path)
+        grand_path, _, module_attr = path.rpartition(".")
+        grandparent = self.resolve(grand_path) if grand_path else self.model
         dense_weight = weight.detach().float().cpu()
         bias = getattr(module, "bias", None)
         linear = torch.nn.Linear(
@@ -157,6 +149,33 @@ class HFModel:
                 linear.bias.copy_(bias.detach().float().cpu())
         setattr(grandparent, module_attr, linear.to(self.device))
         return True
+
+    def densify_layer(self, layer: int) -> int:
+        """Replace every quantised linear in one decoder block with float32."""
+        prefix = "%s.%d." % (self.layer_path, layer)
+        names = [n for n, _ in self.model.named_modules() if n.startswith(prefix)]
+        return sum(1 for n in names if self._densify_module(n))
+
+    def densify_from(self, layer: int) -> int:
+        """Densify ``layer`` and every layer after it.
+
+        This is what makes a gradient solve affordable at 7B: backward only
+        traverses the blocks after the edit point, so only they need to be
+        differentiable. The quantised layers before it stay frozen and cheap.
+        """
+        return sum(self.densify_layer(i) for i in range(int(layer), self.n_layers))
+
+    def densify(self, name: str) -> bool:
+        """Replace a quantised linear holding ``name`` with a float32 copy.
+
+        Quantised weights (quanto, bitsandbytes) do not accept an in-place
+        write: ``copy_`` rounds the delta away or is a no-op. Replacing just the
+        edited layer keeps the rest of the model quantised, so memory stays low
+        while the edit path stays exactly the same.
+        """
+
+        parent_path, _, _attr = name.rpartition(".")
+        return self._densify_module(parent_path)
 
     def read(self, name: str) -> np.ndarray:
         """Read one weight as float64, always in ``(d_out, d_in)`` orientation."""

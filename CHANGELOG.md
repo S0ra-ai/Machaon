@@ -8,9 +8,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- 7B evaluation on a 32 GB machine: int8 weights (optimum-quanto) plus
-  `HFModel.densify` for the edited layer. Rewrite 0.750, rephrase 0.667,
-  perplexity 1.260 — efficacy good, cost high.
+- 7B evaluation on a 32 GB machine: int8 weights plus `densify_from(layer)`,
+  so backward traverses only the blocks after the edit. Rewrite 1.000,
+  rephrase 0.929, perplexity 1.007 at rel.Δ 0.0043.
+- `--lr` on the benchmark script.
 - `--quantize int8` on the benchmark script, with the memory preflight adjusted.
 - `scripts/mcp_smoke.py`: starts the MCP server over stdio and calls tools with
   a real client; wired into CI as its own job.

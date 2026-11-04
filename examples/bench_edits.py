@@ -89,6 +89,7 @@ def main() -> int:
     parser.add_argument("--layer", type=int, default=8)
     parser.add_argument("--edits", type=int, default=8)
     parser.add_argument("--steps", type=int, default=200)
+    parser.add_argument("--lr", type=float, default=0.02)
     parser.add_argument("--mmlu", type=int, default=100)
     parser.add_argument("--wikitext", type=int, default=40)
     parser.add_argument("--dtype", default="auto", choices=["auto", "float32"])
@@ -128,7 +129,8 @@ def main() -> int:
     if args.quantize == "int8":
         from transformers import QuantoConfig
 
-        load_kwargs["quantization_config"] = QuantoConfig(weights="int8")
+        load_kwargs["quantization_config"] = QuantoConfig(
+            weights="int8", modules_to_not_convert=["lm_head"])
         load_kwargs["device_map"] = "cpu"
     runtime = HFModel(
         AutoModelForCausalLM.from_pretrained(args.model, **load_kwargs).eval(), tokenizer)
@@ -152,8 +154,13 @@ def main() -> int:
     else:
         rephrases = [list(c.rephrases) for c in cases]
     if args.quantize != "none":
-        densified = runtime.densify(runtime.edit_target(args.layer))
-        print("densified target layer: %s" % densified)
+        if args.solver == "gradient":
+            count = runtime.densify_from(args.layer)
+            print("densified %d modules from layer %d (backward stays local)" % (
+                count, args.layer))
+        else:
+            densified = runtime.densify(runtime.edit_target(args.layer))
+            print("densified target layer: %s" % densified)
     print("distractor pool: %d entity tokens" % len(pool))
     print("zsRE: injecting %d targets into %s (%d rephrasings each)" % (
         len(cases), runtime.edit_target(args.layer),
@@ -183,7 +190,7 @@ def main() -> int:
         result = rome_edit(
             runtime, case.question, "", layer=args.layer,
             preserve_prompts=NEUTRAL, steps=args.steps, target_token_id=token,
-            max_rel_norm=args.max_rel_norm, solver=args.solver,
+            max_rel_norm=args.max_rel_norm, solver=args.solver, lr=args.lr,
         )
         rels.append(result.relative_delta)
     after = panel()

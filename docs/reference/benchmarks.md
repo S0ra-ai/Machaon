@@ -133,9 +133,25 @@ untouched: lm_head.weight identical=True
 Only the shard holding the tensor is rewritten; the other three are hard-linked.
 Peak memory is one shard (~4 GB) instead of the whole checkpoint (14 GB).
 
-**Evaluation at 7B is possible with int8.** Loading through `optimum-quanto`
-keeps the model at ~9.4 GB resident and 2.5 s per forward; the edited layer is
-densified to float32 so the edit path is unchanged.
+**Evaluation at 7B is possible with int8, and the edit quality is good.** Two
+pieces make it work: `optimum-quanto` keeps the model at ~9.4 GB, and
+`HFModel.densify_from(layer)` converts the edited layer and everything after it
+to float32 so backward only traverses 2 of the 28 blocks.
+
+| solver | mean rel.Δ | rewrite | rephrase | WikiText-2 | peak RSS |
+|---|---|---|---|---|---|
+| `direction` (no backward) | 0.0503 | 0.750 | 0.667 | 1.260 | 10.6 GB |
+| **`gradient`, local** | **0.0043** | **1.000** | **0.929** | **1.007** | 10.2 GB |
+
+Configuration: layer 26 of 28, 30 steps at lr 0.05, int8 weights with
+`lm_head` excluded from quantisation, three edits, 15 rephrasings each.
+
+The difference is the whole point of the project. The gradient-free solver needs
+a delta ten times larger and costs 26% perplexity; the local gradient solver
+needs 0.004 and costs 0.7%. Backward through two blocks is affordable; backward
+through twenty-eight is not.
+
+MMLU (n=8) is unchanged in both runs — too small to detect anything.
 
 | metric | value |
 |---|---|

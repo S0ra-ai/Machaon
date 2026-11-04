@@ -10,7 +10,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-160-2ea44f)
+![tests](https://img.shields.io/badge/tests-164-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
 [Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md)
@@ -86,7 +86,7 @@ human-written rephrasings.
 | Qwen2.5-0.5B | 20 / 24 | 0.0133 | 0.375 | 0.275 | 1.030 | 0.440 → 0.440 |
 | Qwen2.5-1.5B | 20 / 28 | **0.0065** | 0.500 | 0.273 | **1.005** | 0.400 → 0.400 |
 | Qwen2.5-3B | 26 / 36 | **0.0052** | 0.625 | 0.230 | **1.002** | 0.500 → 0.500 |
-| Qwen2.5-7B (int8) | 24 / 28 | 0.0503 | 0.750 | 0.667 | 1.260 | 0.500 → 0.500 |
+| Qwen2.5-7B (int8) | 26 / 28 | **0.0043** | **1.000** | **0.929** | **1.007** | 0.375 → 0.375 |
 
 Bigger models are cheaper to edit: the same task needs a fifth of the relative
 delta at 3B compared with 0.5B, and costs 0.2% perplexity instead of 3%.

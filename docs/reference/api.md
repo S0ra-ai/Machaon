@@ -121,6 +121,8 @@ rt.nll(items); rt.nll_ids(ids, mask=None)
 rt.score_continuations([(prompt, continuation), ...]) -> ndarray
 rt.capture_module_input(name, ids, position=-1) -> ndarray
 rt.densify(name) -> bool
+rt.densify_layer(layer) -> int
+rt.densify_from(layer) -> int
 rt.param_count()
 ```
 
