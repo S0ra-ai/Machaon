@@ -34,13 +34,15 @@ COMMON = dict(vocab_size=96, hidden_size=64, intermediate_size=128,
               num_hidden_layers=3, num_attention_heads=4, num_key_value_heads=4,
               max_position_embeddings=64)
 
-FAMILIES = {
-    "llama": (LlamaConfig, LlamaForCausalLM),
-    "mistral": (MistralConfig, MistralForCausalLM),
-    "gemma": (GemmaConfig, GemmaForCausalLM),
-    "qwen3": (Qwen3Config, Qwen3ForCausalLM),
-    "phi3": (Phi3Config, Phi3ForCausalLM),
-}
+FAMILIES = {}
+if HAVE_HF:
+    FAMILIES = {
+        "llama": (LlamaConfig, LlamaForCausalLM),
+        "mistral": (MistralConfig, MistralForCausalLM),
+        "gemma": (GemmaConfig, GemmaForCausalLM),
+        "qwen3": (Qwen3Config, Qwen3ForCausalLM),
+        "phi3": (Phi3Config, Phi3ForCausalLM),
+    }
 
 
 def build(name):
