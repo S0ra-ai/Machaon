@@ -133,11 +133,29 @@ untouched: lm_head.weight identical=True
 Only the shard holding the tensor is rewritten; the other three are hard-linked.
 Peak memory is one shard (~4 GB) instead of the whole checkpoint (14 GB).
 
-**Honest status:** 7B/8B edits are supported at the checkpoint level, not at the
-evaluation level on this hardware. A 7.6B bf16 model does load (13.4 GB
-resident, correct next token), but a sustained run is evicted: RSS fell to
-4.1 GB and swap reached 23.6 GB. `machaon.memory.check_fit` now refuses that
-case up front instead of thrashing.
+**Evaluation at 7B is possible with int8.** Loading through `optimum-quanto`
+keeps the model at ~9.4 GB resident and 2.5 s per forward; the edited layer is
+densified to float32 so the edit path is unchanged.
+
+| metric | value |
+|---|---|
+| parameters | 7,615.6M (28 layers, 4 shards) |
+| quantisation | int8 weights, fp32 target layer |
+| mean relative delta | **0.0503** |
+| rewrite accuracy | 0.750 (3/4) |
+| rephrase accuracy | 0.667 (38/57) |
+| WikiText-2 perplexity | **1.260** |
+| MMLU (n=10) | 0.500 → 0.500 |
+| peak RSS | 10.6 GB |
+
+The efficacy is good and the cost is bad. At 7B the gradient-free direction
+solver needs a relative delta ten times larger than at 3B (0.050 vs 0.005), and
+four such edits cost 26% perplexity. A cumulative budget of 0.10 would have
+refused the third edit.
+
+**This is the limit of the current solver, not of the approach.** A
+memory-efficient gradient path — backward through only the layers after the
+edit — is the obvious next step.
 
 A quantised forward path, or at least 64 GB of RAM, is required.
 
