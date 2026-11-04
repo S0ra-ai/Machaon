@@ -281,6 +281,35 @@ class HFModel:
             return self.nll_ids(ids, mask)
         return self.nll_ids(self._to_ids(items))
 
+    def generate(self, prompts: Sequence[str], max_new_tokens: int = 128) -> list:
+        """Greedy, deterministic generation. One prompt at a time.
+
+        Batched generation needs left padding, which several tokenizers do not
+        configure; correctness beats throughput for an evaluation harness.
+        """
+        import torch
+
+        if self.tokenizer is None:
+            raise RuntimeError("generate needs a tokenizer")
+        pad_id = self.tokenizer.pad_token_id
+        if pad_id is None:
+            pad_id = self.tokenizer.eos_token_id
+        outputs = []
+        for prompt in prompts:
+            ids, mask = self.encode([prompt])
+            with torch.no_grad():
+                generated = self.model.generate(
+                    input_ids=ids,
+                    attention_mask=mask,
+                    max_new_tokens=int(max_new_tokens),
+                    do_sample=False,
+                    pad_token_id=pad_id,
+                )
+            new_tokens = generated[0, ids.shape[1]:]
+            outputs.append(
+                self.tokenizer.decode(new_tokens, skip_special_tokens=True))
+        return outputs
+
     def score_continuations(self, pairs: Sequence[tuple]) -> np.ndarray:
         """Mean log-probability of each continuation given its prompt.
 

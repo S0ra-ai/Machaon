@@ -18,8 +18,8 @@ Ordered by what would make the project harder to ignore, not by what is easiest.
 
 ## Next
 
-- [ ] **Long-form coherence suite.** The literature says this is where edits
-      break. It is the highest-value missing measurement.
+- [x] **Long-form coherence suite.** Reference-scored by the unedited model,
+      repetition reported as a delta against baseline.
 - [x] **Cumulative-edit budget.** `EditBudget` caps `Σ‖ΔWᵢ‖/‖W‖`, is charged at
       commit, and is validated by a measured damage curve.
 - [x] **0.5B rung.** Qwen2.5-0.5B: `model.layers`, bf16 I/O, same benchmark

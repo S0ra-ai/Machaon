@@ -8,6 +8,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Long-form coherence checker (`machaon.hygieia.longform`) with
+  reference-scored NLL ratio and repetition delta; no judge model.
+- `HFModel.generate` (greedy, deterministic).
+- `examples/longform_check.py`.
 - `machaon.budget.EditBudget`: cumulative relative-change budget, charged at
   commit, with per-tensor limits.
 - `Workspace(budget=...)`: automatic registration and atomic refusal.

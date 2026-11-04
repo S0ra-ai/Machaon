@@ -35,13 +35,14 @@ class Verdict:
     failures: List[str] = field(default_factory=list)
     missing: List[str] = field(default_factory=list)
     metrics: Dict[str, float] = field(default_factory=dict)
+    n_gates: int = 0
 
     def __bool__(self) -> bool:
         return self.passed
 
     def summary(self) -> str:
         if self.passed:
-            return "PASS (%d gates)" % len(self.metrics)
+            return "PASS (%d gates)" % (self.n_gates or len(self.metrics))
         lines = ["FAIL"]
         lines += ["  missing: %s" % m for m in self.missing]
         lines += ["  %s" % f for f in self.failures]
@@ -80,4 +81,5 @@ def evaluate(metrics: Dict[str, float], gates: Dict[str, Tuple[str, float]] = No
                 "%s = %s violates %s %s" % (name, _fmt(value), op, _fmt(threshold))
             )
     passed = not failures and not missing
-    return Verdict(passed=passed, failures=failures, missing=missing, metrics=dict(metrics))
+    return Verdict(passed=passed, failures=failures, missing=missing,
+                   metrics=dict(metrics), n_gates=len(gates))

@@ -108,6 +108,24 @@ perplexity at checkpoints. GPT-2 124M, layer 8, 100 solve steps:
 the default budget: above roughly 0.1 cumulative relative change, a 124M–0.5B
 model has visibly degraded.
 
+## Long-form coherence
+
+`examples/longform_check.py` applies the Eiffel Tower edit and compares 120-token
+greedy generations on five prompts. Coherence is scored by the **unedited**
+model.
+
+| metric | value |
+|---|---|
+| baseline 4-gram repetition | 0.621 |
+| edited 4-gram repetition | 0.578 |
+| repetition delta | **−0.043** |
+| NLL ratio (edited text under pristine) | 1.089 |
+| empty generations | 0.0 |
+
+Repetition is reported as a delta because GPT-2 loops under greedy decoding
+*before* any edit. The absolute number says more about the model than about the
+edit.
+
 ## Reproduce
 
 ```bash

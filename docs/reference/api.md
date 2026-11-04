@@ -154,6 +154,22 @@ kl_divergence(p, q); kl_summary(p, q); perplexity_ratio(a, b)
 softmax(logits); bootstrap_ci(values)
 ```
 
+## Long-form · `machaon.hygieia.longform`
+
+```python
+LONGFORM_GATES
+repeated_ngram_rate(text, n=4) -> float
+longform_report(pristine, edited, prompts, max_new_tokens=128, n=4) -> dict
+```
+
+Reports `longform_repetition`, `baseline_repetition`,
+`longform_repetition_delta`, `longform_nll_ratio`, `longform_empty_rate`, plus
+the samples. Coherence is scored by the **unedited** model: text the base model
+finds surprising is evidence of damage.
+
+Repetition is compared as a delta, not absolutely — GPT-2 loops under greedy
+decoding before any edit.
+
 ## Checkpoints · `machaon.adapters`
 
 ```python

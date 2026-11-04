@@ -10,7 +10,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-118-2ea44f)
+![tests](https://img.shields.io/badge/tests-127-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
 [Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md)
@@ -97,6 +97,19 @@ human-written rephrasings.
 `EditBudget(max_total=0.10)` refuses edit **#10**. The budget is charged at
 commit, so a rolled-back transaction costs nothing. Reproduce with
 `examples/budget_sweep.py`.
+
+### Long-form coherence
+
+The same edit, 120-token greedy generations on five prompts, scored by the
+**unedited** model:
+
+| metric | value |
+|---|---|
+| repetition delta | −0.043 |
+| NLL ratio (edited text under pristine) | 1.089 |
+| empty generations | 0.0 |
+
+No judge model, no extra download. `examples/longform_check.py`.
 
 Full protocol, licences and caveats:
 [`docs/reference/benchmarks.md`](docs/reference/benchmarks.md).

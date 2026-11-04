@@ -6,6 +6,7 @@ failure: an unmeasured edit is an unverified edit.
 from __future__ import annotations
 
 from .gates import GATES, Verdict, evaluate
+from .longform import LONGFORM_GATES, longform_report, repeated_ngram_rate
 from .metrics import bootstrap_ci, kl_divergence, kl_summary, perplexity_ratio, softmax
 from .runner import EditSuite, evaluate_edit, judge
 
@@ -21,4 +22,7 @@ __all__ = [
     "EditSuite",
     "evaluate_edit",
     "judge",
+    "LONGFORM_GATES",
+    "longform_report",
+    "repeated_ngram_rate",
 ]

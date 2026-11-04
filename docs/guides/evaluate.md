@@ -71,6 +71,39 @@ python examples/gpt2_bench.py --edits 8
 - MMLU at n=100 on GPT-2 sits near chance and cannot detect small regressions.
   Report it, do not over-read it.
 
+## Long-form coherence
+
+Short-answer metrics miss the most common failure: the model still answers
+correctly but its generations fall apart.
+
+```python
+from machaon.hygieia import LONGFORM_GATES, longform_report
+from machaon.hygieia.gates import evaluate
+
+report = longform_report(pristine, edited, prompts, max_new_tokens=120)
+evaluate(report, LONGFORM_GATES)
+```
+
+| metric | definition |
+|---|---|
+| `longform_nll_ratio` | NLL of the edited model's text **under the pristine model**, over the baseline NLL |
+| `longform_repetition_delta` | edited 4-gram repetition minus baseline repetition |
+| `longform_empty_rate` | fraction of empty generations |
+
+No judge model, no extra download. A localised edit should leave the ratio near
+1.0 and the repetition delta near 0.0.
+
+Measured on GPT-2 with the Eiffel Tower edit:
+
+```
+baseline_repetition      0.6210
+longform_repetition      0.5783
+longform_repetition_delta -0.0427
+longform_nll_ratio       1.0889
+longform_empty_rate      0.0000
+PASS (3 gates)
+```
+
 ## Rules we hold ourselves to
 
 1. Only edit items the base model gets **wrong**, so improvement is not
