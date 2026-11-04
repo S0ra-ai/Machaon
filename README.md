@@ -10,7 +10,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-149-2ea44f)
+![tests](https://img.shields.io/badge/tests-158-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
 [Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md)
@@ -185,6 +185,17 @@ txn.commit(evaluate(metrics))       # False => original bytes restored
 HF_ENDPOINT=https://hf-mirror.com python scripts/fetch_benchmarks.py
 python examples/gpt2_bench.py --edits 8
 ```
+
+## Supported models
+
+`model.layers` families (Llama, Mistral, Qwen2/3, Gemma, Phi-3),
+`transformer.h` (GPT-2), `gpt_neox.layers`, `model.decoder.layers` (OPT) and
+`transformer.blocks` (MPT). Weight orientation is normalised, so the maths
+always sees `(d_out, d_in)`.
+
+Verified end to end on GPT-2 124M and Qwen2.5 0.5B / 1.5B / 3B; 7B is verified at
+the checkpoint level. CI instantiates six families from tiny configs and runs
+the same edit path on each.
 
 ## Architecture
 

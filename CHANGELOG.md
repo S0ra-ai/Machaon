@@ -8,6 +8,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- MCP contract test: a recording FastMCP checks every tool is registered,
+  documented and delegating, without the SDK installed.
+- Six architecture families tested from tiny configs; supported-families table
+  in the API reference.
 - `machaon.memory.check_fit`: refuse a checkpoint whose weights exceed 60% of
   available memory, with the measured rationale.
 - `--force` on the benchmark script to override the preflight.

@@ -31,6 +31,9 @@ Ordered by what would make the project harder to ignore, not by what is easiest.
 - [ ] **Up to 8B at the evaluation level.** Blocked by 32 GB of RAM;
       `check_fit` refuses instead of thrashing.
 
+- [x] **Six architecture families** tested from configs (GPT-2, Llama, Mistral,
+      Gemma, Qwen3, Phi-3).
+
 ## Later
 
 - [x] MCP server (file-level): `describe_checkpoint`, `list_tensors`,

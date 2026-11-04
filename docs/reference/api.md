@@ -127,6 +127,20 @@ rt.param_count()
 speak `(d_out, d_in)`, including for `transformers.Conv1D` modules that store
 `(in, out)`.
 
+### Supported families
+
+| family | decoder blocks | MLP projection | weight layout |
+|---|---|---|---|
+| GPT-2 | `transformer.h` | `c_proj` | `(in, out)` via `Conv1D` |
+| GPT-NeoX / Pythia | `gpt_neox.layers` | `mlp.dense_4h_to_h` | `(out, in)` |
+| OPT | `model.decoder.layers` | `fc2` | `(out, in)` |
+| MPT | `transformer.blocks` | `ffn.down_proj` | `(out, in)` |
+| Llama / Mistral / Qwen2 / Qwen3 / Gemma / Phi-3 | `model.layers` | `mlp.down_proj` | `(out, in)` |
+
+Tested in CI with tiny configs for GPT-2, Llama, Mistral, Gemma, Qwen3 and
+Phi-3. Real checkpoints exercised: GPT-2 124M and Qwen2.5 0.5B / 1.5B / 3B /
+7B (7B at the checkpoint level only).
+
 ## Procedures · `machaon.procedures`
 
 ```python
