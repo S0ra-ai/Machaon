@@ -38,6 +38,21 @@ incompatible. Shrink the protected set, or choose a different key.
 **Why is `kl_p95` reported and not the mean?**
 One damaged prompt matters more than a hundred untouched ones. The mean hides it.
 
+**Why target injection instead of fixing wrong answers?**
+Because Qwen2.5-0.5B answers 299 of 300 zsRE first tokens correctly. A protocol
+that only edits items the model gets wrong has almost no headroom on stronger
+models. Injection works at both ends.
+
+**Why float32 instead of bf16?**
+On CPU, PyTorch's bf16 backward is pathologically slow: 4.66 s/step versus
+0.18 s/step in float32 on the same 0.5B model. The delta is computed in float64
+either way; the model dtype only affects the forward/backward used to solve the
+value.
+
+**Why does the layer matter so much?**
+An edit at layer 12 has to survive twelve more blocks. On Qwen2.5-0.5B the same
+edit cost rel. Δ 0.150 at layer 12 and 0.0043 at layer 20 — a 35× difference.
+
 **Why does the gate fail when a metric is missing?**
 Because otherwise the easiest way to pass is to stop measuring. Fail-closed is a
 design choice, not an oversight.

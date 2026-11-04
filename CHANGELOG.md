@@ -8,6 +8,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Qwen2.5-0.5B support: `model.layers`, bf16/float32 I/O, same benchmark panel.
+- Target-injection benchmark protocol, comparable across model strengths.
+- `solver` choice in `rome_edit`: `gradient` (smaller deltas) and `direction`
+  (no backward pass, larger deltas).
 - Documentation site (Material for MkDocs): getting started, concepts, guides,
   API and CLI reference, benchmarks, FAQ, roadmap.
 - Open-benchmark evaluation: zsRE, WikiText-2 and MMLU loaders with recorded

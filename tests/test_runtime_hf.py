@@ -147,6 +147,54 @@ class TestLlamaStyle(unittest.TestCase):
 
 
 @requires_hf
+class TestRomeProcedure(unittest.TestCase):
+    """The procedure, end to end, on a tiny Llama. No downloads."""
+
+    def setUp(self):
+        self.rt = HFModel(build_llama())
+
+        class Stub:
+            pad_token_id = 0
+            eos_token_id = 0
+
+            def __call__(self, text, add_special_tokens=True):
+                return {"input_ids": [5, 6, 7]}
+
+        self.rt.tokenizer = Stub()
+
+    def test_direction_solver_flips_the_prediction(self):
+        from machaon.procedures import rome_edit
+
+        before = self.rt.next_logits([[5, 6, 7]])[0]
+        token = int(np.argsort(before)[-5])
+        result = rome_edit(
+            self.rt, "anything", "", layer=1, target_token_id=token,
+            solver="direction", alphas=(0.5, 1, 2, 4, 8, 16, 32, 64),
+        )
+        after = self.rt.next_logits([[5, 6, 7]])[0]
+        self.assertEqual(int(after.argmax()), token)
+        self.assertGreater(result.relative_delta, 0.0)
+        self.assertEqual(result.solver, "direction")
+
+    def test_gradient_solver_runs(self):
+        from machaon.procedures import rome_edit
+
+        token = int(np.argsort(self.rt.next_logits([[5, 6, 7]])[0])[-3])
+        result = rome_edit(
+            self.rt, "anything", "", layer=1, target_token_id=token,
+            solver="gradient", steps=5,
+        )
+        self.assertEqual(result.steps, 5)
+        self.assertGreater(result.relative_delta, 0.0)
+
+    def test_unknown_solver_rejected(self):
+        from machaon.procedures import rome_edit
+
+        with self.assertRaises(ValueError):
+            rome_edit(self.rt, "x", "", layer=1, target_token_id=1, solver="magic")
+
+
+@requires_hf
 class TestPadding(unittest.TestCase):
     def test_manual_padding_produces_a_mask(self):
         rt = HFModel(build())

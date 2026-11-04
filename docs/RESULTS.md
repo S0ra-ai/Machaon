@@ -53,30 +53,33 @@ All six paraphrases were prompts where the base model *already* answered
 - The value solve uses gradients over a single vector. Model weights are never
   optimised, but this is not a fully gradient-free pipeline.
 
-## R2 · GPT-2 124M · open benchmarks
+## R2 · Two models, open benchmarks
 
-```bash
-python scripts/fetch_benchmarks.py
-python examples/gpt2_bench.py --edits 8 --steps 200 --mmlu 100 --wikitext 40
-```
+Same protocol, same 8 edits, same evaluator. Target injection: pick an entity
+token from the dataset, edit the model to produce it, then test the question and
+its human-written rephrasings.
 
-Datasets, licences and protocols: [`reference/benchmarks.md`](reference/benchmarks.md).
+| model | layer | mean rel.Δ | rewrite | rephrase (513) | WikiText-2 | MMLU |
+|---|---|---|---|---|---|---|
+| GPT-2 124M | 8 / 12 | 0.0135 | 0.500 | 0.259 | 1.066 | 0.220 → 0.220 (n=100) |
+| Qwen2.5-0.5B | 20 / 24 | 0.0133 | 0.375 | 0.275 | 1.030 | 0.440 → 0.440 (n=50) |
 
-| panel | metric | before | after |
-|---|---|---|---|
-| zsRE | rewrite accuracy | 0.000 | **0.500** |
-| zsRE | held-out rephrase accuracy | 0.000 | **0.889** (456/513) |
-| WikiText-2 | perplexity ratio | 1.000 | **1.055** |
-| MMLU (n=100) | accuracy | 0.220 | 0.220 |
-
-Mean relative delta per edit: **0.0114**. Only items the base model answered
-incorrectly were edited.
+Datasets, licences and full protocol: [`reference/benchmarks.md`](reference/benchmarks.md).
 
 ### What R2 does not claim
 
-- n = 8 edits. These validate the pipeline; they are not a benchmark claim.
-- MMLU at n = 100 on GPT-2 is near chance and cannot detect small regressions.
+- n = 8 edits. These validate the pipeline and the cross-architecture path.
+- MMLU at these sample sizes is near chance on GPT-2 and small on Qwen.
 - No long-form coherence measurement yet.
+
+### Two findings worth more than the numbers
+
+| finding | measurement |
+|---|---|
+| bf16 backward on macOS CPU | 4.66 s/step |
+| float32 backward on the same model | **0.18 s/step** |
+| Qwen layer 12, one edit | rel. Δ 0.150 |
+| Qwen layer 20, same edit | rel. Δ **0.0043** |
 
 ## R1 · Things that broke on the way, and are now fixed
 

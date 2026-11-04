@@ -22,8 +22,8 @@ Ordered by what would make the project harder to ignore, not by what is easiest.
       break. It is the highest-value missing measurement.
 - [ ] **Cumulative-edit budget.** Cap `Σ‖ΔWᵢ‖/‖W‖` and show where the model
       collapses.
-- [ ] **0.5B rung.** Qwen2.5-0.5B: verify the Llama naming path on a real
-      checkpoint, bf16 I/O, and the same benchmark panel.
+- [x] **0.5B rung.** Qwen2.5-0.5B: `model.layers`, bf16 I/O, same benchmark
+      panel. Results in [`reference/benchmarks.md`](reference/benchmarks.md).
 - [ ] **1.5B and 3B rungs.** Memory and shard handling.
 - [ ] **Up to 8B.** Single-shard edits without loading the whole model.
 

@@ -76,22 +76,23 @@ Same edit, two budgets. Both hit the target; only one is acceptable.
 
 ## Benchmarks
 
-GPT-2 (124M), 8 edits to items the base model answers **incorrectly**, on open
-datasets with recorded provenance:
+Same protocol on two architectures, 8 edits each, open datasets with recorded
+provenance. Target: inject an entity token, then measure the question and its
+human-written rephrasings.
 
-| benchmark | metric | before | after |
-|---|---|---|---|
-| zsRE (dev) | rewrite accuracy | 0.000 | **0.500** |
-| zsRE (dev) | held-out rephrase accuracy | 0.000 | **0.889** (456/513) |
-| WikiText-2 (test) | perplexity ratio | — | 1.055 |
-| MMLU (test, n=100) | accuracy | 0.220 | 0.220 |
+| model | layer | mean rel.Δ | rewrite | rephrase (513) | WikiText-2 | MMLU |
+|---|---|---|---|---|---|---|
+| GPT-2 124M | 8 / 12 | 0.0135 | 0.500 | 0.259 | 1.066 | 0.220 → 0.220 |
+| Qwen2.5-0.5B | 20 / 24 | 0.0133 | 0.375 | 0.275 | 1.030 | 0.440 → 0.440 |
 
-Mean relative delta per edit: **0.0114**. Full protocol, licences and caveats:
+Full protocol, licences and caveats:
 [`docs/reference/benchmarks.md`](docs/reference/benchmarks.md).
 
-Honest reading: efficacy is real, perplexity cost is real (8%), and MMLU at
-n=100 on GPT-2 is too weak to detect small regressions. Every number here is
-reproducible with one command.
+Honest reading: 37–50% rewrite with ~27% paraphrase transfer is a real signal,
+not a strong one; 8 cumulative edits cost 3–7% perplexity; MMLU at these sample
+sizes is a smoke alarm, not a measurement. Two engineering findings mattered
+more than any hyperparameter: **float32 backward is 26× faster than bf16 on
+CPU**, and **layer choice changed the delta by 35×** on the same model.
 
 ## Quickstart
 
