@@ -1,4 +1,4 @@
-.PHONY: help install test lint demo ci clean
+.PHONY: help install test lint demo ci docs clean
 
 help:
 	@echo "make install   editable install with dev extras"
@@ -6,6 +6,7 @@ help:
 	@echo "make lint      ruff"
 	@echo "make demo      offline synthetic demo"
 	@echo "make ci        everything CI runs"
+	@echo "make docs      build the docs site locally"
 
 install:
 	uv pip install -e ".[dev]"
@@ -21,6 +22,9 @@ demo:
 
 ci:
 	./scripts/ci.sh
+
+docs:
+	mkdocs serve
 
 clean:
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +

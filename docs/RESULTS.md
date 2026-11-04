@@ -53,7 +53,32 @@ All six paraphrases were prompts where the base model *already* answered
 - The value solve uses gradients over a single vector. Model weights are never
   optimised, but this is not a fully gradient-free pipeline.
 
-### Things that broke on the way, and are now fixed
+## R2 · GPT-2 124M · open benchmarks
+
+```bash
+python scripts/fetch_benchmarks.py
+python examples/gpt2_bench.py --edits 8 --steps 200 --mmlu 100 --wikitext 40
+```
+
+Datasets, licences and protocols: [`reference/benchmarks.md`](reference/benchmarks.md).
+
+| panel | metric | before | after |
+|---|---|---|---|
+| zsRE | rewrite accuracy | 0.000 | **0.500** |
+| zsRE | held-out rephrase accuracy | 0.000 | **0.889** (456/513) |
+| WikiText-2 | perplexity ratio | 1.000 | **1.055** |
+| MMLU (n=100) | accuracy | 0.220 | 0.220 |
+
+Mean relative delta per edit: **0.0114**. Only items the base model answered
+incorrectly were edited.
+
+### What R2 does not claim
+
+- n = 8 edits. These validate the pipeline; they are not a benchmark claim.
+- MMLU at n = 100 on GPT-2 is near chance and cannot detect small regressions.
+- No long-form coherence measurement yet.
+
+## R1 · Things that broke on the way, and are now fixed
 
 | problem | fix |
 |---|---|

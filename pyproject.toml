@@ -32,6 +32,8 @@ dependencies = ["numpy>=1.23"]
 torch = ["torch>=2.0"]
 hf = ["torch>=2.0", "transformers>=4.40"]
 dev = ["pytest>=7"]
+docs = ["mkdocs-material>=9.5,<10"]
+bench = ["pyarrow>=14"]
 
 [project.scripts]
 machaon = "machaon.cli:main"

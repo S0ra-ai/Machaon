@@ -6,7 +6,7 @@ import numpy as np
 
 try:
     import torch
-    from transformers import GPT2Config, GPT2LMHeadModel
+    from transformers import GPT2Config, GPT2LMHeadModel, LlamaConfig, LlamaForCausalLM
 
     from machaon.hygieia import EditSuite, evaluate_edit
     from machaon.hygieia.gates import evaluate
@@ -83,6 +83,67 @@ class _StubTokenizer:
 
     def __call__(self, text):
         return {"input_ids": list(range(1, len(text.split()) + 1))}
+
+
+def build_llama(seed=0):
+    torch.manual_seed(seed)
+    return LlamaForCausalLM(LlamaConfig(
+        vocab_size=96, hidden_size=64, intermediate_size=128,
+        num_hidden_layers=3, num_attention_heads=4, num_key_value_heads=4,
+        max_position_embeddings=64)).eval()
+
+
+@requires_hf
+class TestLlamaStyle(unittest.TestCase):
+    """A second architecture family: `model.layers` + `down_proj` + nn.Linear."""
+
+    def setUp(self):
+        self.model = build_llama()
+        self.rt = HFModel(self.model)
+
+    def test_layer_discovery(self):
+        self.assertEqual(self.rt.layer_path, "model.layers")
+        self.assertEqual(self.rt.n_layers, 3)
+
+    def test_edit_target_uses_down_proj(self):
+        self.assertEqual(self.rt.edit_target(1), "model.layers.1.mlp.down_proj.weight")
+
+    def test_linear_orientation_is_preserved(self):
+        name = "model.layers.1.mlp.down_proj.weight"
+        stored = tuple(self.model.model.layers[1].mlp.down_proj.weight.shape)
+        self.assertEqual(self.rt.weight_shape(name), stored)
+        self.assertEqual(stored, (64, 128))
+
+    def test_read_write_roundtrip(self):
+        name = self.rt.edit_target(2)
+        original = self.rt.read(name)
+        self.rt.write(name, original + 1e-3)
+        np.testing.assert_allclose(self.rt.read(name), original + 1e-3, atol=1e-6)
+        self.rt.write(name, original)
+        np.testing.assert_allclose(self.rt.read(name), original, atol=0)
+
+    def test_forward_contract(self):
+        ids = np.array([[5, 9, 14, 22]])
+        self.assertEqual(self.rt.next_logits([ids]).shape, (1, 96))
+        self.assertEqual(self.rt.nll([ids]).shape, (1,))
+
+    def test_same_edit_pipeline_works(self):
+        before = HFModel(build_llama())
+        edited = HFModel(build_llama())
+        target = np.array([[5, 9, 14, 22]])
+        token = int(np.argsort(before.next_logits([target])[0])[-2])
+        hidden = before.capture_module_input("lm_head", target)[0]
+        base = before.read("lm_head.weight")
+        direction = np.zeros_like(base[:, 0])
+        direction[token] = 12.0
+        edited.write("lm_head.weight", base + np.outer(direction, hidden) / float(hidden @ hidden))
+
+        metrics = evaluate_edit(
+            before, edited,
+            EditSuite([target], [token], corpus_items=[np.array([[1, 4, 6, 9, 12]])]),
+        )
+        self.assertEqual(metrics["rewrite_acc"], 1.0)
+        self.assertIn("ppl_ratio", metrics)
 
 
 @requires_hf

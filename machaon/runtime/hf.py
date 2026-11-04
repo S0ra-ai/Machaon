@@ -281,5 +281,33 @@ class HFModel:
             return self.nll_ids(ids, mask)
         return self.nll_ids(self._to_ids(items))
 
+    def score_continuations(self, pairs: Sequence[tuple]) -> np.ndarray:
+        """Mean log-probability of each continuation given its prompt.
+
+        Tokenises prompt and continuation separately so the boundary is exact;
+        used for multiple-choice scoring and answer-level edit metrics.
+        """
+        import torch
+
+        if self.tokenizer is None:
+            raise RuntimeError("this runtime has no tokenizer")
+        scores = []
+        for prompt, continuation in pairs:
+            prefix = self.tokenizer(prompt, add_special_tokens=False)["input_ids"]
+            suffix = self.tokenizer(continuation, add_special_tokens=False)["input_ids"]
+            if not suffix:
+                raise ValueError("empty continuation")
+            ids = torch.as_tensor([prefix + suffix], dtype=torch.long, device=self.device)
+            with torch.no_grad():
+                logits = self.model(ids).logits.float()
+            log_probs = torch.log_softmax(logits[0, :-1, :], dim=-1)
+            targets = ids[0, 1:]
+            start = len(prefix) - 1
+            picked = log_probs[start:, :].gather(
+                -1, targets[start:].unsqueeze(-1)
+            ).squeeze(-1)
+            scores.append(float(picked.mean()))
+        return np.asarray(scores, dtype=np.float64)
+
     def param_count(self) -> int:
         return int(sum(p.numel() for p in self.model.parameters()))

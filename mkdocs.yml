@@ -1,0 +1,77 @@
+site_name: Machaon
+site_description: Direct weight surgery for LLMs, with transactional verification.
+site_url: https://s0ra-ai.github.io/Machaon/
+repo_url: https://github.com/S0ra-ai/Machaon
+repo_name: S0ra-ai/Machaon
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - content.code.annotate
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Installation: getting-started/installation.md
+      - Quickstart: getting-started/quickstart.md
+  - Concepts:
+      - Weight editing: concepts/weight-editing.md
+      - Null-space projection: concepts/null-space.md
+      - Transactions and gates: concepts/transactions-and-gates.md
+  - Guides:
+      - Edit a fact: guides/edit-a-fact.md
+      - Evaluate an edit: guides/evaluate.md
+      - Save a checkpoint: guides/checkpoints.md
+      - Work with OpenWSP: guides/openwsp-interop.md
+  - Reference:
+      - Python API: reference/api.md
+      - CLI: reference/cli.md
+      - Benchmarks: reference/benchmarks.md
+  - Project:
+      - Architecture: ARCHITECTURE.md
+      - The maths: MATH.md
+      - Results: RESULTS.md
+      - Related work: RELATED_WORK.md
+      - Roadmap: roadmap.md
+      - FAQ: faq.md

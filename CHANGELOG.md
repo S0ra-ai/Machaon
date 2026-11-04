@@ -8,6 +8,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Documentation site (Material for MkDocs): getting started, concepts, guides,
+  API and CLI reference, benchmarks, FAQ, roadmap.
+- Open-benchmark evaluation: zsRE, WikiText-2 and MMLU loaders with recorded
+  provenance (source, revision, licence, SHA-256).
+- `machaon.procedures.rome` and `machaon.runtime.HFModel.score_continuations`.
+- `docs/reference/benchmarks.md` with licences, protocol and current numbers.
 - First real result on GPT-2 124M (`examples/gpt2_rome.py`, `docs/RESULTS.md`):
   rewrite 1.00, paraphrase 1.00, KL p95 0.0006, perplexity ratio 1.0008.
 - `paraphrase_acc` in the evaluation runner.
