@@ -138,6 +138,7 @@ class TestSingleShardWrite(unittest.TestCase):
             np.testing.assert_array_equal(edited.read("a"), a)
 
 
+@requires_torch
 class TestSharded(unittest.TestCase):
     def test_sharded_read_and_write(self):
         with tempfile.TemporaryDirectory() as tmp:
