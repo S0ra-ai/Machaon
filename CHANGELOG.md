@@ -8,6 +8,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `scripts/fetch_model.py`: endpoint fallback (Hugging Face → mirror →
+  ModelScope) with safetensors header verification.
+- `Checkpoint.summary()`: tensor/parameter counts without loading weights.
 - Long-form coherence checker (`machaon.hygieia.longform`) with
   reference-scored NLL ratio and repetition delta; no judge model.
 - `HFModel.generate` (greedy, deterministic).

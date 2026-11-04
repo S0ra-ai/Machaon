@@ -48,6 +48,15 @@ If `huggingface.co` is unreachable, point the client at a mirror:
 export HF_ENDPOINT=https://hf-mirror.com
 ```
 
+Download a model through whichever endpoint reaches you:
+
+```bash
+python scripts/fetch_model.py --repo Qwen/Qwen2.5-1.5B --dest ./qwen15b
+```
+
+It tries Hugging Face, the mirror, then ModelScope, and checks the safetensors
+headers afterwards.
+
 Benchmark files are fetched separately:
 
 ```bash

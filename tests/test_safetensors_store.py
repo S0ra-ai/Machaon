@@ -56,6 +56,13 @@ class TestSingleFile(unittest.TestCase):
         np.testing.assert_array_equal(
             ckpt.read("model.layers.0.mlp.down_proj.weight"), self.w)
 
+    def test_summary(self):
+        ckpt = Checkpoint(self.path)
+        summary = ckpt.summary()
+        self.assertEqual(summary["tensors"], 2)
+        self.assertEqual(summary["shards"], 1)
+        self.assertEqual(summary["parameters"], self.w.size + self.other.size)
+
     def test_find(self):
         ckpt = Checkpoint(self.path)
         self.assertEqual(len(ckpt.find(layer=0)), 1)

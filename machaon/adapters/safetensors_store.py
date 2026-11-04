@@ -117,6 +117,27 @@ class Checkpoint:
     def read_float64(self, name: str) -> np.ndarray:
         return self.read(name, dtype=np.float64)
 
+    def summary(self) -> Dict[str, Any]:
+        """Tensor count, parameter count and dtype mix, without loading data."""
+        import math
+        from collections import Counter
+
+        dtypes: Counter = Counter()
+        total = 0
+        names = self.names()
+        for name in names:
+            info = self.info(name)
+            count = int(math.prod(info.shape)) if info.shape else 1
+            total += count
+            dtypes[info.dtype] += count
+        return {
+            "tensors": len(names),
+            "parameters": total,
+            "dtypes": dict(dtypes),
+            "shards": len(self.shards),
+            "path": str(self.path),
+        }
+
     def find(
         self,
         contains: Optional[str] = None,

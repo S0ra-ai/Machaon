@@ -53,6 +53,11 @@ value.
 An edit at layer 12 has to survive twelve more blocks. On Qwen2.5-0.5B the same
 edit cost rel. Δ 0.150 at layer 12 and 0.0043 at layer 20 — a 35× difference.
 
+**Hugging Face is blocked where I am.**
+Use `python scripts/fetch_model.py --repo ... --dest ...`, which falls back to
+ModelScope, or set `HF_ENDPOINT=https://hf-mirror.com`. The fetch script also
+verifies safetensors headers after transfer.
+
 **Why is repetition reported relative to baseline?**
 Because GPT-2 loops under greedy decoding before you touch it. An absolute
 threshold would fail the unedited model too, which tells you nothing about the

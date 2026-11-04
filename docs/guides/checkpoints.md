@@ -20,6 +20,24 @@ Supported layouts:
 - a directory containing exactly one
 - a sharded checkpoint with `model.safetensors.index.json`
 
+## Inspect without loading
+
+```python
+ckpt.summary()
+# {'tensors': 339, 'parameters': 1543714304, 'dtypes': {'BF16': ...}, 'shards': 1, ...}
+```
+
+Reads headers only. Useful before you commit to loading a multi-gigabyte model.
+
+## Download a model
+
+```bash
+python scripts/fetch_model.py --repo Qwen/Qwen2.5-1.5B --dest ./qwen15b
+```
+
+Tries `huggingface.co`, then `hf-mirror.com`, then ModelScope, and verifies every
+`.safetensors` header rather than trusting the transfer.
+
 ## Read
 
 ```python
