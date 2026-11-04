@@ -23,7 +23,7 @@ from .linalg import (
 from .schema import Constraints, EditSpec, Target
 from .transaction import Transaction, Workspace
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
 __all__ = [
     "rank1",

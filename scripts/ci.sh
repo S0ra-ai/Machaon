@@ -21,5 +21,12 @@ if python3 -m machaon.cli gate examples/metrics_fail.json; then
   exit 1
 fi
 
+if command -v ruff > /dev/null 2>&1; then
+  echo "== lint =="
+  ruff check machaon tests examples
+else
+  echo "== lint skipped (ruff not installed) =="
+fi
+
 echo
 echo "ALL CHECKS PASSED"

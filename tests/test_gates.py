@@ -2,7 +2,6 @@ import unittest
 
 from machaon.hygieia.gates import evaluate
 
-
 GOOD = {
     "rewrite_acc": 1.0,
     "paraphrase_acc": 0.8,

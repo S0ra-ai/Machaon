@@ -1,0 +1,27 @@
+name: Feature request
+description: Propose an edit primitive, a runtime, or an evaluation suite.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The bar here is a *derivable* guarantee plus a test that shows it holds.
+        "It seemed to work" is a starting point, not an acceptance criterion.
+  - type: textarea
+    id: what
+    attributes:
+      label: What should exist
+    validations:
+      required: true
+  - type: textarea
+    id: guarantee
+    attributes:
+      label: What can we prove about it
+      description: An invariant, a bound, or a property that a test can check.
+    validations:
+      required: true
+  - type: textarea
+    id: how
+    attributes:
+      label: How you would verify it
+      description: The measurement, the suite, or the counter-example.

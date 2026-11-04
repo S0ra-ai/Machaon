@@ -28,7 +28,9 @@ class Workspace:
         try:
             return self._w[name]
         except KeyError:
-            raise KeyError("unknown weight %r; known: %s" % (name, sorted(self._w)))
+            raise KeyError(
+                "unknown weight %r; known: %s" % (name, sorted(self._w))
+            ) from None
 
     @property
     def names(self) -> Tuple[str, ...]:

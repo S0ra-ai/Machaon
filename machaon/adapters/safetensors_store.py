@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import numpy as np
 
@@ -85,7 +85,7 @@ class Checkpoint:
             try:
                 return self.path / self._weight_map[name]
             except KeyError:
-                raise KeyError("unknown tensor: %s" % name)
+                raise KeyError("unknown tensor: %s" % name) from None
         assert self._single is not None
         return self._single
 

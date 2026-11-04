@@ -60,7 +60,7 @@ def check_tensor(
     try:
         bf16_bits(value)
     except ValueError as exc:
-        raise EditRefused("edit overflows bfloat16: %s (%s)" % (name, exc))
+        raise EditRefused("edit overflows bfloat16: %s (%s)" % (name, exc)) from exc
 
     if refuse_rescale and not np.array_equal(value, base):
         flat_base = base.reshape(-1).astype(np.float64)

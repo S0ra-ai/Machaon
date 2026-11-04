@@ -196,7 +196,7 @@ def _checked_fixups(arrays: Mapping[str, np.ndarray], i: int, size: int):
         indices = arrays["t%d_idx" % i]
         values = arrays["t%d_val" % i]
     except KeyError:
-        raise EditError("missing sparse payload for tensor %d" % i)
+        raise EditError("missing sparse payload for tensor %d" % i) from None
     if indices.ndim != 1 or indices.dtype.kind not in "iu":
         raise EditError("sparse indices must be a 1-D integer array")
     if values.ndim != 1 or values.dtype.kind != "u" or values.dtype.itemsize != 2:
@@ -235,7 +235,7 @@ def read_edit(
     try:
         manifest = json.loads((target / "manifest.json").read_text())
     except (OSError, ValueError) as exc:
-        raise EditError("cannot read manifest: %s" % exc)
+        raise EditError("cannot read manifest: %s" % exc) from exc
     if not isinstance(manifest, dict):
         raise EditError("manifest must be an object")
 
@@ -255,7 +255,7 @@ def read_edit(
                 raise EditError("duplicate payload array names")
             arrays = {name: archive[name] for name in archive.files}
     except (OSError, ValueError) as exc:
-        raise EditError("cannot read payload: %s" % exc)
+        raise EditError("cannot read payload: %s" % exc) from exc
 
     if versioned:
         if manifest.get("payload_sha256") != payload_sha256(arrays):

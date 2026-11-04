@@ -53,7 +53,7 @@ class DeltaStore:
 
     def list(self) -> List[str]:
         out = []
-        for dirpath, _, files in os.walk(self.root):
+        for _dirpath, _, files in os.walk(self.root):
             for name in files:
                 if name.endswith(".npy"):
                     out.append(name[:-4])

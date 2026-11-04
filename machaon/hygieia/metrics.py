@@ -10,6 +10,14 @@ from typing import Callable, Dict, Tuple
 import numpy as np
 
 
+def softmax(logits, axis: int = -1) -> np.ndarray:
+    """Numerically stable softmax over the last axis by default."""
+    z = np.asarray(logits, dtype=np.float64)
+    z = z - z.max(axis=axis, keepdims=True)
+    e = np.exp(z)
+    return e / e.sum(axis=axis, keepdims=True)
+
+
 def kl_divergence(p, q, eps: float = 1e-12):
     """Per-sample KL(p || q). Accepts (n, vocab) or (vocab,)."""
     p = np.asarray(p, dtype=np.float64)

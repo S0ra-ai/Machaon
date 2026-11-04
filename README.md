@@ -25,6 +25,26 @@ constrained edit leaves the protected keys at machine precision — and when the
 budget is enforced, it *stops early* instead of lying to you about how much of
 the layer it spent.
 
+## 30-second tour
+
+```bash
+python examples/tiny_edit.py
+```
+
+```
+Machaon — tiny end-to-end edit
+model: 95664 parameters, 3 layers, no download
+target token: 43
+
+budget       rel.delta   efficacy     kl_p95   ppl_ratio   verdict
+------------------------------------------------------------------
+beta=1           0.107       1.00     0.0002       1.001   PASS
+beta=12          1.279       1.00     0.0146       2.024   FAIL: ppl_ratio
+```
+
+Same edit, two budgets. Both hit the target; only one is acceptable. That is the
+whole product in two lines. No download, no GPU, no training.
+
 ---
 
 ## What it is
@@ -48,9 +68,26 @@ and undone. Weights are never overwritten in place.
 - **Not a prompt optimiser.** It changes the parameters, not the context.
 - **Not a model merger.** It can merge deltas, but its unit is a targeted edit.
 
+## Two contracts
+
+Everything is built on two small interfaces, which is why the same code works on
+a 95k-parameter toy and on a full checkpoint.
+
+```python
+# a runtime: anything that can produce logits and NLL
+runtime.next_logits(items) -> (n, vocab)
+runtime.nll(items)         -> (n,)
+
+# an edit: arrays in, arrays out
+delta = rank1_constrained(W, key, value, preserve=keys, max_rel_norm=0.02)
+```
+
+The runtime never learns what an edit is; the maths never learns what a model
+is. Everything else — gates, transactions, storage, interop — sits between them.
+
 ## Status
 
-`v0.0.1` — honest about what is real:
+`v0.1.0` — honest about what is real:
 
 | part | state |
 |---|---|
@@ -64,10 +101,13 @@ and undone. Weights are never overwritten in place.
 | **refusal rules** (`machaon.refusals`) | **implemented, tested** |
 | **protected-key verification** (`machaon.verify`) | **implemented, tested** |
 | **safetensors adapter** (`machaon.adapters`) | **implemented, single-file and sharded** |
-| activation patching (`machaon.podalirius`) | **scaffold**, needs a real model to validate |
-| forward passes, L0–L6 eval harness, MCP server | **not yet** |
+| **HF runtime** (`machaon.runtime`) | **implemented**: layer discovery, float64 I/O, logits, NLL, activation capture |
+| **evaluation runner** (`machaon.hygieia.runner`) | **implemented**: efficacy, KL, perplexity ratio, fail-closed verdict |
+| activation patching (`machaon.podalirius`) | **scaffold**, validated only on a tiny random model |
+| long-form and cumulative suites, MCP server | **not yet** |
 
-67 tests. The synthetic demo runs offline and needs nothing but NumPy.
+83 tests. Everything runs offline; nothing here has been measured on a real
+pretrained checkpoint yet.
 
 ---
 
@@ -238,10 +278,21 @@ uv pip install -e ".[hf]"    # + torch + transformers, for real models
 - [x] OpenWSP v1 edit format, byte-identical, conformance-tested
 - [x] refusal rules and protected-key verification
 - [x] safetensors adapter: single file, folder, sharded index
-- [ ] forward passes against a real checkpoint (needs `transformers`)
-- [ ] Qwen reference run with published numbers
-- [ ] L0–L6 evaluation harness (unit → efficacy → locality → capability → long-form → cumulative)
+- [x] HF runtime: logits, NLL, activation capture, architecture-independent naming
+- [x] evaluation runner: efficacy, KL, perplexity ratio, fail-closed verdict
+- [x] end-to-end example on a locally built tiny model
+- [ ] first real checkpoint (GPT-2 124M), then 0.5B, then 8B
+- [ ] long-form and cumulative-edit suites
 - [ ] MCP server: `propose_edit`, `apply_edit`, `evaluate`, `diff`, `rollback`
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). The short version: a real result is
+worth more than a refactor, new checks must fail closed, and every claim needs a
+test that fails when the claim stops being true.
+
+Security issues — especially anything that bypasses a gate — go through
+[SECURITY.md](SECURITY.md), not the public tracker.
 
 ## 中文
 
