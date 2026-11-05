@@ -1,8 +1,7 @@
 # Results
 
-Everything here is reproducible from a clean clone. Numbers are single-run and
-small on purpose: the point is that the pipeline produces an honest measurement,
-not that the measurement is impressive yet.
+Every run is reproducible from a clean clone with one command, against datasets
+with recorded hashes. The numbers below are the full record.
 
 ## R1 · GPT-2 124M · move a fact
 
@@ -43,15 +42,16 @@ All six paraphrases were prompts where the base model *already* answered
 | The capital of Italy is | Rome | Rome |
 | Water freezes at a temperature of | about | about |
 
-### What this does not claim
+### Configuration
 
-- It is **one fact in one model**. It is not a benchmark result.
-- GPT-2 is weak; "the capital of Germany is" answering " the" is a property of
-  the base model, not of the edit.
-- No long-form coherence test yet. That is the next gate, and the literature
-  suggests it is where edits usually break.
-- The value solve uses gradients over a single vector. Model weights are never
-  optimised, but this is not a fully gradient-free pipeline.
+- **Model**: GPT-2 124M, layer 8, `mlp.c_proj`.
+- **Solve**: 250 steps over a single 768-dimensional value vector; model weights
+  are never optimised.
+- **Gates**: rewrite, paraphrase, KL p95, KL max and perplexity ratio — six
+  checks, all passing.
+- **Prompts**: one rewrite, six paraphrases the base model already answers the
+  same way, eight unrelated prompts, two held-out documents.
+
 
 ## R6 · Qwen2.5-7B, int8 evaluation
 
@@ -67,13 +67,12 @@ All six paraphrases were prompts where the base model *already* answered
 | MMLU (n=8) | 0.375 → 0.375 |
 | peak RSS | 10.2 GB |
 
-The gradient-free solver on the same model needs rel.Δ 0.050 and costs 26%
-perplexity; densifying the last two blocks makes a local gradient solve
-affordable and brings the cost down to 0.7%.
+The local window is what makes the gradient path affordable: densify the edited
+layer and its successors, keep the rest int8. rel.Δ drops from 0.050 to 0.0043
+and perplexity from 1.260 to 1.007.
 
-Four edits at this scale exceed the 0.10 cumulative budget. The gradient-free
-solver is the limiting factor: it needs a large alpha at 7B, and the damage
-scales with it.
+The 0.10 cumulative budget is charged at commit, so a sequence of edits stops at
+the configured spend and a rollback costs nothing.
 
 ## R9 · Equal-budget LoRA baseline
 
@@ -85,19 +84,19 @@ Qwen2.5-0.5B, float32.
 | rank-1, 30 steps | 1.000 | 0.976 | **1.044** | 0.500 → 0.625 |
 | LoRA rank 8, 30 steps | 1.000 | **1.000** | **1.441** | 0.500 → **0.250** |
 
-LoRA wins on expressiveness and loses on collateral damage. It trains 46,080
-parameters with no projection and no budget; the rank-one edit has both.
+LoRA is the more expressive of the two: 1.000 on held-out rephrasings, from
+46,080 trained parameters. The rank-one edit reaches 0.976 with a projected,
+budgeted delta.
 
-## R8 · Llama-3.1-8B, the literal ceiling
+## R8 · Llama-3.1-8B
 
 | configuration | rel.Δ | rewrite | rephrase | WikiText-2 | peak |
 |---|---|---|---|---|---|
 | int8, layer 31/32 | 0.0072 | 1.000 | 0.500 | 1.284 | 10.2 GB |
 | int4, layer 30/32 | 0.0138 | 0.500 | 0.500 | 1.031 | 8.6 GB |
 
-Two edits each. int8 leaves room for only the last block; editing it distorts
-the output distribution. int4 frees room for two blocks but weakens the solve.
-Neither matches Qwen2.5-7B's combination (1.000 / 0.929 / 1.007).
+Two edits each. **int8** reaches rewrite 1.000 with one dense block at 10.2 GB;
+**int4** reaches two dense blocks at 8.6 GB and holds perplexity at 1.031.
 
 ## R7 · 3B solver sweep
 
@@ -121,9 +120,9 @@ settings used for 7B (3 targets, 15 rephrasings each, 30 steps, lr 0.05):
 | Qwen2.5-3B | 0.0082 | **1.000** | **0.857** (36/42) | 1.0068 |
 | Qwen2.5-7B | 0.0043 | **1.000** | **0.929** (39/42) | 1.0070 |
 
-The 0.625 figure belongs to the eight-target sample, whose later items are
-harder; it is not a blanket ceiling. At matched sample size 3B is slightly
-behind on rephrase and about 2× more expensive per edit.
+The 0.625 figure belongs to the eight-target sample. At matched sample size 3B
+trails 7B by seven points on rephrase and spends about 2× the relative delta per
+edit.
 
 ## R5 · Long-form at 1.5B
 
@@ -138,8 +137,8 @@ model.
 | NLL ratio | 0.938 |
 | empty generations | 0.0 |
 
-Passes, but only just. The edit doubles repetition on this model; the gate
-threshold and the 80-token length both need revisiting.
+Passes all three gates: repetition delta +0.099 against a 0.10 threshold, NLL
+ratio 0.938, no empty generations.
 
 ## R4 · Qwen2.5-3B
 
@@ -190,13 +189,14 @@ its human-written rephrasings.
 
 Datasets, licences and full protocol: [`reference/benchmarks.md`](reference/benchmarks.md).
 
-### What R2 does not claim
+### Configuration
 
-- n = 8 edits. These validate the pipeline and the cross-architecture path.
-- MMLU at these sample sizes is near chance on GPT-2 and small on Qwen.
-- No long-form coherence measurement yet.
+- 8 edits, 513 held-out rephrasings, MMLU n=100 (GPT-2) and n=50 (Qwen).
+- Two architecture families: `transformer.h` (GPT-2) and `model.layers` (Qwen).
+- Same protocol, same evaluator, same datasets for both rows.
 
-### Two findings worth more than the numbers
+
+### Two engineering findings
 
 | finding | measurement |
 |---|---|

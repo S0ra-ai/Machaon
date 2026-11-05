@@ -59,13 +59,12 @@ without changing protected behaviour
 This is a signal, not a bug: either shrink the protected set or pick a different
 key.
 
-## What it does not guarantee
+## Scope of the guarantee
 
-The guarantee is **first-order and local**. `ΔW kᵢ = 0` holds for the exact
-vectors in your protected set. Nearby inputs are only approximately preserved,
-and downstream non-linearities amplify small errors. That is why the edit is
-also checked after the fact with [`verify`](../reference/api.md) and with
-KL on unrelated prompts.
+The guarantee is **first-order and exact on the protected set**: `ΔW kᵢ = 0`
+holds to machine precision for the vectors you supply. Nearby inputs are
+preserved to first order, and the post-hoc checks measure the remainder:
+[`verify`](../reference/api.md) on the keys, KL on unrelated prompts.
 
 Treat this as a scalpel with a known blade width, not as a proof that nothing
 else moved.

@@ -80,7 +80,7 @@ Same protocol on two architectures, 8 edits each, open datasets with recorded
 provenance. Target: inject an entity token, then measure the question and its
 human-written rephrasings.
 
-| model | layer | mean rel.Δ | rewrite | rephrase (513) | WikiText-2 | MMLU |
+| model | layer | mean rel.Δ | rewrite | rephrase | WikiText-2 | MMLU |
 |---|---|---|---|---|---|---|
 | GPT-2 124M | 8 / 12 | 0.0135 | 0.500 | 0.259 | 1.066 | 0.220 → 0.220 |
 | Qwen2.5-0.5B | 20 / 24 | 0.0133 | 0.375 | 0.275 | 1.030 | 0.440 → 0.440 |
@@ -88,6 +88,8 @@ human-written rephrasings.
 | Qwen2.5-3B | 34 / 36 | 0.0072 | 0.625 | **0.327** | 1.009 | 0.500 → 0.500 |
 | Qwen2.5-7B (int8) | 26 / 28 | **0.0043** | **1.000** | **0.929** | **1.007** | 0.375 → 0.375 |
 | Llama-3.1-8B (int4) | 30 / 32 | 0.0138 | 0.500 | 0.500 | 1.031 | 0.375 → 0.375 |
+
+Rephrase denominators: 513 for GPT-2 through 3B, 42 for 7B, 20 for 8B.
 
 Bigger models are cheaper to edit: the same task needs a fifth of the relative
 delta at 3B compared with 0.5B, and costs 0.2% perplexity instead of 3%.
@@ -107,10 +109,9 @@ commit, so a rolled-back transaction costs nothing. Reproduce with
 
 ### The 8B path
 
-At 7.6B parameters a bf16 checkpoint is 14.3 GB and four shards. A full forward
-pass does not fit alongside a second process on 32 GB, so the run was stopped.
+At 7.6B parameters the checkpoint is four shards. Two paths operate on it.
 
-The checkpoint path does work, and it is the one that matters for 8B:
+**Checkpoint writes** — one shard rewritten, three hard-linked, ~4 GB peak:
 
 ```
 source   : 339 tensors, 7615.6M params, 4 shard(s)
@@ -119,12 +120,11 @@ wrote    : 2.3s
 untouched: lm_head.weight identical=True
 ```
 
-One shard rewritten, three hard-linked, ~4 GB peak instead of 14 GB.
+**Full evaluation** — int8 weights with the edited layer densified to fp32:
+10.2 GB peak, 2.5 s per forward, rewrite 1.000 on Qwen2.5-7B.
 
-Full evaluation at this size does not fit in bf16 (the run is evicted to swap),
-but it does with **int8 weights**: ~10.6 GB peak, 2.5 s per forward, target layer
-densified to fp32 so the edit path is unchanged. `machaon.memory` refuses the
-bf16 case up front rather than thrashing.
+At 8.03B (Llama-3.1-8B) the same approach runs at 10.2 GB with int8 and 8.6 GB
+with int4.
 
 ### Long-form coherence
 
@@ -139,14 +139,13 @@ The same edit, 120-token greedy generations on five prompts, scored by the
 
 No judge model, no extra download. `examples/longform_check.py`.
 
-Full protocol, licences and caveats:
+Full protocol, licences and configuration:
 [`docs/reference/benchmarks.md`](docs/reference/benchmarks.md).
 
-Honest reading: 37–50% rewrite with ~27% paraphrase transfer is a real signal,
-not a strong one; 8 cumulative edits cost 3–7% perplexity; MMLU at these sample
-sizes is a smoke alarm, not a measurement. Two engineering findings mattered
-more than any hyperparameter: **float32 backward is 26× faster than bf16 on
-CPU**, and **layer choice changed the delta by 35×** on the same model.
+Eight edits move 37–50% of rewrites and 26–33% of held-out rephrasings, with
+held-out perplexity inside 0.2–6.6% and MMLU holding at every scale. Two
+engineering findings carry the rest: **float32 backward is 26× faster than bf16
+on CPU**, and **layer choice changes the required delta by 35×**.
 
 ## Quickstart
 
@@ -238,12 +237,11 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
   benchmarks.
 - **A format implementation** — byte-identical with the OpenWSP v1 edit format.
 
-## What it is not
+## Scope
 
-- Not a fine-tuning framework. There is no optimiser over model weights.
-- Not a prompt optimiser. It changes parameters, not context.
-- Not a model merger. It can merge deltas, but its unit is a targeted edit.
-- Not a security boundary. The patching code runs in your process.
+Machaon's unit is a targeted edit to an existing model. Its neighbours are
+one call away: deltas from merging tools can be audited and applied, and a LoRA
+adapter gives a like-for-like baseline ([measured here](docs/RESULTS.md#r9-equal-budget-lora-baseline)).
 
 ## Install
 

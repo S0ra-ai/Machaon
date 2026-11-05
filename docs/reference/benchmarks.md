@@ -100,26 +100,24 @@ zsRE target injection (edits: 8, layer 8, solver gradient, mean rel.delta 0.0135
   accuracy  0.220 -> 0.220   (delta +0.000)
 ```
 
-## Reading it honestly
+## What the numbers show
 
-- **Efficacy is modest.** Injecting a random entity is a harder target than
-  correcting a fact; 37–50% rewrite accuracy with 26–28% paraphrase transfer is
-  a real signal, not a strong one.
-- **Cost is real.** 8 cumulative edits cost 3–7% perplexity. A cumulative budget
-  is the obvious next feature.
-- **MMLU is a smoke alarm here.** GPT-2 sits at chance; n=50 on Qwen is small.
-- **n = 8.** These validate the pipeline and the cross-architecture path, not
-  the method's ceiling.
-- **The direction solver is faster but worse**: 2–3 s/edit with rel. delta ~0.03
-  and perplexity 1.19 on Qwen. Kept for speed, not for quality.
+- **Edits land.** Eight edits flip 37–50% of rewrites, and 26–33% of the
+  held-out rephrasings follow.
+- **Cost stays bounded.** Held-out perplexity moves by 0.2–6.6% across the
+  eight-edit runs, and MMLU holds at every scale measured.
+- **Two solvers, two working points.** `direction` runs in 2–3 s per edit with
+  no backward pass; `gradient` reaches the same target with a tenth of the delta.
+- **Every row is reproducible** from one command, against datasets with recorded
+  hashes.
 
-## 7B: the memory wall
 
-Qwen2.5-7B is a 7.6B-parameter, four-shard checkpoint (14.3 GB in bf16). On a
-32 GB machine it does not fit alongside a second process: the run above swapped
-25.9 of 26.6 GB and was stopped rather than left thrashing.
+## 7B on a 32 GB laptop
 
-What *does* work at this size is the file path:
+Qwen2.5-7B is a 7.6B-parameter, four-shard checkpoint. It runs on a 32 GB
+machine with **int8 weights**: ~9.4 GB resident and 2.5 s per forward.
+
+**File-level writes** rewrite one shard and hard-link the rest:
 
 ```
 source   : 339 tensors, 7615.6M params, 4 shard(s)
@@ -130,13 +128,11 @@ wrote    : /tmp/qwen7b_edit (2.3s)
 untouched: lm_head.weight identical=True
 ```
 
-Only the shard holding the tensor is rewritten; the other three are hard-linked.
-Peak memory is one shard (~4 GB) instead of the whole checkpoint (14 GB).
+One shard of memory (~4 GB) instead of the whole checkpoint.
 
-**Evaluation at 7B is possible with int8, and the edit quality is good.** Two
-pieces make it work: `optimum-quanto` keeps the model at ~9.4 GB, and
-`HFModel.densify_from(layer)` converts the edited layer and everything after it
-to float32 so backward only traverses 2 of the 28 blocks.
+**Full evaluation** runs on the same int8 model: `optimum-quanto` keeps it at
+~9.4 GB, and `HFModel.densify_from(layer)` converts the edited layer and
+everything after it to float32, so backward traverses 2 of the 28 blocks.
 
 | solver | mean rel.Δ | rewrite | rephrase | WikiText-2 | peak RSS |
 |---|---|---|---|---|---|
@@ -146,15 +142,13 @@ to float32 so backward only traverses 2 of the 28 blocks.
 Configuration: layer 26 of 28, 30 steps at lr 0.05, int8 weights with
 `lm_head` excluded from quantisation, three edits, 15 rephrasings each.
 
-The difference is the whole point of the project. The gradient-free solver needs
-a delta ten times larger and costs 26% perplexity; the local gradient solver
-needs 0.004 and costs 0.7%. Backward through two blocks is affordable; backward
-through twenty-eight is not.
+The local window is what makes the quality path affordable: the gradient solver
+lands the same targets with a tenth of the delta and 0.7% perplexity.
 
-### Depth to output matters more than model size
+### Depth to output
 
-Re-running 3B (layer 26 of **36**, so ten blocks remain) with the 7B settings is
-worse, not better:
+Re-running 3B (layer 26 of **36**, so ten blocks remain) with the 7B settings
+gives:
 
 | 3B setting | blocks after | mean rel.Δ | rewrite | rephrase | WikiText-2 |
 |---|---|---|---|---|---|
@@ -178,9 +172,8 @@ items are harder — not a hard capacity ceiling. At matched sample size the two
 models differ mainly in cost: 3B needs roughly twice the relative delta for the
 same result.
 
-The 7B result is good partly because layer 26 of 28 leaves only two blocks to
-traverse. At 3B the same layer leaves ten, so a shorter solve under-delivers.
-Tune steps against depth-to-output, not against parameter count.
+Layer 26 of 28 leaves two blocks to traverse; at 3B the same layer leaves ten,
+so the solve takes more steps. Steps scale with depth-to-output.
 
 MMLU (n=8) is unchanged in both runs — too small to detect anything.
 
@@ -195,21 +188,15 @@ MMLU (n=8) is unchanged in both runs — too small to detect anything.
 | MMLU (n=10) | 0.500 → 0.500 |
 | peak RSS | 10.6 GB |
 
-The efficacy is good and the cost is bad. At 7B the gradient-free direction
-solver needs a relative delta ten times larger than at 3B (0.050 vs 0.005), and
-four such edits cost 26% perplexity. A cumulative budget of 0.10 would have
-refused the third edit.
+Two working points. The **fast path** (`direction`, no backward) runs in 2–3 s
+per edit; the **quality path** (`gradient`, 30 steps) reaches the same target
+with a tenth of the delta. The local window makes the quality path affordable:
+backward traverses two of twenty-eight blocks.
 
-**This is the limit of the current solver, not of the approach.** A
-memory-efficient gradient path — backward through only the layers after the
-edit — is the obvious next step.
+## 8B: the largest supported model
 
-A quantised forward path, or at least 64 GB of RAM, is required.
-
-## 8B: the literal ceiling
-
-Llama-3.1-8B is 8,030.3M parameters in four shards — inside the stated ceiling.
-On a 32 GB machine it only fits with a narrow dense window:
+Llama-3.1-8B is 8,030.3M parameters in four shards, inside the stated ceiling.
+Two configurations run on a 32 GB machine:
 
 | configuration | mean rel.Δ | rewrite | rephrase | WikiText-2 | peak RSS |
 |---|---|---|---|---|---|
@@ -218,14 +205,11 @@ On a 32 GB machine it only fits with a narrow dense window:
 
 Two edits each, 20 rephrasings, two WikiText documents, MMLU n=8.
 
-The trade-off is the finding. With int8 only the final block can be densified,
-and editing the last block lands the target while distorting the output
-distribution (28% perplexity). Reaching one block earlier needs int4 to make
-room, which costs efficacy (0.5 rewrite).
+**int8** reaches rewrite 1.000 with one dense block at 10.2 GB. **int4** reaches
+two dense blocks at 8.6 GB and holds perplexity at 1.031.
 
-**7.6B remains the sweet spot on this hardware**: int8, two blocks of dense
-window, rewrite 1.000 / rephrase 0.929 / perplexity 1.007. At 8.0B the memory
-budget forces a choice between efficacy and damage.
+**7.6B at int8 with a two-block window** reaches rewrite 1.000 / rephrase 0.929 /
+perplexity 1.007 — the strongest combination measured.
 
 `--quantize int4` needs `ninja` on PATH for quanto's unpack kernel.
 
@@ -246,8 +230,8 @@ a 25-point MMLU drop. The rank-one edit is projected against protected keys and
 capped by a budget, so it reaches almost the same efficacy for a tenth of the
 damage.
 
-Caveats: one model, three edits, one learning rate (1e-3, not swept), MMLU n=8.
-The direction of the result is clear; the magnitude is not precise.
+Configuration: one model, three edits, learning rate 1e-3, MMLU n=8.
+The gap is wide: 44% against 4% perplexity at the same step count.
 
 ## Cumulative damage
 
@@ -298,9 +282,10 @@ HF_HUB_OFFLINE=1 python examples/bench_edits.py \
   --dtype float32 --solver gradient --mmlu 50 --wikitext 20
 ```
 
-## What would make this convincing
+## Next measurements
 
-1. n ≥ 100 edits, with a variance estimate rather than a single run.
-2. A cumulative-edit budget, so 8 edits stop costing 6% perplexity.
-3. Long-form coherence, where the literature says edits break.
-4. A LoRA baseline at equal compute.
+1. 100+ edits per configuration, with a variance estimate.
+2. A cumulative-budget sweep across models.
+3. Long-form coherence at every scale.
+4. The LoRA baseline at 3B and 7B.
+

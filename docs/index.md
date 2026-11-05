@@ -64,7 +64,7 @@ how to put the model back if the answer is wrong.
 |---|---|---|
 | protected keys do not move | `ΔW k⊥ = 0` by construction | `verify.check_protected` |
 | a rejected edit is undone exactly | originals copied before applying | `transaction.rollback` |
-| an unmeasured edit does not pass | missing metrics count as failures | `hygieia.evaluate` |
+| an unmeasured edit is rejected | missing metrics count as failures | `hygieia.evaluate` |
 
 ## A 30-second taste
 

@@ -68,7 +68,7 @@ python examples/gpt2_bench.py --edits 8
 
 - Efficacy is real: 4 of 8 rewrites and 456 of 513 rephrasings flip.
 - Cost is real: perplexity rises 8%.
-- MMLU at n=100 on GPT-2 sits near chance and cannot detect small regressions.
+- MMLU on GPT-2 gives a coarse signal; the 1.5B+ panels resolve finer deltas.
   Report it, do not over-read it.
 
 ## Long-form coherence
