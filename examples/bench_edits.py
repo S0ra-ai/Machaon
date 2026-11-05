@@ -93,7 +93,7 @@ def main() -> int:
     parser.add_argument("--mmlu", type=int, default=100)
     parser.add_argument("--wikitext", type=int, default=40)
     parser.add_argument("--dtype", default="auto", choices=["auto", "float32"])
-    parser.add_argument("--quantize", default="none", choices=["none", "int8"],
+    parser.add_argument("--quantize", default="none", choices=["none", "int8", "int4"],
                         help="load quantised; the edited layer is densified")
     parser.add_argument("--solver", default="gradient", choices=["gradient", "direction"])
     parser.add_argument("--max-rel-norm", type=float, default=None)
@@ -114,9 +114,10 @@ def main() -> int:
 
     if Path(args.model).exists():
         summary = Checkpoint(args.model).summary()
-        if args.quantize == "int8":
-            # weights are stored at one byte per parameter, not two
-            summary = {"dtypes": {"I8": summary["parameters"]}}
+        if args.quantize in ("int8", "int4"):
+            # one byte (int8) or half a byte (int4) per parameter, not two
+            bits = 8 if args.quantize == "int8" else 4
+            summary = {"dtypes": {"I8": summary["parameters"] * bits // 8}}
         fit = check_fit(summary)
         print("memory: %.1f GB of weights, %s" % (
             fit["weights_bytes"] / 1e9, fit["reason"]))
@@ -126,11 +127,11 @@ def main() -> int:
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     load_kwargs = {} if args.dtype == "auto" else {"dtype": torch.float32}
-    if args.quantize == "int8":
+    if args.quantize in ("int8", "int4"):
         from transformers import QuantoConfig
 
         load_kwargs["quantization_config"] = QuantoConfig(
-            weights="int8", modules_to_not_convert=["lm_head"])
+            weights=args.quantize, modules_to_not_convert=["lm_head"])
         load_kwargs["device_map"] = "cpu"
     runtime = HFModel(
         AutoModelForCausalLM.from_pretrained(args.model, **load_kwargs).eval(), tokenizer)

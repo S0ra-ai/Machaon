@@ -87,6 +87,7 @@ human-written rephrasings.
 | Qwen2.5-1.5B | 20 / 28 | **0.0065** | 0.500 | 0.273 | **1.005** | 0.400 → 0.400 |
 | Qwen2.5-3B | 34 / 36 | 0.0072 | 0.625 | **0.327** | 1.009 | 0.500 → 0.500 |
 | Qwen2.5-7B (int8) | 26 / 28 | **0.0043** | **1.000** | **0.929** | **1.007** | 0.375 → 0.375 |
+| Llama-3.1-8B (int4) | 30 / 32 | 0.0138 | 0.500 | 0.500 | 1.031 | 0.375 → 0.375 |
 
 Bigger models are cheaper to edit: the same task needs a fifth of the relative
 delta at 3B compared with 0.5B, and costs 0.2% perplexity instead of 3%.

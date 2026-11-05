@@ -75,6 +75,17 @@ Four edits at this scale exceed the 0.10 cumulative budget. The gradient-free
 solver is the limiting factor: it needs a large alpha at 7B, and the damage
 scales with it.
 
+## R8 · Llama-3.1-8B, the literal ceiling
+
+| configuration | rel.Δ | rewrite | rephrase | WikiText-2 | peak |
+|---|---|---|---|---|---|
+| int8, layer 31/32 | 0.0072 | 1.000 | 0.500 | 1.284 | 10.2 GB |
+| int4, layer 30/32 | 0.0138 | 0.500 | 0.500 | 1.031 | 8.6 GB |
+
+Two edits each. int8 leaves room for only the last block; editing it distorts
+the output distribution. int4 frees room for two blocks but weakens the solve.
+Neither matches Qwen2.5-7B's combination (1.000 / 0.929 / 1.007).
+
 ## R7 · 3B solver sweep
 
 The 7B settings do not transfer upward from below:

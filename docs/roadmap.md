@@ -28,8 +28,9 @@ Ordered by what would make the project harder to ignore, not by what is easiest.
 - [x] **3B rung.** Sharded checkpoint, 11.7 GB peak RSS, same panel.
 - [x] **Up to 8B at the checkpoint level.** Single-shard edits without
       loading the whole model.
-- [x] **Up to 8B at the evaluation level**, via int8 weights with a densified
-      target layer. Costs 26% perplexity at 7B with the gradient-free solver.
+- [x] **Up to 8B at the evaluation level.** 7.6B works well with int8 and a
+      two-block dense window; 8.03B runs but forces a trade-off between
+      efficacy (int8, last block) and damage (int4, two blocks).
 - [x] **Memory-efficient gradient solver.** Densify the edited layer and later,
       keeping the rest int8; backward traverses 2 of 28 blocks at 7B.
 

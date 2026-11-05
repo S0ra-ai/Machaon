@@ -196,6 +196,29 @@ edit — is the obvious next step.
 
 A quantised forward path, or at least 64 GB of RAM, is required.
 
+## 8B: the literal ceiling
+
+Llama-3.1-8B is 8,030.3M parameters in four shards — inside the stated ceiling.
+On a 32 GB machine it only fits with a narrow dense window:
+
+| configuration | mean rel.Δ | rewrite | rephrase | WikiText-2 | peak RSS |
+|---|---|---|---|---|---|
+| int8, layer 31/32 (one block densified) | 0.0072 | **1.000** | 0.500 | 1.284 | 10.2 GB |
+| int4, layer 30/32 (two blocks densified) | 0.0138 | 0.500 | 0.500 | **1.031** | 8.6 GB |
+
+Two edits each, 20 rephrasings, two WikiText documents, MMLU n=8.
+
+The trade-off is the finding. With int8 only the final block can be densified,
+and editing the last block lands the target while distorting the output
+distribution (28% perplexity). Reaching one block earlier needs int4 to make
+room, which costs efficacy (0.5 rewrite).
+
+**7.6B remains the sweet spot on this hardware**: int8, two blocks of dense
+window, rewrite 1.000 / rephrase 0.929 / perplexity 1.007. At 8.0B the memory
+budget forces a choice between efficacy and damage.
+
+`--quantize int4` needs `ninja` on PATH for quanto's unpack kernel.
+
 ## Cumulative damage
 
 `examples/budget_sweep.py` applies edits one at a time and measures held-out
