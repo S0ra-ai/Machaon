@@ -16,6 +16,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - `--lr` and `--quantize int4` on the benchmark script.
 - Llama-3.1-8B (8.03B) evaluated at both int8 and int4; documented the
   efficacy/damage trade-off at the memory boundary.
+- Matched 3B/7B comparison (3 targets, 42 rephrasings): 3B 1.000/0.857 vs 7B
+  1.000/0.929, correcting the earlier "capacity ceiling" reading.
 - 3B depth sweep (layers 26/32/34): rephrase 0.230 → 0.327 as the edit moves
   closer to the output; rewrite stays at 0.625, which is a capacity limit.
 - `--quantize int8` on the benchmark script, with the memory preflight adjusted.

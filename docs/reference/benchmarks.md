@@ -163,10 +163,20 @@ worse, not better:
 | layer 32, lr 0.05, 30 steps | 4 | 0.0068 | 0.625 | 0.312 | 1.009 |
 | **layer 34, lr 0.05, 30 steps** | **2** | 0.0072 | 0.625 | **0.327** | 1.009 |
 
-Depth helps (0.230 → 0.327) but plateaus. Rewrite accuracy is stuck at 0.625 for
-every 3B configuration: three of the eight targets never flip, at any depth. At
-7B the same eight targets all flip. That is a capacity difference, not a
-placement one.
+Depth helps generalisation (0.230 → 0.327) but plateaus at eight targets.
+
+**A matched run corrects the reading.** With the same three targets and 42
+rephrasings as the 7B experiment, 3B reaches almost the same numbers:
+
+| model | edits | mean rel.Δ | rewrite | rephrase | WikiText-2 |
+|---|---|---|---|---|---|
+| Qwen2.5-3B, layer 34 | 3 | 0.0082 | **1.000** | **0.857** (36/42) | 1.0068 |
+| Qwen2.5-7B, layer 26 (int8) | 3 | 0.0043 | **1.000** | **0.929** (39/42) | 1.0070 |
+
+So the earlier 0.625 is a property of the eight-target sample — its last five
+items are harder — not a hard capacity ceiling. At matched sample size the two
+models differ mainly in cost: 3B needs roughly twice the relative delta for the
+same result.
 
 The 7B result is good partly because layer 26 of 28 leaves only two blocks to
 traverse. At 3B the same layer leaves ten, so a shorter solve under-delivers.

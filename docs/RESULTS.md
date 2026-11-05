@@ -97,10 +97,20 @@ The 7B settings do not transfer upward from below:
 | layer 32, lr 0.05, 30 steps | 4 | 0.0068 | 0.625 | 0.312 | 1.009 |
 | layer 34, lr 0.05, 30 steps | 2 | 0.0072 | 0.625 | 0.327 | 1.009 |
 
-Two effects separate cleanly. Depth helps generalisation: rephrase rises from
-0.230 to 0.327 as the edit moves closer to the output. But rewrite stays at
-0.625 in every configuration — three of eight targets never flip at 3B, while
-all eight flip at 7B. That part is capacity, not placement.
+Depth helps generalisation: rephrase rises from 0.230 to 0.327 as the edit
+moves closer to the output.
+
+**A matched three-target run revises the capacity claim.** With exactly the
+settings used for 7B (3 targets, 15 rephrasings each, 30 steps, lr 0.05):
+
+| model | rel.Δ | rewrite | rephrase | WikiText-2 |
+|---|---|---|---|---|
+| Qwen2.5-3B | 0.0082 | **1.000** | **0.857** (36/42) | 1.0068 |
+| Qwen2.5-7B | 0.0043 | **1.000** | **0.929** (39/42) | 1.0070 |
+
+The 0.625 figure belongs to the eight-target sample, whose later items are
+harder; it is not a blanket ceiling. At matched sample size 3B is slightly
+behind on rephrase and about 2× more expensive per edit.
 
 ## R5 · Long-form at 1.5B
 
