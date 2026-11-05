@@ -75,6 +75,19 @@ Four edits at this scale exceed the 0.10 cumulative budget. The gradient-free
 solver is the limiting factor: it needs a large alpha at 7B, and the damage
 scales with it.
 
+## R9 · Equal-budget LoRA baseline
+
+Same layer (20/24), same three prompts, same targets, same 30 steps.
+Qwen2.5-0.5B, float32.
+
+| method | rewrite | rephrase | WikiText-2 | MMLU (n=8) |
+|---|---|---|---|---|
+| rank-1, 30 steps | 1.000 | 0.976 | **1.044** | 0.500 → 0.625 |
+| LoRA rank 8, 30 steps | 1.000 | **1.000** | **1.441** | 0.500 → **0.250** |
+
+LoRA wins on expressiveness and loses on collateral damage. It trains 46,080
+parameters with no projection and no budget; the rank-one edit has both.
+
 ## R8 · Llama-3.1-8B, the literal ceiling
 
 | configuration | rel.Δ | rewrite | rephrase | WikiText-2 | peak |

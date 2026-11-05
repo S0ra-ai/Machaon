@@ -16,6 +16,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - `--lr` and `--quantize int4` on the benchmark script.
 - Llama-3.1-8B (8.03B) evaluated at both int8 and int4; documented the
   efficacy/damage trade-off at the memory boundary.
+- Equal-budget LoRA baseline (`examples/lora_baseline.py`): rank-8 reaches
+  1.000/1.000 but costs 44% perplexity and 25 MMLU points, against 1.000/0.976
+  for 4% with the rank-one edit.
 - Matched 3B/7B comparison (3 targets, 42 rephrasings): 3B 1.000/0.857 vs 7B
   1.000/0.929, correcting the earlier "capacity ceiling" reading.
 - 3B depth sweep (layers 26/32/34): rephrase 0.230 → 0.327 as the edit moves

@@ -229,6 +229,26 @@ budget forces a choice between efficacy and damage.
 
 `--quantize int4` needs `ninja` on PATH for quanto's unpack kernel.
 
+## Why not just fine-tune?
+
+`examples/lora_baseline.py` trains a rank-8 adapter on the same layer, the same
+three prompts, the same target tokens and the same 30 gradient steps as the
+rank-one solve. Qwen2.5-0.5B, float32:
+
+| method | rewrite | rephrase | WikiText-2 | MMLU (n=8) |
+|---|---|---|---|---|
+| rank-1 closed form, 30 steps | 1.000 | 0.976 (41/42) | **1.044** | 0.500 → 0.625 |
+| LoRA rank 8, 30 steps | 1.000 | **1.000** | **1.441** | 0.500 → **0.250** |
+
+LoRA is more expressive: it drives held-out rephrasings to 1.000. It also spends
+46,080 unconstrained parameters and takes the model with it — 44% perplexity and
+a 25-point MMLU drop. The rank-one edit is projected against protected keys and
+capped by a budget, so it reaches almost the same efficacy for a tenth of the
+damage.
+
+Caveats: one model, three edits, one learning rate (1e-3, not swept), MMLU n=8.
+The direction of the result is clear; the magnitude is not precise.
+
 ## Cumulative damage
 
 `examples/budget_sweep.py` applies edits one at a time and measures held-out

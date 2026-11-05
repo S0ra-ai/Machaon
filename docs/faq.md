@@ -12,9 +12,11 @@ weight orientations are handled. Real-checkpoint evidence currently stops at
 GPT-2 124M; 0.5B and up are the next rungs.
 
 **Why not just use LoRA?**
-LoRA requires a training loop and produces an adapter you must ship. This
-produces a delta you can inspect, diff, and roll back — and it can tell you what
-it did *not* change.
+Measured, at equal steps and the same layer: a rank-8 adapter reaches
+rewrite 1.000 / rephrase 1.000 but costs 44% perplexity and 25 MMLU points; the
+rank-one edit reaches 1.000 / 0.976 for 4% perplexity and no measurable loss.
+LoRA is more expressive; it is also unconstrained. See
+[R9](RESULTS.md#r9-equal-budget-lora-baseline).
 
 **Can I edit a 70B model?**
 Not with this design. Reading one tensor at a time is fine, but the value solve
