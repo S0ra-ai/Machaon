@@ -25,6 +25,22 @@ low_rank_scale(delta, rank, scale=1.0) -> delta_r
 
 ヘルパー：`nullspace_basis(preserve)`、`project_complement(k, Q)`、`nullspace_projector(preserve)`、`relative_norm(delta, W)`、`clamp_rel_norm(delta, W, max_rel_norm)`。
 
+## 契約合成 · `machaon.contract`
+
+```python
+from machaon import synthesize_contract
+
+result = synthesize_contract(
+    W, k, v, candidates, max_rel_norm=0.02,
+    weights=None,                  # 任意の優先度
+)
+result.delta                       # 正確な更新
+result.selected; result.rejected   # 保護済み / 明示的に未保護の key
+result.relative_norm; result.target_error
+```
+
+貪欲な admission は、正確な更新が予算内に収まる限り候補 key を追加します。返る更新は目標を正確に満たし、`selected` の各 key で正確に不変です。`rejected` は明示されるため、部分保護を完全保護として扱いません。無保護更新でも予算を超える場合は `BudgetExceeded` を送出します。
+
 ## 検証 · `machaon.verify`
 
 ```python

@@ -25,6 +25,22 @@ low_rank_scale(delta, rank, scale=1.0) -> delta_r
 
 헬퍼: `nullspace_basis(preserve)`, `project_complement(k, Q)`, `nullspace_projector(preserve)`, `relative_norm(delta, W)`, `clamp_rel_norm(delta, W, max_rel_norm)`.
 
+## 계약 합성 · `machaon.contract`
+
+```python
+from machaon import synthesize_contract
+
+result = synthesize_contract(
+    W, k, v, candidates, max_rel_norm=0.02,
+    weights=None,                  # 선택적 우선순위
+)
+result.delta                       # 정확한 업데이트
+result.selected; result.rejected   # 보호됨 / 명시적으로 미보호된 key
+result.relative_norm; result.target_error
+```
+
+탐욕적 admission은 정확한 업데이트가 예산 안에 있는 동안 후보 key를 추가합니다. 반환된 업데이트는 목표를 정확히 만족하고 `selected`의 각 key에서 정확히 불변입니다. `rejected`는 명시되므로 부분 보호를 전체 보호로 오인하지 않습니다. 무보호 업데이트조차 예산을 넘으면 `BudgetExceeded`를 발생시킵니다.
+
 ## 검증 · `machaon.verify`
 
 ```python

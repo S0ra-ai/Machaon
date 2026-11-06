@@ -4,6 +4,22 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.2] - 2026-11-06
+
+### Added
+
+- `machaon.contract.synthesize_contract`: budget-aware protected-set synthesis.
+  It admits the largest auditable subset under a relative-norm budget, keeps
+  the target and every admitted key exact, and returns rejected keys explicitly.
+- Six contract tests covering full admission, partial coverage, budget refusal,
+  weighted priorities and invalid inputs.
+- API documentation and translated notes for contract synthesis.
+
+### Changed
+
+- README, maths docs and API reference now distinguish budget clamping from
+  budget-aware coverage.
+
 ## [0.3.1] - 2026-11-06
 
 ### Added

@@ -7,6 +7,7 @@ Hugging Face are optional adapters.
 """
 from __future__ import annotations
 
+from .contract import ContractSolution, synthesize_contract
 from .linalg import (
     ablate_input,
     ablate_output,
@@ -23,7 +24,7 @@ from .linalg import (
 from .schema import Constraints, EditSpec, Target
 from .transaction import Transaction, Workspace
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 __all__ = [
     "rank1",
@@ -37,6 +38,8 @@ __all__ = [
     "project_complement",
     "clamp_rel_norm",
     "relative_norm",
+    "ContractSolution",
+    "synthesize_contract",
     "EditSpec",
     "Target",
     "Constraints",

@@ -88,6 +88,16 @@ Empirical starting points:
 | behavioural, `o_proj` | 0.05 – 0.15 |
 | ablation | not clamped; measure KL instead |
 
+## 6. Budget-aware coverage
+
+When the full protected set exceeds the budget, Machaon can certify a subset
+instead of clamping the whole update. Starting from the unprotected
+rank-one edit, `machaon.contract.synthesize_contract` greedily admits candidate
+keys while the exact update stays within `max_rel_norm`. The returned update is
+exact for the target and every admitted key; the rejected keys are returned
+explicitly. This preserves the target, unlike clamping, at the cost of partial
+coverage.
+
 ## Diagnostics and recovery
 
 | symptom | cause | fix |

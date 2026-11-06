@@ -32,6 +32,26 @@ Helpers: `nullspace_basis(preserve)`, `project_complement(k, Q)`,
 from machaon import rank1_constrained, nullspace_basis, project_complement
 ```
 
+## Contract synthesis · `machaon.contract`
+
+```python
+from machaon import synthesize_contract
+
+result = synthesize_contract(
+    W, k, v, candidates, max_rel_norm=0.02,
+    weights=None,                  # optional priorities
+)
+result.delta                       # exact update
+result.selected; result.rejected   # admitted / reported-unprotected keys
+result.relative_norm; result.target_error
+```
+
+The greedy admission rule adds candidate keys while the exact update stays
+inside the budget. Every returned update satisfies the target exactly and is
+exactly invariant on every key in `selected`. Rejected keys are never silently
+described as protected. If even the unprotected update exceeds the budget,
+`BudgetExceeded` is raised.
+
 ## Verification · `machaon.verify`
 
 ```python

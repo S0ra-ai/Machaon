@@ -25,6 +25,22 @@ low_rank_scale(delta, rank, scale=1.0) -> delta_r
 
 辅助函数：`nullspace_basis(preserve)`、`project_complement(k, Q)`、`nullspace_projector(preserve)`、`relative_norm(delta, W)`、`clamp_rel_norm(delta, W, max_rel_norm)`。
 
+## 契约合成 · `machaon.contract`
+
+```python
+from machaon import synthesize_contract
+
+result = synthesize_contract(
+    W, k, v, candidates, max_rel_norm=0.02,
+    weights=None,                  # 可选优先级
+)
+result.delta                       # 精确更新
+result.selected; result.rejected   # 已保护 / 明确未保护的 key
+result.relative_norm; result.target_error
+```
+
+贪心准入在精确更新仍满足预算时加入候选 key。返回的更新精确满足目标，并对 `selected` 中每个 key 精确不变；`rejected` 会明确列出，不会把部分覆盖说成完全保护。若连无保护更新都超预算，会抛出 `BudgetExceeded`。
+
 ## 验证 · `machaon.verify`
 
 ```python

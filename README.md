@@ -12,8 +12,8 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-204-2ea44f)
-![coverage](https://img.shields.io/badge/coverage-81%25-2ea44f)
+![tests](https://img.shields.io/badge/tests-210-2ea44f)
+![coverage](https://img.shields.io/badge/coverage-82%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
 [Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md) · [中文](https://s0ra-ai.github.io/Machaon/zh/) · [日本語](https://s0ra-ai.github.io/Machaon/ja/) · [한국어](https://s0ra-ai.github.io/Machaon/ko/)
@@ -282,6 +282,8 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 - **A weight-editing runtime** with derivable guarantees and post-hoc checks.
 - **A transaction layer** — every edit is reversible, recorded and budgeted.
+- **Budget-aware contract synthesis** — admit the protected keys that fit and
+  report the ones that do not, without giving up target exactness.
 - **An evaluation harness** with fail-closed gates and provenance-tracked
   benchmarks.
 - **A format implementation** — byte-identical with the OpenWSP v1 edit format.
@@ -315,7 +317,7 @@ Every user-visible claim in this repository has a check behind it.
 |---|---|
 | `lint` | ruff over the package, tests, examples and scripts |
 | `test` (3.9–3.13) | the suite, demo, CLI entry points and fail-closed gate |
-| `extras` | safetensors, HF runtime, evaluation and **81% branch coverage** |
+| `extras` | safetensors, HF runtime, evaluation and **82% branch coverage** |
 | `mcp` | a real stdio client calls the real server |
 | `docs` | `mkdocs build --strict`, English / Chinese / Japanese / Korean |
 | `package` | sdist and wheel build, install into a clean venv and run |
@@ -354,6 +356,7 @@ Every example is runnable, and every measured number links to its command.
 ```
 machaon/
 ├─ linalg.py            rank-1, null-space, ablation, injection
+├─ contract.py          budget-aware protected-set synthesis
 ├─ schema.py            edit DSL, mandatory intent
 ├─ transaction.py       apply / commit / bit-exact rollback
 ├─ store.py             content-addressed deltas, verified reads
