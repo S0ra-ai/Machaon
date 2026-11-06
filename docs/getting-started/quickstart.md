@@ -12,12 +12,13 @@ python -m machaon.cli demo
 op                         rel.delta   target err   preserve drift probe drift p95
 ----------------------------------------------------------------------------------
 rank1 (naive)                 0.0509     1.60e-16         8.71e-02          0.0902
-constrained (no cap)          0.0730     2.02e-16         3.82e-16          0.1394
-constrained (capped)          0.0200     2.84e-01         2.52e-16          0.0382
+constrained (no cap)          0.0730     2.02e-16         3.11e-16          0.1394
+constrained (capped)          0.0200     2.84e-01         8.55e-17          0.0382
 ```
 
 Read the third column. The naive edit moves the protected keys by 8.7e-2; the
-constrained edit leaves them at 3.8e-16.
+constrained edit leaves them at 3.1e-16. The last digit can move at the 1e-16
+level across BLAS implementations.
 
 ## 2 · Edit a matrix you own
 
@@ -81,4 +82,4 @@ PASS (5 gates)
 
 - [Edit a fact](../guides/edit-a-fact.md) — the full procedure, step by step.
 - [Evaluate an edit](../guides/evaluate.md) — gates, KL, benchmark panels.
-- [The maths](../MATH.md) — derivations and failure modes.
+- [The maths](../MATH.md) — derivations, diagnostics and the operating envelope.

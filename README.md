@@ -12,8 +12,8 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-202-2ea44f)
-![coverage](https://img.shields.io/badge/coverage-80%25-2ea44f)
+![tests](https://img.shields.io/badge/tests-204-2ea44f)
+![coverage](https://img.shields.io/badge/coverage-81%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
 [Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md) · [中文](https://s0ra-ai.github.io/Machaon/zh/) · [日本語](https://s0ra-ai.github.io/Machaon/ja/) · [한국어](https://s0ra-ai.github.io/Machaon/ko/)
@@ -34,18 +34,18 @@ content-addressed artefact that can be diffed, replayed and rolled back.
 
 ## Why Machaon
 
-Three problems show up the moment you start editing weights by hand:
+Weight editing becomes dependable when locality, reversibility and evaluation
+are part of the edit itself:
 
-1. **Locality is unmeasurable.** A rank-one edit makes the target prompt work
-   and quietly moves everything else. Machaon's null-space projection makes the
-   protected keys provably unchanged, and `verify` checks it after the fact —
-   including on edits written by other tools.
-2. **Nothing is reversible.** Most workflows overwrite a checkpoint. Here every
-   edit runs inside a transaction; a failed gate restores the original bytes
-   exactly.
-3. **Evaluation is an afterthought.** Machaon ships a fail-closed gate suite and
-   benchmark loaders with recorded provenance. A missing metric is a failure,
-   not a pass.
+1. **Locality is a declared contract.** A rank-one edit can make the target
+   prompt work while moving neighbours. Machaon's null-space projection makes
+   the declared protected keys exactly invariant, and `verify` checks the claim
+   afterwards — including on edits written by other tools.
+2. **Every edit is reversible.** Each edit runs inside a transaction; a failed
+   gate restores the original bytes exactly.
+3. **Evaluation is part of acceptance.** Machaon ships a fail-closed gate suite
+   and benchmark loaders with recorded provenance. A missing metric is a
+   rejection, not a pass.
 
 | guarantee | how it is enforced | checked by |
 |---|---|---|
@@ -53,6 +53,14 @@ Three problems show up the moment you start editing weights by hand:
 | a rejected edit is undone exactly | originals copied before applying | `transaction.rollback` |
 | an unmeasured edit is rejected | missing metrics count as failures | `hygieia.evaluate` |
 | an edit is reproducible | delta is content-addressed | `store.DeltaStore` |
+
+The contract is portable: the same delta can be audited, replayed, exported in
+OpenWSP v1, and applied through a Python API, CLI, or MCP tool.
+
+The null-space projection follows [AlphaEdit](https://arxiv.org/abs/2410.02355)
+and the earlier Adam-NSCL construction. Machaon's contribution is the
+transaction, the executable acceptance contract, and the reproducible system
+around that projection.
 
 ## Install
 
@@ -125,13 +133,15 @@ python -m machaon.cli demo
 op                         rel.delta   target err   preserve drift probe drift p95
 ----------------------------------------------------------------------------------
 rank1 (naive)                 0.0509     1.60e-16         8.71e-02          0.0902
-constrained (no cap)          0.0730     2.02e-16         3.82e-16          0.1394
-constrained (capped)          0.0200     2.84e-01         2.52e-16          0.0382
+constrained (no cap)          0.0730     2.02e-16         3.11e-16          0.1394
+constrained (capped)          0.0200     2.84e-01         8.55e-17          0.0382
 ```
 
-The naive edit lands the target and moves everything else by 8.7e-2. The
-constrained edit leaves the protected keys at **3.8e-16** — and when the budget
-is enforced it stops early instead of pretending it finished.
+The naive edit lands the target and moves the protected neighbourhood by 8.7e-2.
+The constrained edit leaves the protected keys at **3.1e-16**; when the budget
+is enforced it stops at the requested spend and reports the resulting target
+error. The last digits vary at the 1e-16 level across BLAS implementations; the
+seed and the conclusion are fixed.
 
 ```bash
 python examples/tiny_edit.py        # no download, no GPU
@@ -167,7 +177,7 @@ Rephrase denominators: 513 for GPT-2 through 3B, 42 for 7B, 20 for 8B.
 Bigger models are cheaper to edit: the same task needs a fifth of the relative
 delta at 3B compared with 0.5B, and costs 0.2% perplexity instead of 3%.
 
-### Cumulative damage
+### Cumulative cost
 
 | edits | cumulative Δ | WikiText-2 perplexity |
 |---|---|---|
@@ -215,6 +225,29 @@ No judge model, no extra download. `examples/longform_check.py`.
 Full protocol, licences and configuration:
 [`docs/reference/benchmarks.md`](docs/reference/benchmarks.md).
 
+## Reproduce a result
+
+The offline path needs no model download:
+
+```bash
+python -m machaon.cli demo
+python examples/tiny_edit.py
+```
+
+The real-model path records dataset provenance before it runs:
+
+```bash
+python scripts/fetch_benchmarks.py
+
+HF_HUB_OFFLINE=1 python examples/bench_edits.py \
+  --model gpt2 --layer 8 --edits 8 --dtype float32 --solver gradient
+```
+
+Every benchmark row in this README is generated by a command in
+[`examples/`](examples/README.md), with the full dataset, model and solver
+configuration in [`docs/RESULTS.md`](docs/RESULTS.md). `make ci` runs the
+offline test suite, demo, spec validation and both gate outcomes.
+
 ## How it works
 
 ```
@@ -260,14 +293,19 @@ applied, and a LoRA adapter gives a like-for-like baseline
 
 ## Supported models
 
-`model.layers` families (Llama, Mistral, Qwen2/3, Gemma, Phi-3),
-`transformer.h` (GPT-2), `gpt_neox.layers`, `model.decoder.layers` (OPT) and
-`transformer.blocks` (MPT). Weight orientation is normalised, so the maths
-always sees `(d_out, d_in)`.
+| family | layer path | evidence |
+|---|---|---|
+| GPT-2 / GPT-J | `transformer.h` | GPT-2 124M measured end to end |
+| Llama 3.x | `model.layers` | Llama-3.1-8B measured in int4 and int8 |
+| Qwen 2.5 | `model.layers` | 0.5B, 1.5B, 3B and 7B measured end to end |
+| Mistral, Gemma, Phi-3 | `model.layers` | same edit path; config-level CI |
+| GPT-NeoX / Pythia | `gpt_neox.layers` | same edit path; config-level CI |
+| OPT | `model.decoder.layers` | same edit path; config-level CI |
+| MPT | `transformer.blocks` | same edit path; config-level CI |
 
-Verified end to end on GPT-2 124M and Qwen2.5 0.5B / 1.5B / 3B / 7B, plus
-Llama-3.1-8B. CI instantiates six families from tiny configs and runs the same
-edit path on each.
+Weight orientation is normalised, so the maths always sees `(d_out, d_in)`.
+Adding a decoder family means adding a layer path and a test, not changing the
+edit primitive.
 
 ## Quality bar
 
@@ -277,7 +315,7 @@ Every user-visible claim in this repository has a check behind it.
 |---|---|
 | `lint` | ruff over the package, tests, examples and scripts |
 | `test` (3.9–3.13) | the suite, demo, CLI entry points and fail-closed gate |
-| `extras` | safetensors, HF runtime, evaluation and **80% branch coverage** |
+| `extras` | safetensors, HF runtime, evaluation and **81% branch coverage** |
 | `mcp` | a real stdio client calls the real server |
 | `docs` | `mkdocs build --strict`, English / Chinese / Japanese / Korean |
 | `package` | sdist and wheel build, install into a clean venv and run |
@@ -307,6 +345,9 @@ The same documentation ships in four languages:
 | [Results](docs/RESULTS.md) | every measured run, with its configuration |
 | [How Machaon fits](docs/comparison.md) | fine-tuning, LoRA, mergekit, steering and this |
 | [Related work](docs/RELATED_WORK.md) | where the idea comes from and what it adds |
+
+The examples are indexed by task in [`examples/README.md`](examples/README.md).
+Every example is runnable, and every measured number links to its command.
 
 ## Repository layout
 
@@ -341,6 +382,16 @@ git switch -c codex/my-change
 make install
 make ci
 ```
+
+## Community
+
+- **Questions and design discussion:** [GitHub Discussions](https://github.com/S0ra-ai/Machaon/discussions)
+- **Bugs and guarantees:** [open an issue](https://github.com/S0ra-ai/Machaon/issues) with the smallest reproduction
+- **Security:** report privately through the process in [`SECURITY.md`](SECURITY.md)
+- **Changes:** keep one idea per pull request; include the command and output that proves it
+
+The repository is designed to be hackable in an afternoon: the core is NumPy,
+the model adapters are optional, and the offline test suite runs without a GPU.
 
 ## Licence
 

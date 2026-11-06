@@ -2,7 +2,7 @@
 
 This is the one idea the project is built on.
 
-## The problem
+## The single-constraint update
 
 A rank-one edit that maps key `k` to value `v` is the minimum-norm solution to a
 single constraint:
@@ -11,10 +11,10 @@ single constraint:
 ΔW = (v − W k) kᵀ / (kᵀ k)
 ```
 
-It is exact for `k` and says nothing about any other input. In practice it moves
-neighbouring keys enough to damage them.
+It is exact for `k` and leaves every other input unconstrained. The next
+section adds the second constraint that makes the update dependable.
 
-## The fix
+## The constrained construction
 
 Let `K = [k₁ … kₙ]ᵀ` be keys you refuse to change, and `Q` an orthonormal basis of
 `span(K)`. Define the projector `P = I − Q Qᵀ` and write the edit along the
@@ -46,25 +46,22 @@ k_perp = project_complement(k, Q)      # k - Q Qᵀ k, O(d_in · r)
 At `d_in = 4096` with `r = 32`, that is 0.5 MB of basis instead of a 128 MB
 dense matrix.
 
-## When it fails
+## Feasibility boundary
 
 **The target key lies in the protected subspace.** Then `k⊥ ≈ 0` and no edit can
-satisfy both constraints. Machaon raises rather than silently degrading:
+satisfy both constraints. Machaon detects the boundary before writing:
 
 ```
 ValueError: target key lies in the preserved subspace: the edit cannot be made
 without changing protected behaviour
 ```
 
-This is a signal, not a bug: either shrink the protected set or pick a different
-key.
+This is a useful signal: shrink the protected set or pick a different key.
 
-## Scope of the guarantee
+## What is certified
 
 The guarantee is **first-order and exact on the protected set**: `ΔW kᵢ = 0`
 holds to machine precision for the vectors you supply. Nearby inputs are
-preserved to first order, and the post-hoc checks measure the remainder:
-[`verify`](../reference/api.md) on the keys, KL on unrelated prompts.
-
-Treat this as a scalpel with a known blade width, not as a proof that nothing
-else moved.
+preserved to first order; the post-hoc checks quantify the remainder with
+[`verify`](../reference/api.md) on the keys and KL on unrelated prompts. The
+certificate and the measured remainder together define the operating envelope.

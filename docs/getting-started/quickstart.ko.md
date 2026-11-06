@@ -12,8 +12,8 @@ python -m machaon.cli demo
 op                         rel.delta   target err   preserve drift probe drift p95
 ----------------------------------------------------------------------------------
 rank1 (naive)                 0.0509     1.60e-16         8.71e-02          0.0902
-constrained (no cap)          0.0730     2.02e-16         3.82e-16          0.1394
-constrained (capped)          0.0200     2.84e-01         2.52e-16          0.0382
+constrained (no cap)          0.0730     2.02e-16         3.11e-16          0.1394
+constrained (capped)          0.0200     2.84e-01         8.55e-17          0.0382
 ```
 
 세 번째 열을 보세요. 순진한 편집은 보호 key를 8.7e-2 움직이고, 제약된 편집은 3.8e-16에 머뭅니다.
@@ -79,4 +79,4 @@ PASS (5 gates)
 
 - [사실 편집하기](../guides/edit-a-fact.md) —— 전체 절차를 단계별로.
 - [편집 평가하기](../guides/evaluate.md) —— 게이트, KL, 벤치마크.
-- [수학 원리](../MATH.md) —— 유도와 실패 모드.
+- [수학 원리](../MATH.md) —— 유도, 진단, 적용 범위.

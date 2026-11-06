@@ -2,7 +2,7 @@
 
 ## 事务
 
-一次无法撤销的编辑不是编辑，是一次部署。
+不可回滚的变更是一次部署；Machaon 让编辑保持可逆。
 
 ```python
 ws = Workspace()
@@ -31,7 +31,7 @@ txn.commit(verdict)
 | `kl_p95` | ≤ 0.05 | 无关 prompt 上的分布漂移 |
 | `kl_max` | ≤ 0.50 | 没有单个灾难性离群点 |
 | `mmlu_delta` | ≥ −0.01 | 能力保持 |
-| `ppl_ratio` | ≤ 1.02 | 没有全局损伤 |
+| `ppl_ratio` | ≤ 1.02 | 全局变化有界 |
 | `longform_contradictions` | = 0 | 长文本生成保持连贯 |
 
 ## 失败关闭

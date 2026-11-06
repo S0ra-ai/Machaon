@@ -11,6 +11,7 @@ whole loop.
 | [MEMIT](https://arxiv.org/abs/2210.07229) | batch editing thousands of facts |
 | [MEND](https://arxiv.org/abs/2110.11309) | hypernetwork that predicts edits |
 | [SERAC](https://arxiv.org/abs/2206.06520) | external memory instead of weights |
+| [AlphaEdit](https://arxiv.org/abs/2410.02355) | null-space projection of preserved knowledge; the projection used by Machaon, wrapped here in a transaction and acceptance contract |
 | [Survey](https://arxiv.org/abs/2310.19704) | best entry point to the literature |
 | [EasyEdit](https://github.com/zjunlp/EasyEdit) | the closest existing framework (2.9k★), batch-script oriented |
 
@@ -21,7 +22,7 @@ whole loop.
 | [Model Surgery](https://arxiv.org/abs/2407.08770) | very few parameters change behaviour |
 | [SCALPEL](https://arxiv.org/abs/2601.07411) | low-rank parameter editing for capability ablation |
 | [ThinkEdit](https://arxiv.org/abs/2503.22048) | weight edits change reasoning length |
-| [Resisting Harmful Instructions through Training-Free Weight Editing](https://arxiv.org/abs/2610.21189) | proof this is practical — and dangerous |
+| [Resisting Harmful Instructions through Training-Free Weight Editing](https://arxiv.org/abs/2610.21189) | evidence that this is practical and dual-use |
 | [TARS](https://arxiv.org/abs/2412.10257) | targeted angular reversal for knowledge removal |
 
 ## Representation and activation editing
@@ -59,7 +60,7 @@ whole loop.
 1. [Revisiting Parameter-Based Knowledge Editing: Theoretical Limits and Empirical Evidence](https://arxiv.org/abs/2606.00570) —
    argues parameter editing has fundamental ceilings.
 2. [Long-form evaluation of model editing](https://arxiv.org/abs/2402.09394) —
-   edits that pass short QA collapse in long generation.
+   why short-answer success and long-generation coherence are separate checks.
 
 Both are load-bearing for the gate design in `machaon.hygieia`.
 

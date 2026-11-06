@@ -12,8 +12,8 @@ python -m machaon.cli demo
 op                         rel.delta   target err   preserve drift probe drift p95
 ----------------------------------------------------------------------------------
 rank1 (naive)                 0.0509     1.60e-16         8.71e-02          0.0902
-constrained (no cap)          0.0730     2.02e-16         3.82e-16          0.1394
-constrained (capped)          0.0200     2.84e-01         2.52e-16          0.0382
+constrained (no cap)          0.0730     2.02e-16         3.11e-16          0.1394
+constrained (capped)          0.0200     2.84e-01         8.55e-17          0.0382
 ```
 
 3 列目を見てください。素朴な編集は保護 key を 8.7e-2 動かし、制約付き編集は 3.8e-16 に留めます。
@@ -79,4 +79,4 @@ PASS (5 gates)
 
 - [事実を編集する](../guides/edit-a-fact.md) —— 手順を一つずつ。
 - [編集を評価する](../guides/evaluate.md) —— ゲート、KL、ベンチマーク。
-- [数学的原理](../MATH.md) —— 導出と失敗モード。
+- [数学的原理](../MATH.md) —— 導出、診断、適用範囲。

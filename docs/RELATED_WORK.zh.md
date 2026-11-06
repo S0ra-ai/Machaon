@@ -10,6 +10,7 @@
 | [MEMIT](https://arxiv.org/abs/2210.07229) | 批量编辑数千事实 |
 | [MEND](https://arxiv.org/abs/2110.11309) | 预测编辑的超网络 |
 | [SERAC](https://arxiv.org/abs/2206.06520) | 用外部记忆代替权重 |
+| [AlphaEdit](https://arxiv.org/abs/2410.02355) | 对保留知识做零空间投影；Machaon 沿用该投影，并在外层提供事务与验收契约 |
 | [Survey](https://arxiv.org/abs/2310.19704) | 进入文献的最佳入口 |
 | [EasyEdit](https://github.com/zjunlp/EasyEdit) | 最接近的现有框架（2.9k★），面向批处理脚本 |
 
@@ -20,7 +21,7 @@
 | [Model Surgery](https://arxiv.org/abs/2407.08770) | 极少量参数即可改变行为 |
 | [SCALPEL](https://arxiv.org/abs/2601.07411) | 用于能力消融的低秩参数编辑 |
 | [ThinkEdit](https://arxiv.org/abs/2503.22048) | 权重编辑改变推理长度 |
-| [Resisting Harmful Instructions through Training-Free Weight Editing](https://arxiv.org/abs/2610.21189) | 证明这件事既实用又危险 |
+| [Resisting Harmful Instructions through Training-Free Weight Editing](https://arxiv.org/abs/2610.21189) | 说明这项能力既实用又具有双用途属性 |
 | [TARS](https://arxiv.org/abs/2412.10257) | 定向角度反转，用于知识移除 |
 
 ## 表示与激活编辑

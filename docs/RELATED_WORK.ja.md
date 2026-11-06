@@ -10,6 +10,7 @@
 | [MEMIT](https://arxiv.org/abs/2210.07229) | 数千の事実をバッチ編集 |
 | [MEND](https://arxiv.org/abs/2110.11309) | 編集を予測するハイパーネットワーク |
 | [SERAC](https://arxiv.org/abs/2206.06520) | 重みではなく外部メモリ |
+| [AlphaEdit](https://arxiv.org/abs/2410.02355) | 保持知識への零空間投影。Machaon はこの投影をトランザクションと受入契約で包む |
 | [Survey](https://arxiv.org/abs/2310.19704) | 文献への最良の入口 |
 | [EasyEdit](https://github.com/zjunlp/EasyEdit) | 最も近い既存フレームワーク（2.9k★）。バッチスクリプト志向 |
 
@@ -20,7 +21,7 @@
 | [Model Surgery](https://arxiv.org/abs/2407.08770) | ごく少数のパラメータで振る舞いが変わる |
 | [SCALPEL](https://arxiv.org/abs/2601.07411) | 能力アブレーションのための低ランクパラメータ編集 |
 | [ThinkEdit](https://arxiv.org/abs/2503.22048) | 重み編集が推論長を変える |
-| [Resisting Harmful Instructions through Training-Free Weight Editing](https://arxiv.org/abs/2610.21189) | 実用的であること、そして危険であることの証拠 |
+| [Resisting Harmful Instructions through Training-Free Weight Editing](https://arxiv.org/abs/2610.21189) | 実用的で dual-use でもあることの証拠 |
 | [TARS](https://arxiv.org/abs/2412.10257) | 知識除去のための標的角度反転 |
 
 ## 表現・活性化編集

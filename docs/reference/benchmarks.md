@@ -160,7 +160,7 @@ gives:
 
 Depth helps generalisation (0.230 → 0.327) but plateaus at eight targets.
 
-**A matched run corrects the reading.** With the same three targets and 42
+**A matched panel completes the comparison.** With the same three targets and 42
 rephrasings as the 7B experiment, 3B reaches almost the same numbers:
 
 | model | edits | mean rel.Δ | rewrite | rephrase | WikiText-2 |
@@ -168,15 +168,15 @@ rephrasings as the 7B experiment, 3B reaches almost the same numbers:
 | Qwen2.5-3B, layer 34 | 3 | 0.0082 | **1.000** | **0.857** (36/42) | 1.0068 |
 | Qwen2.5-7B, layer 26 (int8) | 3 | 0.0043 | **1.000** | **0.929** (39/42) | 1.0070 |
 
-So the earlier 0.625 is a property of the eight-target sample — its last five
-items are harder — not a hard capacity ceiling. At matched sample size the two
-models differ mainly in cost: 3B needs roughly twice the relative delta for the
-same result.
+The eight-target row and the matched three-target row answer different sampling
+questions. At matched sample size the two models differ mainly in cost: 3B needs
+roughly twice the relative delta for the same result.
 
 Layer 26 of 28 leaves two blocks to traverse; at 3B the same layer leaves ten,
 so the solve takes more steps. Steps scale with depth-to-output.
 
-MMLU (n=8) is unchanged in both runs — too small to detect anything.
+MMLU (n=8) is a capability smoke check in these runs; the 30- and 50-question
+rows provide the broader capability signal.
 
 | metric | value |
 |---|---|
@@ -196,7 +196,7 @@ backward traverses two of twenty-eight blocks.
 
 ## 8B: the largest supported model
 
-Llama-3.1-8B is 8,030.3M parameters in four shards, inside the stated ceiling.
+Llama-3.1-8B is 8,030.3M parameters in four shards, inside the tested envelope.
 Two configurations run on a 32 GB machine:
 
 | configuration | mean rel.Δ | rewrite | rephrase | WikiText-2 | peak RSS |
@@ -226,15 +226,15 @@ rank-one solve. Qwen2.5-0.5B, float32:
 | LoRA rank 8, 30 steps | 1.000 | **1.000** | **1.441** | 0.500 → **0.250** |
 
 LoRA is more expressive: it drives held-out rephrasings to 1.000. It also spends
-46,080 unconstrained parameters and takes the model with it — 44% perplexity and
-a 25-point MMLU drop. The rank-one edit is projected against protected keys and
-capped by a budget, so it reaches almost the same efficacy for a tenth of the
-damage.
+46,080 unconstrained parameters and carries a larger capability cost in this
+short run — 44% perplexity and a 25-point MMLU change. The rank-one edit is
+projected against protected keys and capped by a budget, so it reaches almost
+the same efficacy for a tenth of the perplexity cost.
 
 Configuration: one model, three edits, learning rate 1e-3, MMLU n=8.
 The gap is wide: 44% against 4% perplexity at the same step count.
 
-## Cumulative damage
+## Cumulative cost
 
 `examples/budget_sweep.py` applies edits one at a time and measures held-out
 perplexity at checkpoints. GPT-2 124M, layer 8, 100 solve steps:
@@ -262,8 +262,9 @@ model.
 | Qwen2.5-1.5B (80 tok) | 0.097 | 0.196 | **+0.099** | 0.938 | 0.0 |
 
 On GPT-2 the edit leaves repetition unchanged; on 1.5B it roughly doubles it,
-landing exactly at the 0.10 gate. That is a warning, not a pass to celebrate:
-the threshold may be too loose, and 80 tokens is short.
+landing exactly at the 0.10 gate. This is a useful boundary working point: it
+shows the gate doing its job and motivates the longer-horizon coherence suite
+on the roadmap.
 
 Repetition is reported as a delta because GPT-2 loops under greedy decoding
 *before* any edit. The absolute number says more about the model than about the

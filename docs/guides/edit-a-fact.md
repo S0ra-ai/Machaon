@@ -88,7 +88,7 @@ delta      : rel 0.0153
 PASS (5 gates)
 ```
 
-## Failure modes
+## Diagnostics
 
 | symptom | cause | fix |
 |---|---|---|

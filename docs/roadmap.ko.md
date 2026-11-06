@@ -14,7 +14,7 @@
 - [x] 단일 함수 ROME procedure
 - [x] provenance가 있는 벤치마크 로더(zsRE, WikiText-2, MMLU)
 - [x] 편집되지 않은 모델로 채점하는 장문 일관성 스위트
-- [x] 실측 손상 곡선이 있는 누적 편집 예산
+- [x] 실측 비용 곡선이 있는 누적 편집 예산
 - [x] Qwen2.5 0.5B, 1.5B, 3B, 7B 단계
 - [x] Llama-3.1-8B의 int8과 int4
 - [x] 메모리 효율 그래디언트 풀이(`densify_from`)

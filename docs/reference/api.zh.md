@@ -160,7 +160,7 @@ repeated_ngram_rate(text, n=4) -> float
 longform_report(pristine, edited, prompts, max_new_tokens=128, n=4) -> dict
 ```
 
-报告 `longform_repetition`、`baseline_repetition`、`longform_repetition_delta`、`longform_nll_ratio`、`longform_empty_rate` 和样本。连贯性由**未编辑**模型评分：base model 觉得意外的文本就是损伤证据。
+报告 `longform_repetition`、`baseline_repetition`、`longform_repetition_delta`、`longform_nll_ratio`、`longform_empty_rate` 和样本。连贯性由**未编辑**模型评分：base model 觉得意外的文本就是变化证据。
 
 ## 内存 · `machaon.memory`
 
