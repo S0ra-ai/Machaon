@@ -1,4 +1,4 @@
-# The maths, and how it fails
+# The maths and its operating envelope
 
 ## 1. Rank-one editing (ROME)
 
@@ -12,8 +12,8 @@ constraint is rank one:
 
 Check: `ΔW k = (v − Wk)(kᵀk)/(kᵀk) = v − Wk`, so `W′ k = v`. ∎
 
-This is exact for the key and says **nothing** about any other input. That is
-why naive ROME edits damage neighbours.
+This is exact for the key and leaves every other input unconstrained. That is
+why naive ROME edits can move neighbours.
 
 ## 2. Null-space constrained editing
 
@@ -53,8 +53,8 @@ W′ = (I − d dᵀ) W
 
 Applied to every matrix that writes into the residual stream, this removes a
 behaviour (a refusal direction, a style direction) without any data. One line,
-zero gradients. This is also why the capability is dangerous — see the safety
-note below.
+zero gradients. This is also why the capability is dual-use — see the safety
+controls below.
 
 ## 4. Direction injection
 
@@ -88,7 +88,7 @@ Empirical starting points:
 | behavioural, `o_proj` | 0.05 – 0.15 |
 | ablation | not clamped; measure KL instead |
 
-## How it fails
+## Diagnostics and recovery
 
 | symptom | cause | fix |
 |---|---|---|
@@ -97,21 +97,25 @@ Empirical starting points:
 | capability drops | layer too central | move 2–4 layers earlier |
 | unrelated prompts drift | no null-space constraint | add a protected key set |
 | nothing changes in bf16 | delta lost to rounding | compute in float64, merge back after |
-| cumulative edits collapse the model | deltas accumulate | cap `Σ‖ΔWᵢ‖/‖W‖` at ~0.1, then recompute |
+| cumulative edits drift the model | deltas accumulate | cap `Σ‖ΔWᵢ‖/‖W‖` at ~0.1, then recompute |
 
-## Where the guarantees stop
+## Operating envelope
 
-Everything above is **first-order and local**. `ΔW kᵢ = 0` holds for the exact
-vectors in your protected set; nearby inputs are only approximately preserved.
-Non-linearities downstream amplify small errors. More complex function changes
-are the job of low-rank, directional or multi-edit compositions.
+The construction gives an exact certificate for the vectors in the protected
+set and an exact target at the edited key. Broader locality is measured on
+held-out probes, neutral prompts, perplexity and task accuracy. This division
+is useful: it separates what the contract proves from what the evaluation
+quantifies. Low-rank, directional and multi-edit compositions extend the same
+pattern to larger function changes.
 
-Treat these formulas as a scalpel with a known blade width, not as a proof that
-nothing else moved. That is what the gates are for.
+The budget, the protected-set rank and the gate suite make the operating
+envelope explicit, so a deployment can choose the working point that matches
+its risk tolerance.
 
-## Safety
+## Safety controls
 
-Direction ablation can remove safety alignment in a single line. Any deployment
-of this library should keep an append-only audit log of every edit, refuse
-edits whose intent is to remove refusal behaviour, and never overwrite a
-checkpoint in place.
+Direction ablation can remove safety alignment in a single line. Machaon
+therefore ships declared intent, pre-acceptance refusal rules, an append-only
+audit record, a cumulative budget and a fail-closed gate suite. Deployments
+should keep the audit log, review edits that target refusal behaviour, and
+write to a new checkpoint rather than overwriting the source.

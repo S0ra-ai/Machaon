@@ -2,7 +2,7 @@
 
 ## Transactions
 
-An edit that cannot be undone is not an edit; it is a deployment.
+An edit without rollback is a deployment; Machaon keeps edits reversible.
 
 ```python
 ws = Workspace()
@@ -35,7 +35,7 @@ Gates are how an edit earns the right to be committed.
 | `kl_p95` | ≤ 0.05 | distribution drift on unrelated prompts |
 | `kl_max` | ≤ 0.50 | no single catastrophic outlier |
 | `mmlu_delta` | ≥ −0.01 | capability preserved |
-| `ppl_ratio` | ≤ 1.02 | no global damage |
+| `ppl_ratio` | ≤ 1.02 | bounded global change |
 | `longform_contradictions` | = 0 | long generation stays coherent |
 
 ## Fail closed

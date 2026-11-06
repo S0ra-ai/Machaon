@@ -2,7 +2,7 @@
 
 ## 트랜잭션
 
-되돌릴 수 없는 편집은 편집이 아니라 배포입니다.
+롤백 없는 변경은 배포입니다. Machaon은 편집을 가역적으로 유지합니다.
 
 ```python
 ws = Workspace()
@@ -31,7 +31,7 @@ txn.commit(verdict)
 | `kl_p95` | ≤ 0.05 | 무관한 prompt의 분포 드리프트 |
 | `kl_max` | ≤ 0.50 | 단일 치명적 이상치 없음 |
 | `mmlu_delta` | ≥ −0.01 | 능력 보존 |
-| `ppl_ratio` | ≤ 1.02 | 전역 손상 없음 |
+| `ppl_ratio` | ≤ 1.02 | 전역 변화가 유계 |
 | `longform_contradictions` | = 0 | 장문 생성 일관성 |
 
 ## 페일 클로즈

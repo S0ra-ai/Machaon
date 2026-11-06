@@ -10,6 +10,7 @@
 | [MEMIT](https://arxiv.org/abs/2210.07229) | 수천 사실 배치 편집 |
 | [MEND](https://arxiv.org/abs/2110.11309) | 편집을 예측하는 하이퍼네트워크 |
 | [SERAC](https://arxiv.org/abs/2206.06520) | 가중치 대신 외부 메모리 |
+| [AlphaEdit](https://arxiv.org/abs/2410.02355) | 보존 지식에 대한 영공간 투영. Machaon은 이 투영을 트랜잭션과 수락 계약으로 감쌉니다 |
 | [Survey](https://arxiv.org/abs/2310.19704) | 문헌 최고의 입구 |
 | [EasyEdit](https://github.com/zjunlp/EasyEdit) | 가장 가까운 기존 프레임워크(2.9k★). 배치 스크립트 지향 |
 
@@ -20,7 +21,7 @@
 | [Model Surgery](https://arxiv.org/abs/2407.08770) | 아주 적은 파라미터로 행동이 바뀜 |
 | [SCALPEL](https://arxiv.org/abs/2601.07411) | 능력 절제를 위한 저랭크 파라미터 편집 |
 | [ThinkEdit](https://arxiv.org/abs/2503.22048) | 가중치 편집이 추론 길이를 바꿈 |
-| [Resisting Harmful Instructions through Training-Free Weight Editing](https://arxiv.org/abs/2610.21189) | 실용적이며 동시에 위험하다는 증거 |
+| [Resisting Harmful Instructions through Training-Free Weight Editing](https://arxiv.org/abs/2610.21189) | 실용적이며 이중 용도이기도 하다는 증거 |
 | [TARS](https://arxiv.org/abs/2412.10257) | 지식 제거를 위한 표적 각도 반전 |
 
 ## 표현·활성화 편집

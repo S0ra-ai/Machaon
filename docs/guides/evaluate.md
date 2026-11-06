@@ -33,7 +33,7 @@ verdict = judge(before, after, suite)         # apply the default gates
 | `kl_max` | worst single neutral prompt |
 | `ppl_ratio` | `exp(mean NLL_after − mean NLL_before)` on held-out text |
 
-KL is reported by quantile, not mean: one damaged prompt matters more than a
+KL is reported by quantile, not mean: one outlier prompt matters more than a
 hundred untouched ones.
 
 ## Benchmark panels

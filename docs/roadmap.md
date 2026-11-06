@@ -16,7 +16,7 @@ ship. Every completed item has a test or a measured run behind it.
 - [x] ROME procedure as a single function
 - [x] Benchmark loaders with provenance (zsRE, WikiText-2, MMLU)
 - [x] Long-form coherence suite, scored by the unedited model
-- [x] Cumulative-edit budget with a measured damage curve
+- [x] Cumulative-edit budget with a measured cost curve
 - [x] Qwen2.5 0.5B, 1.5B, 3B and 7B rungs
 - [x] Llama-3.1-8B at both int8 and int4
 - [x] Memory-efficient gradient solver (`densify_from`)

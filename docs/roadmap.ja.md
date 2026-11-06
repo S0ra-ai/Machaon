@@ -14,7 +14,7 @@
 - [x] 単一関数の ROME procedure
 - [x] provenance 付きベンチマークローダー（zsRE、WikiText-2、MMLU）
 - [x] 未編集モデルで採点する長文一貫性スイート
-- [x] 実測ダメージ曲線付き累積編集予算
+- [x] 実測コスト曲線付き累積編集予算
 - [x] Qwen2.5 0.5B、1.5B、3B、7B の各段
 - [x] Llama-3.1-8B の int8 と int4
 - [x] メモリ効率の良い勾配求解（`densify_from`）

@@ -46,8 +46,9 @@ One damaged prompt matters more than a hundred untouched ones. The mean hides it
 
 **Why target injection instead of fixing wrong answers?**
 Because Qwen2.5-0.5B answers 299 of 300 zsRE first tokens correctly. A protocol
-that only edits items the model gets wrong has almost no headroom on stronger
-models. Injection works at both ends.
+that only edits items the model gets wrong leaves little measurement headroom
+on stronger models. Injection keeps the panel informative at both ends of the
+scale range.
 
 **Why float32 instead of bf16?**
 On CPU, PyTorch's bf16 backward is pathologically slow: 4.66 s/step versus
@@ -65,9 +66,9 @@ ModelScope, or set `HF_ENDPOINT=https://hf-mirror.com`. The fetch script also
 verifies safetensors headers after transfer.
 
 **Why is repetition reported relative to baseline?**
-Because GPT-2 loops under greedy decoding before you touch it. An absolute
-threshold would fail the unedited model too, which tells you nothing about the
-edit.
+Because GPT-2 loops under greedy decoding before any edit is applied. The
+relative measure isolates the change produced by the edit from the base
+model's decoding behaviour.
 
 **How many edits can I stack?**
 Measure it. On GPT-2, 32 rank-one edits (cumulative Δ 0.255) cost 19%

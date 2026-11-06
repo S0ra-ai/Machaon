@@ -4,6 +4,33 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] - 2026-11-06
+
+### Added
+
+- `examples/README.md`: a task-oriented index of every runnable example, with
+  the exact command and the measurement each one produces.
+- A support-matrix table in the README that separates measured checkpoints from
+  config-level architecture coverage.
+- A community section that points questions, bugs, security reports and changes
+  at the right channel.
+
+### Changed
+
+- README and concept pages now describe locality, reversibility and acceptance
+  as positive operating properties, with the measured envelope stated directly.
+- The quickstart demo output is synchronized with the current deterministic run;
+  the README notes the 1e-16 BLAS variation instead of hiding it.
+- Benchmark prose separates sample-size effects from capacity effects and
+  labels small MMLU panels as smoke checks.
+
+### Fixed
+
+- Enabled GitHub Discussions for the support link already advertised by the
+  issue-template configuration.
+- Refreshed the demo drift values across the English, Chinese, Japanese and
+  Korean quickstarts.
+
 ## [0.3.0] - 2026-11-06
 
 ### Added

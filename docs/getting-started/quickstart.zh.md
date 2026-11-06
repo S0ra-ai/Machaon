@@ -12,8 +12,8 @@ python -m machaon.cli demo
 op                         rel.delta   target err   preserve drift probe drift p95
 ----------------------------------------------------------------------------------
 rank1 (naive)                 0.0509     1.60e-16         8.71e-02          0.0902
-constrained (no cap)          0.0730     2.02e-16         3.82e-16          0.1394
-constrained (capped)          0.0200     2.84e-01         2.52e-16          0.0382
+constrained (no cap)          0.0730     2.02e-16         3.11e-16          0.1394
+constrained (capped)          0.0200     2.84e-01         8.55e-17          0.0382
 ```
 
 看第三列。朴素编辑把受保护 key 移动了 8.7e-2；受约束编辑把它们留在 3.8e-16。
@@ -79,4 +79,4 @@ PASS (5 gates)
 
 - [编辑一个事实](../guides/edit-a-fact.md) —— 完整流程，逐步拆解。
 - [评估一次编辑](../guides/evaluate.md) —— 验收门、KL、基准面板。
-- [数学原理](../MATH.md) —— 推导与失效模式。
+- [数学原理](../MATH.md) —— 推导、诊断与适用范围。

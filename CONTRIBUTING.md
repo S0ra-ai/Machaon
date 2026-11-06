@@ -48,7 +48,7 @@ that runs the runtime, adapter and evaluation tests with torch installed.
 ## Ground rules
 
 - **No silent failure.** New acceptance checks must fail closed: a missing
-  measurement is a failure, not a pass.
+  measurement rejects the edit.
 - **No unverifiable claims.** If the README says something is implemented,
   there is a test that fails when it is removed.
 - **Edits are recorded as data.** Prefer a declarative spec over a Python call

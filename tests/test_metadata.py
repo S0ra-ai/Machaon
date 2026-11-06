@@ -124,5 +124,26 @@ class TestTranslations(unittest.TestCase):
             self.assertRegex(mkdocs, r"locale: %s\b" % locale)
 
 
+class TestExamplesIndex(unittest.TestCase):
+    """The example index stays a complete map of runnable entry points."""
+
+    def test_every_example_is_listed(self):
+        directory = os.path.join(ROOT, "examples")
+        names = sorted(
+            name for name in os.listdir(directory)
+            if name.endswith(".py") and not name.startswith("_")
+        )
+        index = read("examples", "README.md")
+        for name in names:
+            self.assertIn("`%s`" % name, index, name)
+
+    def test_index_names_a_command_for_every_example(self):
+        index = read("examples", "README.md")
+        self.assertIn("examples/tiny_edit.py", index)
+        self.assertIn("examples/bench_edits.py", index)
+        self.assertIn("examples/file_edit.py", index)
+        self.assertIn("examples/lora_baseline.py", index)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -43,10 +43,9 @@ Torch appears only in `runtime/` and `adapters/`, at the boundary.
 
 ## Why transactions rather than in-place edits
 
-An edit that cannot be undone is not an edit; it is a deployment. `Transaction`
-copies the original bytes before applying, so `rollback()` restores them
-exactly. `commit(verdict)` refuses when the verdict did not pass, which makes the
-default fail-closed.
+Rollback is part of the edit. `Transaction` copies the original bytes before
+applying, so `rollback()` restores them exactly. `commit(verdict)` refuses when
+the verdict did not pass, which makes the default fail-closed.
 
 ## Why the gates fail closed
 

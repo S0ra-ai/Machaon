@@ -39,7 +39,7 @@ Torch 只出现在 `runtime/` 和 `adapters/` 的边界。
 
 ## 为什么用事务而不是原地编辑
 
-一次无法撤销的编辑不是编辑，是一次部署。`Transaction` 在应用前复制原始字节，因此 `rollback()` 精确还原。`commit(verdict)` 在 verdict 未通过时拒绝提交，使默认行为是失败关闭。
+回滚是编辑的一部分。`Transaction` 在应用前复制原始字节，因此 `rollback()` 精确还原。`commit(verdict)` 在 verdict 未通过时拒绝提交，使默认行为是失败关闭。
 
 ## 验收门为什么失败关闭
 

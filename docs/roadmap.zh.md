@@ -14,7 +14,7 @@
 - [x] 单函数 ROME procedure
 - [x] 带 provenance 的基准加载器（zsRE、WikiText-2、MMLU）
 - [x] 长文本连贯性套件，由未编辑模型评分
-- [x] 带实测损伤曲线的累计编辑预算
+- [x] 带实测成本曲线的累计编辑预算
 - [x] Qwen2.5 0.5B、1.5B、3B、7B 各级
 - [x] Llama-3.1-8B 的 int8 与 int4 两条路径
 - [x] 内存友好的梯度求解（`densify_from`）

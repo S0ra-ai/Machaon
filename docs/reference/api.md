@@ -182,7 +182,7 @@ longform_report(pristine, edited, prompts, max_new_tokens=128, n=4) -> dict
 Reports `longform_repetition`, `baseline_repetition`,
 `longform_repetition_delta`, `longform_nll_ratio`, `longform_empty_rate`, plus
 the samples. Coherence is scored by the **unedited** model: text the base model
-finds surprising is evidence of damage.
+  finds surprising is evidence of change.
 
 Repetition is compared as a delta, not absolutely — GPT-2 loops under greedy
 decoding before any edit.

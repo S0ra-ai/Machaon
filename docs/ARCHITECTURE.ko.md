@@ -39,7 +39,7 @@ Torch는 `runtime/`과 `adapters/` 경계에만 나타납니다.
 
 ## 왜 인플레이스가 아니라 트랜잭션인가
 
-되돌릴 수 없는 편집은 편집이 아니라 배포입니다. `Transaction`은 적용 전 원본 바이트를 복사하므로 `rollback()`이 정확히 복원합니다. `commit(verdict)`는 verdict가 통과하지 못하면 거부해 기본을 페일 클로즈로 만듭니다.
+롤백은 편집의 일부입니다. `Transaction`은 적용 전 원본 바이트를 복사하므로 `rollback()`이 정확히 복원합니다. `commit(verdict)`는 verdict가 통과하지 못하면 거부해 기본을 페일 클로즈로 만듭니다.
 
 ## 게이트가 페일 클로즈인 이유
 
