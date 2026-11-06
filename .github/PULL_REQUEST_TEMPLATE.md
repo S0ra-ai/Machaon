@@ -13,9 +13,9 @@
 ```
 ```
 
-## What this does *not* claim
+## Scope and evidence
 
-<!-- the honest boundary; leave empty only if there is genuinely none -->
+<!-- what is now true, which files prove it, and where the measured claim ends -->
 
 ## Checklist
 
@@ -23,3 +23,4 @@
 - [ ] new behaviour has a test that fails when the behaviour is removed
 - [ ] no new mandatory dependency in the core (NumPy is the floor)
 - [ ] README or docs updated if a user-visible claim changed
+- [ ] a benchmark or reproduction command accompanies every new number

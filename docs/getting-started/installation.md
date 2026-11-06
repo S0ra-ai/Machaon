@@ -4,10 +4,11 @@
 
 | | |
 |---|---|
-| Python | 3.9, 3.11 or 3.12 |
+| Python | 3.9, 3.10, 3.11, 3.12 or 3.13 |
 | Core | NumPy only |
-| Real models | PyTorch + transformers |
+| Real models | PyTorch + transformers + safetensors |
 | Benchmarks | pyarrow |
+| MCP server | `mcp` SDK, Python 3.10+ |
 
 ## Install
 
@@ -20,8 +21,10 @@ uv venv && uv pip install -e ".[dev]"
 Extras:
 
 ```bash
-uv pip install -e ".[hf]"      # torch + transformers
+uv pip install -e ".[hf]"      # torch + transformers + safetensors
 uv pip install -e ".[bench]"   # pyarrow, for MMLU / WikiText loaders
+uv pip install -e ".[mcp]"     # MCP SDK, Python 3.10+
+uv pip install -e ".[dev,docs]"  # tests, lint, coverage, docs site
 ```
 
 ## Verify
@@ -36,7 +39,7 @@ lint. It needs no network and no GPU.
 Expected tail:
 
 ```
-Ran 107 tests ...
+Ran 202 tests ...
 ALL CHECKS PASSED
 ```
 

@@ -4,7 +4,45 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0] - 2026-11-06
+
+### Added
+
+- `machaon doctor` (human and `--json`), `python -m machaon`, `--json` on
+  `inspect`, and a `machaon-mcp` console script.
+- Python 3.13 in the test matrix, a branch-coverage job at a 78% floor with
+  **80% measured**, a real MCP stdio job, a wheel/sdist build-and-install job,
+  CodeQL, Dependabot, `pre-commit`, `CODEOWNERS` and `SUPPORT.md`.
+- `mkdocs-static-i18n` as a declared docs dependency, translated navigation and
+  complete Chinese, Japanese and Korean editions of every documentation page.
+- `docs/comparison.md`: where Machaon sits relative to fine-tuning, LoRA,
+  ROME/MEMIT, mergekit, pruning and activation steering.
+- Delta-store integrity checks: reads verify the SHA-256 address by default,
+  writes publish atomically, and `StoreCorrupted` distinguishes corruption
+  from a missing file.
+- Tests for CLI exit codes, `python -m machaon`, store corruption, non-finite
+  inputs, version consistency, packaging metadata and documentation tone.
+
+### Changed
+
+- `Session.open` honours `float32`, `float16`, `bfloat16` and `auto`, and
+  supports an explicit device. Budget is checked before the write and recorded
+  only after it succeeds.
+- The 3B benchmark row now reports the measured layer-34 run (rephrase 0.327),
+  consistent with `docs/RESULTS.md` and the README.
+- Documentation describes capabilities first; scope is stated as a design
+  boundary with the adjacent tool named.
+
+### Fixed
+
+- The docs workflow now installs the i18n plugin it configures, so
+  `mkdocs build --strict` succeeds instead of failing on an unknown plugin.
+- The `mcp` extra carries a Python 3.10+ environment marker; `.[mcp]` resolves
+  on Python 3.9 without pulling an incompatible SDK.
+- CI now runs the MCP smoke test it advertises, and exercises the CLI entry
+  points in the package job.
+- The 202-test suite is green on Python 3.9 and 3.12; lint passes on
+  `machaon`, `tests`, `examples` and `scripts`.
 
 ## [0.2.0] - 2026-11-04
 

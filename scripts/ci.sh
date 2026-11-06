@@ -6,6 +6,10 @@ cd "$(dirname "$0")/.."
 echo "== tests =="
 python3 -m unittest discover -s tests
 
+echo "== entry points =="
+python3 -m machaon --version
+python3 -m machaon doctor > /dev/null && echo "doctor ok"
+
 echo "== demo =="
 python3 -m machaon.cli demo > /dev/null && echo "demo ok"
 
@@ -30,7 +34,7 @@ fi
 
 if command -v ruff > /dev/null 2>&1; then
   echo "== lint =="
-  ruff check machaon tests examples
+  ruff check machaon tests examples scripts
 else
   echo "== lint skipped (ruff not installed) =="
 fi

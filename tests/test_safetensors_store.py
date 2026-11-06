@@ -95,6 +95,16 @@ class TestSingleFile(unittest.TestCase):
                 {"model.layers.0.mlp.down_proj.weight": np.zeros((2, 2))},
                 self.dir / "x")
 
+    def test_write_refuses_to_overwrite_the_source(self):
+        ckpt = Checkpoint(self.path)
+        with self.assertRaises(ValueError):
+            ckpt.write_with(
+                {"model.layers.0.mlp.down_proj.weight": np.zeros_like(self.w)},
+                self.dir)
+        with self.assertRaises(ValueError):
+            ckpt.write_tensor(
+                "model.layers.0.mlp.down_proj.weight", self.w, self.dir)
+
     def test_bfloat16_roundtrip(self):
         path = self.dir / "bf16.safetensors"
         bf = torch.randn(8, 6, dtype=torch.bfloat16)

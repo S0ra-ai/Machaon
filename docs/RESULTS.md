@@ -47,7 +47,7 @@ All six paraphrases were prompts where the base model *already* answered
 - **Model**: GPT-2 124M, layer 8, `mlp.c_proj`.
 - **Solve**: 250 steps over a single 768-dimensional value vector; model weights
   are never optimised.
-- **Gates**: rewrite, paraphrase, KL p95, KL max and perplexity ratio — six
+- **Gates**: rewrite, paraphrase, KL p95, KL max and perplexity ratio — five
   checks, all passing.
 - **Prompts**: one rewrite, six paraphrases the base model already answers the
   same way, eight unrelated prompts, two held-out documents.
@@ -74,7 +74,7 @@ and perplexity from 1.260 to 1.007.
 The 0.10 cumulative budget is charged at commit, so a sequence of edits stops at
 the configured spend and a rollback costs nothing.
 
-## R9 · Equal-budget LoRA baseline
+## R9 · Equal-budget LoRA baseline {#r9-equal-budget-lora-baseline}
 
 Same layer (20/24), same three prompts, same targets, same 30 steps.
 Qwen2.5-0.5B, float32.
@@ -205,7 +205,7 @@ Datasets, licences and full protocol: [`reference/benchmarks.md`](reference/benc
 | Qwen layer 12, one edit | rel. Δ 0.150 |
 | Qwen layer 20, same edit | rel. Δ **0.0043** |
 
-## R1 · Things that broke on the way, and are now fixed
+## Engineering notes
 
 | problem | fix |
 |---|---|

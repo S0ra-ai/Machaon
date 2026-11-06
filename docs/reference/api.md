@@ -141,8 +141,8 @@ speak `(d_out, d_in)`, including for `transformers.Conv1D` modules that store
 | Llama / Mistral / Qwen2 / Qwen3 / Gemma / Phi-3 | `model.layers` | `mlp.down_proj` | `(out, in)` |
 
 Tested in CI with tiny configs for GPT-2, Llama, Mistral, Gemma, Qwen3 and
-Phi-3. Real checkpoints exercised: GPT-2 124M and Qwen2.5 0.5B / 1.5B / 3B /
-7B (7B at the checkpoint level only).
+Phi-3. Real checkpoints exercised: GPT-2 124M, Qwen2.5 0.5B / 1.5B / 3B / 7B
+(7B at both checkpoint and evaluation level) and Llama-3.1-8B.
 
 ## Procedures · `machaon.procedures`
 

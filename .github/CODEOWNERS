@@ -1,0 +1,6 @@
+# Every change to the public surface needs a maintainer review.
+* @S0ra-ai
+
+/machaon/interop/ @S0ra-ai
+/machaon/linalg.py @S0ra-ai
+/SECURITY.md @S0ra-ai

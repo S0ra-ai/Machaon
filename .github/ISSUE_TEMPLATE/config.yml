@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Related work
-    url: https://github.com/S0ra-ai/Machaon/blob/main/docs/RELATED_WORK.md
-    about: Read this before proposing something that already exists.
+  - name: Questions and design discussion
+    url: https://github.com/S0ra-ai/Machaon/discussions
+    about: Ask how to edit a model, compare protocols, or propose a new direction.
+  - name: Documentation
+    url: https://s0ra-ai.github.io/Machaon/
+    about: Installation, quickstart, API, benchmarks and the MCP server.

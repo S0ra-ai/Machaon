@@ -63,12 +63,13 @@ Same protocol, same 8 edits, same evaluator.
 | GPT-2 124M | 124M | 8 / 12 | 0.0135 | 0.500 | 0.259 | 1.066 | 0.220 → 0.220 (n=100) |
 | Qwen2.5-0.5B | 494M | 20 / 24 | 0.0133 | 0.375 | 0.275 | 1.030 | 0.440 → 0.440 (n=50) |
 | Qwen2.5-1.5B | 1544M | 20 / 28 | **0.0065** | 0.500 | 0.273 | **1.005** | 0.400 → 0.400 (n=50) |
-| Qwen2.5-3B | 3086M | 26 / 36 | **0.0052** | 0.625 | 0.230 | **1.002** | 0.500 → 0.500 (n=30) |
+| Qwen2.5-3B | 3086M | 34 / 36 | 0.0072 | 0.625 | **0.327** | 1.009 | 0.500 → 0.500 (n=30) |
 
-The 1.5B run used 100 solve steps, the 3B run 80. The trend is what matters:
-from 0.5B to 3B the same injection costs **a fifth of the relative delta** and
-**eighteen times less perplexity**. The 3B checkpoint is sharded (2 files); the
-run loads through `AutoModelForCausalLM` and edits one `down_proj` per layer.
+The 1.5B run used 100 solve steps; the 3B run uses 30 steps at layer 34. The
+trend is what matters: from 0.5B to 3B the same injection roughly **halves the
+relative delta** and cuts perplexity cost from 3.0% to 0.9%. The 3B checkpoint
+is sharded (2 files); the run loads through `AutoModelForCausalLM` and edits one
+`down_proj` per layer.
 
 ### File-level writes at 1.5B
 

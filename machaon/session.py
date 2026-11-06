@@ -57,10 +57,24 @@ class Session:
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
         tokenizer = AutoTokenizer.from_pretrained(model_path)
-        kwargs = {} if dtype == "auto" else {"dtype": torch.float32}
-        if device is not None:
-            kwargs["device_map"] = device
+        dtypes = {
+            "auto": None,
+            "float32": torch.float32,
+            "float16": torch.float16,
+            "bfloat16": torch.bfloat16,
+        }
+        if dtype not in dtypes:
+            raise ValueError(
+                "dtype must be one of %s" % ", ".join(sorted(dtypes))
+            )
+        kwargs = {}
+        if dtypes[dtype] is not None:
+            kwargs["torch_dtype"] = dtypes[dtype]
+        if device == "auto":
+            kwargs["device_map"] = "auto"
         model = AutoModelForCausalLM.from_pretrained(model_path, **kwargs).eval()
+        if device is not None and device != "auto":
+            model = model.to(device)
         return cls(HFModel(model, tokenizer), model_path, budget)
 
     # -- state ----------------------------------------------------------
@@ -119,12 +133,21 @@ class Session:
         name = proposal.module
 
         if name not in self._originals:
-            self.budget.register(name, self.runtime.read(name))
-            self._originals[name] = self.runtime.read(name)
-        self.budget.add([(name, proposal.delta)])
-
+            original = self.runtime.read(name)
+            self.budget.register(name, original)
+            self._originals[name] = original
+        # Check before writing, record after the write succeeds: a failed
+        # write must not consume budget, and a charged edit must be visible.
+        self.budget.check([(name, proposal.delta)])
         W = self.runtime.read(name)
         self.runtime.write(name, W + proposal.delta)
+        try:
+            self.budget.add([(name, proposal.delta)])
+        except Exception:
+            # The write already happened; put the bytes back before re-raising
+            # so a charged-budget invariant never breaks.
+            self.runtime.write(name, W)
+            raise
         self._pending = None
         return {
             "module": name,
@@ -135,13 +158,21 @@ class Session:
     def rollback(self) -> Dict[str, Any]:
         """Restore every edited tensor to its original bytes."""
         restored = []
-        for name, original in self._originals.items():
-            self.runtime.write(name, original)
+        failure: Optional[BaseException] = None
+        for name, original in list(self._originals.items()):
+            try:
+                self.runtime.write(name, original)
+            except BaseException as exc:
+                failure = exc
+                break
             restored.append(name)
-        self._originals.clear()
+            self._originals.pop(name, None)
         self._pending = None
-        self.budget = EditBudget(max_total=self.budget.max_total,
-                                 max_per_tensor=self.budget.max_per_tensor)
+        if not self._originals:
+            self.budget = EditBudget(max_total=self.budget.max_total,
+                                     max_per_tensor=self.budget.max_per_tensor)
+        if failure is not None:
+            raise failure
         return {"restored": sorted(restored)}
 
     # -- evaluation -----------------------------------------------------

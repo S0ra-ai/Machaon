@@ -160,6 +160,15 @@ class Checkpoint:
 
     # -- writes ---------------------------------------------------------
 
+    def _check_output(self, out_dir: str | Path) -> Path:
+        out = Path(out_dir).expanduser().resolve()
+        source_root = self.path if self.path.is_dir() else self.path.parent
+        if out == source_root:
+            raise ValueError(
+                "output directory would overwrite the source checkpoint: %s" % out
+            )
+        return out
+
     def write_tensor(self, name: str, values, out_dir: str | Path,
                      link_others: bool = True) -> Dict[str, Any]:
         """Rewrite only the shard that holds ``name``.
@@ -176,7 +185,7 @@ class Checkpoint:
             raise KeyError("unknown tensor: %s" % name)
 
         target = self._shard_for(name)
-        out = Path(out_dir)
+        out = self._check_output(out_dir)
         out.mkdir(parents=True, exist_ok=True)
 
         if self._weight_map is not None:
@@ -240,7 +249,7 @@ class Checkpoint:
         """
         import torch
 
-        out = Path(out_dir)
+        out = self._check_output(out_dir)
         out.mkdir(parents=True, exist_ok=True)
         known = set(self.names())
         unknown = [n for n in deltas if n not in known]

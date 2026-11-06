@@ -45,8 +45,8 @@ W = ckpt.read(name)                # float64, exact widening from bf16/fp16
 W = ckpt.read(name, dtype=None)    # keep the stored dtype
 ```
 
-Reads are lazy: one tensor at a time, so a 7B sharded checkpoint streams in
-fit in memory all at once.
+Reads are lazy: one tensor at a time, so a 7B sharded checkpoint streams without
+holding the whole checkpoint in memory.
 
 ## Write one tensor, one shard
 

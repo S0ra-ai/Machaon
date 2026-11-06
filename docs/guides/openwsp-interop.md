@@ -51,8 +51,9 @@ tests/test_openwsp_interop.py  payload_sha256 and edit_sha256 must match exactly
 
 If the upstream address changes, the test fails rather than silently drifting.
 
-## Limits
+## Trust model
 
-- The address commits to content, not to authorship or effect.
-- Import validates only the tensors listed in the manifest; unlisted tensors in
-  the base are not checked.
+- The address commits to **content**. Authorship and downstream effect are
+  separate claims, established by signatures and gates respectively.
+- Import validates every tensor listed in the manifest. Add the rest of the
+  checkpoint to `originals` when you want them inside the same audit.

@@ -1,10 +1,11 @@
-"""MCP stdio server exposing the file-level operations.
+"""MCP stdio server exposing file-level and model-level operations.
 
     python -m machaon.mcp_server
 
-The transport is deliberately thin: every tool calls a function in
-:mod:`machaon.tools`. Nothing here loads a model, so the server is cheap to run
-alongside an agent and safe to restart.
+The transport is deliberately thin.  File-level tools call plain functions in
+:mod:`machaon.tools` and never load a model.  Model-level tools operate on one
+explicitly opened :class:`machaon.session.Session`; nothing is written until
+``apply_edit`` is called.
 
 Requires the optional extra: ``pip install "machaon[mcp]"``.
 """
@@ -12,6 +13,8 @@ from __future__ import annotations
 
 import sys
 from typing import Any, Dict, List, Optional
+
+__all__ = ["create_server", "main"]
 
 
 def _server_class():

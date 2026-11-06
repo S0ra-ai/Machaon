@@ -271,12 +271,14 @@ class HFModel:
                 rows.extend(list(array))
             else:
                 raise ValueError("token ids must be 1-D or 2-D, got %r" % (array.shape,))
-        try:
-            return np.asarray(rows)
-        except ValueError as exc:
+        if not rows:
+            raise ValueError("no token ids to score")
+        lengths = {len(row) for row in rows}
+        if len(lengths) != 1:
             raise ValueError(
                 "token id rows have different lengths; pad them yourself or pass text"
-            ) from exc
+            )
+        return np.asarray(rows, dtype=np.int64)
 
     def next_logits(self, items: Sequence[Any]) -> np.ndarray:
         items = list(items)
@@ -315,6 +317,8 @@ class HFModel:
         import torch
 
         ids = torch.as_tensor(np.asarray(input_ids), dtype=torch.long, device=self.device)
+        if ids.ndim != 2 or ids.shape[1] < 2:
+            raise ValueError("NLL needs at least two tokens per row")
         mask = None
         if attention_mask is not None:
             mask = torch.as_tensor(

@@ -14,11 +14,11 @@ be reasoned about rather than hoped for.
 | level | what the agent chooses | what the maths does | status |
 |---|---|---|---|
 | L0 | which procedure, which layer | nothing yet | ✅ `procedures.rome` |
-| L1 | a Python function over tensors | executes it | planned |
+| L1 | a Python function over tensors | executes it | next |
 | L2 | a target key/value pair | rank-one solve | ✅ `rank1_constrained` |
 | L3 | an interpretable direction | ablation / injection | ✅ `ablate_*`, `bake_direction` |
 | L4 | a sparse set of scalars | literal assignment | via `Workspace` |
-| L5 | structure: prune, merge, rewire | out of scope | — |
+| L5 | structure: prune, merge, rewire | handled by merge/prune tools; their deltas audit cleanly here | interop |
 
 Most published work lives at L2 and L3. L0 is what turns an algorithm into a
 tool: the model decides *where* and *how much*, the maths decides *what*.
@@ -48,11 +48,12 @@ base model fails is not a generalisation test, it is noise.
 You must be able to undo it, exactly. Machaon copies the original bytes before
 applying; `rollback()` restores them bit for bit.
 
-## What an edit is not
+## What an edit is
 
-- Not a fine-tune. There is no optimiser over model parameters.
-- Not a prompt. It survives context changes, system prompts and restarts.
-- Not free. Every edit spends a budget: `‖ΔW‖_F / ‖W‖_F`.
+- A weight change. There is no optimiser over model parameters: the solve is
+  closed-form or a gradient over one value vector.
+- Persistent. It survives context changes, system prompts and restarts.
+- Measured. Every edit spends a budget: `‖ΔW‖_F / ‖W‖_F`.
 
 ## The budget
 

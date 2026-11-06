@@ -103,8 +103,8 @@ Empirical starting points:
 
 Everything above is **first-order and local**. `ΔW kᵢ = 0` holds for the exact
 vectors in your protected set; nearby inputs are only approximately preserved.
-Non-linearities downstream amplify small errors. And a rank-one edit cannot
-represent an arbitrary change of function.
+Non-linearities downstream amplify small errors. More complex function changes
+are the job of low-rank, directional or multi-edit compositions.
 
 Treat these formulas as a scalpel with a known blade width, not as a proof that
 nothing else moved. That is what the gates are for.

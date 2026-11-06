@@ -29,6 +29,8 @@ class Workspace:
         arr = np.array(weight, dtype=np.float64, copy=True)
         if arr.ndim != 2:
             raise ValueError("weight %r must be 2-D, got %r" % (name, arr.shape))
+        if not np.isfinite(arr).all():
+            raise ValueError("weight %r contains non-finite values" % (name,))
         self._w[name] = arr
         if self._budget is not None:
             self._budget.register(name, arr)
@@ -69,6 +71,8 @@ class Transaction:
                 "delta shape %r does not match weight %r shape %r"
                 % (delta.shape, name, original.shape)
             )
+        if not np.isfinite(delta).all():
+            raise ValueError("delta for %r contains non-finite values" % (name,))
         self._ws._w[name] = original + delta
         self._undo.append((name, original.copy()))
         self.deltas.append((name, delta))

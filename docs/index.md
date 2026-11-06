@@ -87,6 +87,10 @@ verdict.
 
 ## Status
 
-Alpha. The maths, transactions, storage, gates, runtime, safetensors adapter and
-OpenWSP format are implemented and tested (161 tests). Real-model evidence
-currently stops at GPT-2 124M. See the [roadmap](roadmap.md).
+Alpha with a measured core. The maths, transactions, storage, gates, runtime,
+safetensors adapter and OpenWSP format are implemented and tested on Python
+3.9–3.13. Real-model evidence covers GPT-2 124M, Qwen2.5 0.5B / 1.5B / 3B / 7B
+and Llama-3.1-8B; the 7B and 8B runs use int8/int4 weights with a densified
+local window. Six CI jobs cover lint, the test matrix, adapters and coverage,
+the MCP transport, the documentation build, and wheel/sdist installation. See
+the [roadmap](roadmap.md) for what is next.

@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 
 from machaon.schema import EditSpec
-from machaon.store import DeltaStore
+from machaon.store import DeltaStore, StoreCorrupted
 from machaon.telesphorus import diff, load, save
 from machaon.transaction import Workspace
 
@@ -23,6 +23,42 @@ class TestStore(unittest.TestCase):
             self.assertEqual(manifest["intent"], "unit test")
             self.assertEqual(store.put(delta, {"op": "rank1"}), sha)
             self.assertEqual(len(store.list()), 1)
+
+    def test_get_verifies_the_content_address(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = DeltaStore(tmp)
+            sha = store.put(np.eye(3), {"op": "rank1"})
+            path = store._path(sha)
+            with open(path, "r+b") as handle:
+                handle.seek(-1, os.SEEK_END)
+                handle.write(b"\x00")
+            with self.assertRaises(StoreCorrupted):
+                store.get(sha)
+
+    def test_invalid_address_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = DeltaStore(tmp)
+            with self.assertRaises(ValueError):
+                store.get("../../etc/passwd")
+            self.assertNotIn("../", store)
+            self.assertNotIn("not-a-sha", store)
+
+    def test_non_finite_delta_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = DeltaStore(tmp)
+            bad = np.zeros((2, 2))
+            bad[0, 0] = np.nan
+            with self.assertRaises(ValueError):
+                store.put(bad, {"op": "rank1"})
+
+    def test_missing_manifest_is_repaired_on_put(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = DeltaStore(tmp)
+            delta = np.eye(2)
+            sha = store.put(delta, {"op": "rank1"})
+            os.unlink(store._mpath(sha))
+            self.assertEqual(store.put(delta, {"op": "rank1"}), sha)
+            self.assertEqual(store.manifest(sha)["op"], "rank1")
 
 
 class TestSchema(unittest.TestCase):

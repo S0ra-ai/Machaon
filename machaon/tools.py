@@ -91,7 +91,9 @@ def apply_delta(base_path: str, tensor: str, delta_path: str, out_dir: str,
     """Apply one ``.npy`` delta to one tensor and write a new checkpoint."""
     checkpoint = _checkpoint(base_path)
     base = checkpoint.read(tensor)
-    delta = np.load(delta_path)
+    delta = np.load(delta_path, allow_pickle=False)
+    if not np.isfinite(delta).all():
+        raise ValueError("delta contains non-finite values")
     if delta.shape != base.shape:
         raise ValueError("delta shape %r does not match %r" % (delta.shape, base.shape))
 

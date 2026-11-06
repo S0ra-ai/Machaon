@@ -61,6 +61,7 @@ GATES = {
     "rewrite_acc": (">=", 0.99),
     "paraphrase_acc": (">=", 0.50),
     "kl_p95": ("<=", 0.50),
+    "kl_max": ("<=", 0.50),
     "ppl_ratio": ("<=", 1.05),
 }
 

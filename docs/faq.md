@@ -8,8 +8,9 @@ single value vector during a ROME solve.
 **Does it work on models other than GPT-2?**
 The runtime discovers layers for Llama/Qwen/Mistral/Gemma (`model.layers`),
 GPT-2/GPT-J (`transformer.h`), GPT-NeoX (`gpt_neox.layers`), OPT and MPT. Both
-weight orientations are handled. Real-checkpoint evidence currently stops at
-GPT-2 124M; 0.5B and up are the next rungs.
+weight orientations are handled. Real-checkpoint evidence covers GPT-2 124M,
+Qwen2.5 0.5B / 1.5B / 3B / 7B and Llama-3.1-8B, with the same benchmark panel
+at every rung.
 
 **Why not just use LoRA?**
 Measured, at equal steps and the same layer: a rank-8 adapter reaches
@@ -19,14 +20,17 @@ LoRA is more expressive; it is also unconstrained. See
 [R9](RESULTS.md#r9-equal-budget-lora-baseline).
 
 **Can I edit a 70B model?**
-Not with this design. Reading one tensor at a time is fine, but the value solve
-needs a forward pass and gradients through the remaining layers. The stated
-target is up to 8B.
+Machaon's measured range is through 8B, where int8/int4 weights plus a densified
+local window keep the solve inside 10.2 GB. Beyond that, checkpoint-level
+operations stream one tensor at a time, and the evaluation path scales with the
+memory you give it. The solver cost is the window after the edit, not the whole
+model.
 
 **Is a rank-one edit enough?**
 For one fact, often. For a behaviour, low-rank plus a direction (`bake_direction`
-or `ablate_output`) is usually better. For mass edits you want MEMIT-style batch
-solving, which is not implemented.
+or `ablate_output`) is usually better. For mass edits, MEMIT-style batch solving
+is the next primitive on the [roadmap](roadmap.md); today, compose per-fact
+edits under one `EditBudget`, or use a low-rank direction.
 
 **Why does my edit succeed but paraphrases fail?**
 The key was tied to one token sequence. Capture keys from several phrasings and

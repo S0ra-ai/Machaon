@@ -49,6 +49,21 @@ class TestTransaction(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             txn.apply("layer.0.down_proj", np.ones((8, 6)))
 
+    def test_non_finite_delta_is_rejected_before_mutation(self):
+        txn = self.ws.begin("test")
+        bad = np.zeros((8, 6))
+        bad[1, 2] = np.inf
+        with self.assertRaises(ValueError):
+            txn.apply("layer.0.down_proj", bad)
+        np.testing.assert_array_equal(
+            self.ws.weight("layer.0.down_proj"), self.original)
+
+    def test_non_finite_weight_is_rejected_at_registration(self):
+        bad = np.zeros((2, 2))
+        bad[0, 0] = np.nan
+        with self.assertRaises(ValueError):
+            self.ws.register("broken", bad)
+
 
 if __name__ == "__main__":
     unittest.main()

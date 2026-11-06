@@ -71,6 +71,14 @@ class TestRuntime(unittest.TestCase):
         self.assertEqual(nll.shape, (1,))
         self.assertGreater(nll[0], 0.0)
 
+    def test_ragged_token_ids_are_rejected(self):
+        with self.assertRaises(ValueError):
+            self.rt.next_logits([np.array([1, 2, 3]), np.array([4, 5])])
+
+    def test_nll_needs_a_real_prefix(self):
+        with self.assertRaises(ValueError):
+            self.rt.nll([np.array([[7]])])
+
     def test_capture_module_input(self):
         ids = np.array([[5, 9, 14, 22]])
         x = self.rt.capture_module_input("lm_head", ids)

@@ -37,7 +37,8 @@ Claude Desktop (`claude_desktop_config.json`):
 }
 ```
 
-The server speaks stdio and holds no model state, so it is cheap to restart.
+The file-level server speaks stdio and holds no model state, so it is cheap to
+restart. Model-level tools share one explicitly opened `Session`.
 
 ## Tools
 
@@ -84,13 +85,18 @@ Session tools return `{"error": "no model is open; call open_model first"}`
 instead of raising, so an agent sees the reason rather than a generic
 `Error executing tool`.
 
-## What it does not do
+## Design boundaries
 
-- It does not load a model, run a forward pass, or train anything.
-- It does not decide *where* to edit; that belongs to the agent or to a
-  procedure like `machaon.procedures.rome`.
-- It is not a sandbox. Paths are read and written with the server process's
-  permissions.
+- **File-level tools are header-first.** They inspect, audit and rewrite
+  checkpoints without loading a model into memory.
+- **Model-level tools are explicit.** `open_model` is the only expensive call;
+  `propose_edit` reports cost before `apply_edit` writes anything.
+- **The agent chooses the site.** Layer selection belongs to the agent or to a
+  procedure such as `machaon.procedures.rome`; the server enforces the
+  transaction and the budget.
+- **Paths use process permissions.** Run the server in the same trust boundary
+  as your shell, as described in
+  [SECURITY.md](https://github.com/S0ra-ai/Machaon/blob/main/SECURITY.md).
 
 ## Why file-level first
 
@@ -98,5 +104,6 @@ The expensive, risky operations are the ones that touch a checkpoint. Giving an
 agent a verified way to inspect and audit weights is useful on its own, and it
 does not require the agent to hold 3 GB of tensors in context or memory.
 
-Model-level tools — `propose_edit`, `evaluate`, `rollback` — come after the
-runtime is stable at 3B.
+Model-level tools — `propose_edit`, `evaluate`, `rollback` — run on the same
+session contract measured through 8B, with int8/int4 weights and a densified
+local window.

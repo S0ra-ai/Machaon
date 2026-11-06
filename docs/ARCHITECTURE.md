@@ -61,9 +61,12 @@ format. It is conformance-tested against an artefact produced by the reference
 implementation, not against a description of it. If the address changes upstream,
 the test fails rather than silently drifting.
 
-## What is deliberately absent
+## Design boundaries
 
-- **No optimiser over model weights.** There is no gradient descent here.
-- **No prompt handling.** Text enters only through a runtime's tokenizer.
-- **No scheduler.** Batch orchestration belongs to the caller or to a future
-  MCP server.
+- **Closed-form first.** Model weights are never optimised by gradient descent;
+  a ROME solve optimises one value vector, then hands the delta to the maths.
+- **Text at the boundary.** Text enters through a runtime's tokenizer; the edit
+  layer only ever sees arrays.
+- **Orchestration by the caller.** `Session` and the MCP server provide the
+  state machine — open → baseline → propose → apply → evaluate → rollback —
+  and leave scheduling to the agent or script that owns the job.

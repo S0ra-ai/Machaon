@@ -25,6 +25,22 @@ class StubTokenizer:
         return {"input_ids": [5, 6, 7]}
 
 
+class FlakyRuntime:
+    """Delegate to HFModel, but fail writes when asked."""
+
+    def __init__(self, inner, fail_writes=False):
+        self.inner = inner
+        self.fail_writes = fail_writes
+
+    def __getattr__(self, name):
+        return getattr(self.inner, name)
+
+    def write(self, name, values):
+        if self.fail_writes:
+            raise OSError("disk full")
+        return self.inner.write(name, values)
+
+
 def build(seed=0):
     torch.manual_seed(seed)
     model = LlamaForCausalLM(LlamaConfig(
@@ -99,6 +115,28 @@ class TestSession(unittest.TestCase):
     def test_apply_without_proposal_is_rejected(self):
         with self.assertRaises(RuntimeError):
             self.session.apply()
+
+    def test_failed_write_does_not_charge_budget(self):
+        flaky = FlakyRuntime(self.runtime, fail_writes=True)
+        session = Session(flaky, "toy", EditBudget(max_total=1.0))
+        session.propose(
+            "anything", "", layer=1, target_token_id=self.token,
+            solver="direction", alphas=(0.5, 1, 2, 4, 8, 16, 32, 64))
+        with self.assertRaises(OSError):
+            session.apply()
+        self.assertEqual(session.state().budget_total, 0.0)
+
+    def test_failed_rollback_keeps_the_original_for_a_retry(self):
+        self.session.propose(
+            "anything", "", layer=1, target_token_id=self.token,
+            solver="direction", alphas=(0.5, 1, 2, 4, 8, 16, 32, 64))
+        self.session.apply()
+        flaky = FlakyRuntime(self.runtime, fail_writes=True)
+        self.session.runtime = flaky
+        with self.assertRaises(OSError):
+            self.session.rollback()
+        self.assertEqual(self.session.state().edited,
+                         ["model.layers.1.mlp.down_proj.weight"])
 
 
 if __name__ == "__main__":

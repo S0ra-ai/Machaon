@@ -8,6 +8,8 @@ edit_uri: edit/main/docs/
 theme:
   name: material
   language: en
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
   features:
     - navigation.sections
     - navigation.top
@@ -31,6 +33,109 @@ theme:
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: zh
+          name: 中文
+          build: true
+          nav_translations:
+            Home: 首页
+            Getting started: 入门
+            Installation: 安装
+            Quickstart: 快速开始
+            Concepts: 核心概念
+            Weight editing: 权重编辑
+            Null-space projection: 零空间投影
+            Transactions and gates: 事务与验收门
+            Guides: 指南
+            Edit a fact: 编辑一个事实
+            Evaluate an edit: 评估一次编辑
+            Save a checkpoint: 保存检查点
+            Work with OpenWSP: 使用 OpenWSP
+            Reference: 参考
+            Python API: Python API
+            CLI: 命令行
+            Benchmarks: 基准测试
+            MCP server: MCP 服务
+            Project: 项目
+            How Machaon fits: Machaon 的定位
+            Architecture: 架构
+            The maths: 数学原理
+            Results: 实测结果
+            Related work: 相关工作
+            Roadmap: 路线图
+            FAQ: 常见问题
+        - locale: ja
+          name: 日本語
+          build: true
+          nav_translations:
+            Home: ホーム
+            Getting started: はじめに
+            Installation: インストール
+            Quickstart: クイックスタート
+            Concepts: コンセプト
+            Weight editing: 重み編集
+            Null-space projection: 零空間投影
+            Transactions and gates: トランザクションとゲート
+            Guides: ガイド
+            Edit a fact: 事実を編集する
+            Evaluate an edit: 編集を評価する
+            Save a checkpoint: チェックポイントを保存
+            Work with OpenWSP: OpenWSP を使う
+            Reference: リファレンス
+            Python API: Python API
+            CLI: CLI
+            Benchmarks: ベンチマーク
+            MCP server: MCP サーバー
+            Project: プロジェクト
+            How Machaon fits: Machaon の位置づけ
+            Architecture: アーキテクチャ
+            The maths: 数学的原理
+            Results: 実測結果
+            Related work: 関連研究
+            Roadmap: ロードマップ
+            FAQ: よくある質問
+        - locale: ko
+          name: 한국어
+          build: true
+          nav_translations:
+            Home: 홈
+            Getting started: 시작하기
+            Installation: 설치
+            Quickstart: 빠른 시작
+            Concepts: 핵심 개념
+            Weight editing: 가중치 편집
+            Null-space projection: 영공간 투영
+            Transactions and gates: 트랜잭션과 게이트
+            Guides: 가이드
+            Edit a fact: 사실 편집하기
+            Evaluate an edit: 편집 평가하기
+            Save a checkpoint: 체크포인트 저장
+            Work with OpenWSP: OpenWSP 사용하기
+            Reference: 레퍼런스
+            Python API: Python API
+            CLI: CLI
+            Benchmarks: 벤치마크
+            MCP server: MCP 서버
+            Project: 프로젝트
+            How Machaon fits: Machaon의 위치
+            Architecture: 아키텍처
+            The maths: 수학 원리
+            Results: 실측 결과
+            Related work: 관련 연구
+            Roadmap: 로드맵
+            FAQ: 자주 묻는 질문
 
 markdown_extensions:
   - admonition
@@ -70,6 +175,7 @@ nav:
       - Benchmarks: reference/benchmarks.md
       - MCP server: reference/mcp.md
   - Project:
+      - How Machaon fits: comparison.md
       - Architecture: ARCHITECTURE.md
       - The maths: MATH.md
       - Results: RESULTS.md

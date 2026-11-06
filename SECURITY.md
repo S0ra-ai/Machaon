@@ -1,5 +1,12 @@
 # Security
 
+## Supported versions
+
+| version | supported |
+|---|---|
+| `0.2.x` | yes |
+| older | upgrade to `0.2.x` |
+
 ## Reporting
 
 Open a private security advisory on GitHub, or email the maintainer listed in
@@ -23,8 +30,13 @@ we treat the following as security issues rather than bugs:
 - Gates fail closed.
 - The delta store is content-addressed and verifiable offline.
 
-## Known limitation
+## Deployment guidance
 
 `machaon.podalirius` executes forward hooks inside the process that owns the
-model. The Python kernel in a future MCP server will not be an operating-system
-sandbox. Do not expose it to untrusted input.
+model, and the MCP server reads and writes paths with its own process
+permissions. Run it with the same trust boundary as your shell: one user, one
+workspace, and no untrusted callers sharing that process.
+
+For a shared deployment, put the MCP server behind an authenticated proxy,
+give it a dedicated working directory, and keep checkpoints on a read-only
+mount except for the explicit output directory.

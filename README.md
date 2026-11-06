@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/logo.svg" alt="Machaon" width="128">
+
 # Machaon
 
 **Direct weight surgery for LLMs — edit the weights, not the gradients.**
@@ -8,27 +10,29 @@
 
 [![ci](https://github.com/S0ra-ai/Machaon/actions/workflows/ci.yml/badge.svg)](https://github.com/S0ra-ai/Machaon/actions/workflows/ci.yml)
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
-![python](https://img.shields.io/badge/python-3.9%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)
+![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-161-2ea44f)
+![tests](https://img.shields.io/badge/tests-202-2ea44f)
+![coverage](https://img.shields.io/badge/coverage-80%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
-[Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md)
+[Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md) · [中文](https://s0ra-ai.github.io/Machaon/zh/) · [日本語](https://s0ra-ai.github.io/Machaon/ja/) · [한국어](https://s0ra-ai.github.io/Machaon/ko/)
 
 </div>
 
 ---
 
-Machaon edits a model's parameters directly and then *proves the edit did not
-break anything*. No fine-tuning loop, no gradient descent over model weights, no
-training data. One edit is a small, content-addressed artefact that can be
-diffed, replayed and rolled back.
+Machaon edits a model's parameters directly, then **proves the edit did not
+break anything**: what it was allowed to touch, what it actually moved, and how
+to put the model back if the answer is wrong. No fine-tuning loop, no gradient
+descent over model weights, no training data. One edit is a small,
+content-addressed artefact that can be diffed, replayed and rolled back.
 
 > OpenWSP defines how an edit is **recorded**. Machaon defines whether it is
-> **accepted**: what it was allowed to touch, what it actually moved, and how to
-> put the model back if the answer is wrong.
+> **accepted**: the constraint it must satisfy, the budget it must respect, and
+> the evidence that it is safe to keep.
 
-## Why
+## Why Machaon
 
 Three problems show up the moment you start editing weights by hand:
 
@@ -40,8 +44,76 @@ Three problems show up the moment you start editing weights by hand:
    edit runs inside a transaction; a failed gate restores the original bytes
    exactly.
 3. **Evaluation is an afterthought.** Machaon ships a fail-closed gate suite and
-   benchmark loaders with recorded provenance. A missing metric is a failure, not
-   a pass.
+   benchmark loaders with recorded provenance. A missing metric is a failure,
+   not a pass.
+
+| guarantee | how it is enforced | checked by |
+|---|---|---|
+| protected keys do not move | `ΔW k⊥ = 0` by construction | `verify.check_protected` |
+| a rejected edit is undone exactly | originals copied before applying | `transaction.rollback` |
+| an unmeasured edit is rejected | missing metrics count as failures | `hygieia.evaluate` |
+| an edit is reproducible | delta is content-addressed | `store.DeltaStore` |
+
+## Install
+
+The core is NumPy only. Real models, checkpoints and benchmarks are optional
+extras, so the maths runs anywhere.
+
+```bash
+git clone https://github.com/S0ra-ai/Machaon.git
+cd Machaon
+
+uv pip install -e .              # NumPy only: maths, gates, interop
+uv pip install -e ".[hf]"        # + torch + transformers + safetensors
+uv pip install -e ".[bench]"     # + pyarrow, for the benchmark loaders
+uv pip install -e ".[mcp]"       # + MCP SDK, Python 3.10+
+uv pip install -e ".[dev,docs]"  # tests, lint, coverage, docs site
+```
+
+Python 3.9–3.13 are tested. `make ci` runs the offline check suite.
+
+## Quickstart
+
+**1 · Build a delta.** No model needed; this is pure linear algebra.
+
+```python
+import numpy as np
+from machaon import rank1_constrained
+
+W   # (d_out, d_in) weight
+k   # key the matrix must memorise
+v   # value it must produce
+keys  # protected keys that must not move
+
+W_new, delta = rank1_constrained(W, k, v, preserve=keys, max_rel_norm=0.02)
+```
+
+**2 · Apply it inside a transaction.** A failed verdict rolls back bit-exactly.
+
+```python
+from machaon import Workspace
+from machaon.hygieia import evaluate
+
+ws = Workspace()
+ws.register("layer.8.mlp.c_proj", W)
+
+txn = ws.begin("eiffel tower -> rome")
+txn.apply("layer.8.mlp.c_proj", delta)
+txn.commit(evaluate(metrics))       # False => original bytes restored
+```
+
+**3 · Check the claim.** Any delta can be audited, including one produced by a
+different tool.
+
+```python
+from machaon.verify import check_protected
+
+report = check_protected(W, delta, keys)
+assert report["passed"] and report["max_drift"] < 1e-12
+```
+
+That last block is the point. The first block is a formula; the last is a
+verdict.
 
 ## Demo
 
@@ -76,9 +148,10 @@ Same edit, two budgets. Both hit the target; only one is acceptable.
 
 ## Benchmarks
 
-Same protocol on two architectures, 8 edits each, open datasets with recorded
-provenance. Target: inject an entity token, then measure the question and its
-human-written rephrasings.
+Same protocol across six models, open datasets with recorded provenance.
+The GPT-2 through 3B rows use 8 edits; 7B and 8B use the smaller matched panels
+documented below. Target: inject an entity token, then measure the question and
+its human-written rephrasings.
 
 | model | layer | mean rel.Δ | rewrite | rephrase | WikiText-2 | MMLU |
 |---|---|---|---|---|---|---|
@@ -142,64 +215,7 @@ No judge model, no extra download. `examples/longform_check.py`.
 Full protocol, licences and configuration:
 [`docs/reference/benchmarks.md`](docs/reference/benchmarks.md).
 
-Eight edits move 37–50% of rewrites and 26–33% of held-out rephrasings, with
-held-out perplexity inside 0.2–6.6% and MMLU holding at every scale. Two
-engineering findings carry the rest: **float32 backward is 26× faster than bf16
-on CPU**, and **layer choice changes the required delta by 35×**.
-
-## Quickstart
-
-```bash
-uv pip install -e ".[hf]"
-```
-
-**1 · Build a delta.** No model needed; this is pure linear algebra.
-
-```python
-import numpy as np
-from machaon import rank1_constrained
-
-W   # (d_out, d_in) weight
-k   # key the matrix must memorise
-v   # value it must produce
-keys  # protected keys that must not move
-
-W_new, delta = rank1_constrained(W, k, v, preserve=keys, max_rel_norm=0.02)
-```
-
-**2 · Apply it inside a transaction.** A failed verdict rolls back bit-exactly.
-
-```python
-from machaon import Workspace
-from machaon.hygieia import evaluate
-
-ws = Workspace()
-ws.register("layer.8.mlp.c_proj", W)
-
-txn = ws.begin("eiffel tower -> rome")
-txn.apply("layer.8.mlp.c_proj", delta)
-txn.commit(evaluate(metrics))       # False => original bytes restored
-```
-
-**3 · Evaluate on open benchmarks.**
-
-```bash
-HF_ENDPOINT=https://hf-mirror.com python scripts/fetch_benchmarks.py
-python examples/gpt2_bench.py --edits 8
-```
-
-## Supported models
-
-`model.layers` families (Llama, Mistral, Qwen2/3, Gemma, Phi-3),
-`transformer.h` (GPT-2), `gpt_neox.layers`, `model.decoder.layers` (OPT) and
-`transformer.blocks` (MPT). Weight orientation is normalised, so the maths
-always sees `(d_out, d_in)`.
-
-Verified end to end on GPT-2 124M and Qwen2.5 0.5B / 1.5B / 3B; 7B is verified at
-the checkpoint level. CI instantiates six families from tiny configs and runs
-the same edit path on each.
-
-## Architecture
+## How it works
 
 ```
                  edit spec (DSL, JSON)
@@ -229,27 +245,68 @@ delta = rank1_constrained(W, k, v, ...)      # an edit
 The runtime never learns what an edit is; the maths never learns what a model
 is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## What it is
+## What you get
 
 - **A weight-editing runtime** with derivable guarantees and post-hoc checks.
-- **A transaction layer** — every edit is reversible and recorded.
+- **A transaction layer** — every edit is reversible, recorded and budgeted.
 - **An evaluation harness** with fail-closed gates and provenance-tracked
   benchmarks.
 - **A format implementation** — byte-identical with the OpenWSP v1 edit format.
+- **An agent interface** — 12 MCP tools over stdio, file-level and model-level.
 
-## Scope
+Adjacent work composes cleanly: deltas from merging tools can be audited and
+applied, and a LoRA adapter gives a like-for-like baseline
+([measured here](docs/RESULTS.md#r9-equal-budget-lora-baseline)).
 
-Machaon's unit is a targeted edit to an existing model. Its neighbours are
-one call away: deltas from merging tools can be audited and applied, and a LoRA
-adapter gives a like-for-like baseline ([measured here](docs/RESULTS.md#r9-equal-budget-lora-baseline)).
+## Supported models
 
-## Install
+`model.layers` families (Llama, Mistral, Qwen2/3, Gemma, Phi-3),
+`transformer.h` (GPT-2), `gpt_neox.layers`, `model.decoder.layers` (OPT) and
+`transformer.blocks` (MPT). Weight orientation is normalised, so the maths
+always sees `(d_out, d_in)`.
+
+Verified end to end on GPT-2 124M and Qwen2.5 0.5B / 1.5B / 3B / 7B, plus
+Llama-3.1-8B. CI instantiates six families from tiny configs and runs the same
+edit path on each.
+
+## Quality bar
+
+Every user-visible claim in this repository has a check behind it.
+
+| gate | what it proves |
+|---|---|
+| `lint` | ruff over the package, tests, examples and scripts |
+| `test` (3.9–3.13) | the suite, demo, CLI entry points and fail-closed gate |
+| `extras` | safetensors, HF runtime, evaluation and **80% branch coverage** |
+| `mcp` | a real stdio client calls the real server |
+| `docs` | `mkdocs build --strict`, English / Chinese / Japanese / Korean |
+| `package` | sdist and wheel build, install into a clean venv and run |
+| `codeql` | Python security and quality queries |
 
 ```bash
-uv pip install -e .            # NumPy only: maths, gates, interop
-uv pip install -e ".[hf]"      # + torch + transformers, for real models
-uv pip install -e ".[bench]"   # + pyarrow, for the benchmark loaders
+make ci          # tests, demo, spec validation, gate behaviour, lint
+make test-cov    # coverage report
+make docs        # local documentation site
 ```
+
+## Documentation
+
+The same documentation ships in four languages:
+[English](https://s0ra-ai.github.io/Machaon/),
+[中文](https://s0ra-ai.github.io/Machaon/zh/),
+[日本語](https://s0ra-ai.github.io/Machaon/ja/) and
+[한국어](https://s0ra-ai.github.io/Machaon/ko/).
+
+| | |
+|---|---|
+| [Getting started](docs/getting-started/installation.md) | install, first edit in five minutes |
+| [Concepts](docs/concepts/weight-editing.md) | why null-space, why transactions, why gates |
+| [Guides](docs/guides/edit-a-fact.md) | edit a fact, evaluate it, save a checkpoint |
+| [Reference](docs/reference/api.md) | every public function and the CLI |
+| [Benchmarks](docs/reference/benchmarks.md) | datasets, licences, protocols, numbers |
+| [Results](docs/RESULTS.md) | every measured run, with its configuration |
+| [How Machaon fits](docs/comparison.md) | fine-tuning, LoRA, mergekit, steering and this |
+| [Related work](docs/RELATED_WORK.md) | where the idea comes from and what it adds |
 
 ## Repository layout
 
@@ -258,7 +315,7 @@ machaon/
 ├─ linalg.py            rank-1, null-space, ablation, injection
 ├─ schema.py            edit DSL, mandatory intent
 ├─ transaction.py       apply / commit / bit-exact rollback
-├─ store.py             content-addressed deltas
+├─ store.py             content-addressed deltas, verified reads
 ├─ refusals.py          pre-acceptance rules
 ├─ verify.py            post-hoc protected-key audit
 ├─ runtime/hf.py        architecture-independent model runtime
@@ -272,44 +329,18 @@ machaon/
 └─ telesphorus/         snapshots, restore, diff
 ```
 
-## Documentation
-
-| | |
-|---|---|
-| [Getting started](docs/getting-started/installation.md) | install, first edit in five minutes |
-| [Concepts](docs/concepts/weight-editing.md) | why null-space, why transactions, why gates |
-| [Guides](docs/guides/edit-a-fact.md) | edit a fact, evaluate it, save a checkpoint |
-| [Reference](docs/reference/api.md) | every public function and the CLI |
-| [Benchmarks](docs/reference/benchmarks.md) | datasets, licences, protocols, numbers |
-| [Related work](docs/RELATED_WORK.md) | what exists, and what is missing |
-
-Build the site locally:
-
-```bash
-uv pip install mkdocs-material
-mkdocs serve
-```
-
-## Roadmap
-
-- [x] linear-algebra primitives, transactions, delta store
-- [x] fail-closed gates, KL, bootstrap intervals
-- [x] OpenWSP v1 edit format, byte-identical
-- [x] safetensors adapter, single file and sharded
-- [x] HF runtime, architecture-independent
-- [x] first real result on GPT-2 124M
-- [x] open-benchmark evaluation with provenance
-- [ ] long-form coherence and cumulative-edit suites
-- [ ] 0.5B → 1.5B → up to 8B, one rung at a time
-- [x] MCP server: inspect, audit, apply, gate (file-level)
-- [x] MCP server: model-level propose / apply / evaluate / rollback
-- [x] MCP transport tested end to end in CI (stdio client, 12 tools)
-
 ## Contributing
 
 A real result is worth more than a refactor. New checks must fail closed, and
 every claim in the README needs a test that fails when the claim stops being
-true. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+true. See [CONTRIBUTING.md](CONTRIBUTING.md),
+[SUPPORT.md](SUPPORT.md) and [SECURITY.md](SECURITY.md).
+
+```bash
+git switch -c codex/my-change
+make install
+make ci
+```
 
 ## Licence
 

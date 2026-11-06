@@ -74,7 +74,7 @@ delta      : rel 0.0153
   paraphrase_acc 1
   kl_p95       0.000614724
   ppl_ratio    1.00079
-PASS (6 gates)
+PASS (5 gates)
 ```
 
 ## Where next

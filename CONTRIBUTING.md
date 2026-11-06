@@ -8,7 +8,8 @@ to reproduce something and tell us what broke.
 ```bash
 git clone https://github.com/S0ra-ai/Machaon.git
 cd Machaon
-uv venv && uv pip install -e ".[dev]"
+uv venv && uv pip install -e ".[dev,docs]"
+pre-commit install
 ```
 
 PyTorch and transformers are optional:
@@ -23,10 +24,15 @@ uv pip install ruff            # lint
 ```bash
 ./scripts/ci.sh          # tests, demo, spec validation, gate behaviour
 make lint                # ruff
+make test-cov            # branch coverage, 78% floor in pyproject
+make docs                # local docs site; CI builds with --strict
 ```
 
 Everything that CI runs is runnable offline. If `./scripts/ci.sh` passes locally,
 CI will pass.
+
+The full matrix is Python 3.9–3.13. The optional `hf` extra adds a second job
+that runs the runtime, adapter and evaluation tests with torch installed.
 
 ## What we want help with, in order
 
@@ -59,7 +65,26 @@ Explain *why* in the body when the change is not obvious.
 Keep them small. One idea per PR. Include:
 - what changes,
 - how you verified it (command + output),
-- what it does *not* claim.
+- the evidence behind any new number, and where the measured claim ends.
+
+## Documentation
+
+Documentation is part of the public surface. A page that names a function,
+threshold or number must match the code and the measured run. When you change
+one, update the English page and its `.zh.md`, `.ja.md` and `.ko.md`
+counterparts. `mkdocs build --strict` is part of CI, and
+`tests/test_metadata.py` checks the four-language coverage, test-count badges,
+package metadata and the documentation tone.
+
+## Release process
+
+1. Move `[Unreleased]` entries in `CHANGELOG.md` under the new version.
+2. Bump `version` in `pyproject.toml`, `machaon/__init__.py` and
+   `CITATION.cff`; `tests/test_metadata.py` enforces that they agree.
+3. Push a `vX.Y.Z` tag. `release.yml` builds sdist + wheel, checks the tag
+   against the package version, and publishes a GitHub release. Set the
+   repository variable `PUBLISH_TO_PYPI=true` to publish through PyPI trusted
+   publishing.
 
 ## Reporting a problem
 
