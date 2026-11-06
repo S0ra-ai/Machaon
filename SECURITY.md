@@ -4,13 +4,13 @@
 
 | version | supported |
 |---|---|
-| `0.2.x` | yes |
-| older | upgrade to `0.2.x` |
+| `0.3.x` | yes |
+| older | upgrade to `0.3.x` |
 
 ## Reporting
 
-Open a private security advisory on GitHub, or email the maintainer listed in
-`pyproject.toml`. Please do not open a public issue for a vulnerability.
+Open a private security advisory on GitHub. Please do not open a public issue
+for a vulnerability.
 
 ## What counts as a vulnerability here
 
