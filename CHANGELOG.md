@@ -4,6 +4,21 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.2] - 2026-11-08
+
+### Added
+
+- The Web console now ships in English, Simplified Chinese, Japanese and
+  Korean, with a top-bar language picker, browser-language detection,
+  `localStorage` persistence and `?lang=zh|ja|ko` deep links.
+- Static and dynamic console copy share one locale catalog, including gate
+  metrics, task statuses, timeline messages and validation errors.
+
+### Changed
+
+- The Web UI uses a CJK-capable system font stack and preserves the
+  model-agnostic workflow and checkpoint terminology across all four locales.
+
 ## [0.4.1] - 2026-11-08
 
 ### Added

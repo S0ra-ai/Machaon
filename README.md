@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-225-2ea44f)
+![tests](https://img.shields.io/badge/tests-226-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-82%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -97,6 +97,10 @@ back byte-for-byte. Long operations run in a single worker and stream through
 SSE, so the browser never blocks on a large checkpoint load. The one-time
 token and the checkpoint path allowlist keep the local control plane scoped to
 the roots you name.
+
+The console ships in English, Chinese, Japanese and Korean. It follows the
+browser language on first load, remembers an explicit choice, and accepts
+`?lang=zh`, `?lang=ja` or `?lang=ko` for a direct link.
 
 See [the Web console reference](docs/reference/web.md) for the API surface and
 the large-checkpoint working point (Qwen3.6-27B is one example).

@@ -41,7 +41,7 @@ lint. It needs no network and no GPU.
 Expected tail:
 
 ```
-Ran 225 tests ...
+Ran 226 tests ...
 ALL CHECKS PASSED
 ```
 

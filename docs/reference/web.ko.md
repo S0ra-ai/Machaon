@@ -24,6 +24,14 @@ machaon-web --allowed-root /models --port 8765
 `127.0.0.1`에만 바인딩됩니다. `--allowed-root` 또는
 `MACHAON_WEB_ALLOWED_ROOTS`로 checkpoint 루트를 지정하세요.
 
+## 표시 언어
+
+콘솔은 English, 중국어 간체, 日本語, 한국어를 제공합니다. 상단 언어 선택기는
+정적 문구뿐 아니라 작업 상태, 지표, 오류 메시지도 전환하며 선택을
+`localStorage`에 저장합니다. `?lang=zh`, `?lang=ja`, `?lang=ko` 직접 링크도
+지원합니다. 명시 선택이 없으면 브라우저 언어를 따르고, 지원하지 않으면 English로
+폴백합니다.
+
 ## 세 열 작업 흐름
 
 1. **Checkpoint**: safetensors 파일 또는 분할 디렉터리의 header를 읽어

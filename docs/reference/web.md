@@ -34,6 +34,14 @@ or repeat `--allowed-root` for more than one checkpoint directory. The
 allowlist applies to checkpoint paths, edit directories, delta files and output
 directories.
 
+## Languages
+
+The console ships in English, Simplified Chinese, Japanese and Korean. The
+top-bar picker updates both static copy and dynamic job/evidence messages,
+stores the choice in `localStorage`, and accepts direct links such as
+`?lang=zh`, `?lang=ja` and `?lang=ko`. Without an explicit choice it follows the
+browser language and falls back to English.
+
 ## Three-column workflow
 
 1. **Checkpoint.** Inspect a safetensors file or a sharded checkpoint directory.

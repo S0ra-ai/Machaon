@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
-  <title>Machaon · weight surgery console</title>
+  <title data-i18n="meta.title">Machaon · weight surgery console</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -18,30 +18,39 @@
           <circle cx="33" cy="14" r="3.4" fill="currentColor"/>
         </svg>
       </span>
-      <span><strong>Machaon</strong><small>transactional weight surgery</small></span>
+      <span><strong>Machaon</strong><small data-i18n="brand.tagline">transactional weight surgery</small></span>
     </a>
     <div class="topbar-right">
       <span id="connectionPill" class="pill muted"><i></i> checking</span>
-      <span id="versionPill" class="pill mono">v—</span>
-      <button id="tokenButton" class="ghost small" type="button">token</button>
+      <a id="versionPill" class="pill mono" href="https://github.com/S0ra-ai/Machaon/releases" target="_blank" rel="noreferrer">v—</a>
+      <label class="language-picker">
+        <span class="sr-only" data-i18n="lang.label">Language</span>
+        <select id="languageSelect" aria-label="Language">
+          <option value="en">English</option>
+          <option value="zh">中文</option>
+          <option value="ja">日本語</option>
+          <option value="ko">한국어</option>
+        </select>
+      </label>
+      <button id="tokenButton" class="ghost small" type="button" data-i18n="token.button">token</button>
     </div>
   </header>
 
   <main>
     <section class="hero">
       <div>
-        <p class="eyebrow">LOCAL CONTROL PLANE</p>
-        <h1>Edit weights.<br><em>Keep the contract.</em></h1>
-        <p class="lede">Inspect a checkpoint, declare what must change and what must not, then apply the edit inside a fail-closed transaction. Nothing is written until you press <strong>Apply</strong>.</p>
+        <p class="eyebrow" data-i18n="hero.eyebrow">LOCAL CONTROL PLANE</p>
+        <h1 data-i18n-html="hero.title">Edit weights.<br><em>Keep the contract.</em></h1>
+        <p class="lede" data-i18n-html="hero.lede">Inspect a checkpoint, declare what must change and what must not, then apply the edit inside a fail-closed transaction. Nothing is written until you press <strong>Apply</strong>.</p>
       </div>
         <div class="hero-orbit" aria-hidden="true">
-          <span class="orbit-caption">CONTRACT LOOP</span>
+          <span class="orbit-caption" data-i18n="hero.caption">CONTRACT LOOP</span>
         <div class="orbit orbit-a"></div>
         <div class="orbit orbit-b"></div>
         <div class="orbit-core">ΔW</div>
-        <span class="orbit-label label-a">protected</span>
-        <span class="orbit-label label-b">budget</span>
-        <span class="orbit-label label-c">gate</span>
+        <span class="orbit-label label-a" data-i18n="hero.protected">protected</span>
+        <span class="orbit-label label-b" data-i18n="hero.budget">budget</span>
+        <span class="orbit-label label-c" data-i18n="hero.gate">gate</span>
       </div>
     </section>
 
@@ -51,48 +60,48 @@
         <div class="panel-head">
           <div>
             <span class="step">01</span>
-            <h2>Checkpoint</h2>
+            <h2 data-i18n="section.checkpoint">Checkpoint</h2>
           </div>
-          <span id="checkpointBadge" class="badge">no checkpoint</span>
+          <span id="checkpointBadge" class="badge" data-i18n="badge.noCheckpoint">no checkpoint</span>
         </div>
 
         <label class="field">
-          <span>Checkpoint path</span>
+          <span data-i18n="checkpoint.path">Checkpoint path</span>
           <div class="input-row">
-            <input id="checkpointPath" autocomplete="off" spellcheck="false" placeholder="./my-checkpoint or ./model.safetensors">
-            <button id="describeButton" class="secondary" type="button">Inspect</button>
+            <input id="checkpointPath" autocomplete="off" spellcheck="false" data-i18n-placeholder="checkpoint.placeholder" placeholder="./my-checkpoint or ./model.safetensors">
+            <button id="describeButton" class="secondary" type="button" data-i18n="checkpoint.inspect">Inspect</button>
           </div>
-          <small>Existing path below an allowed root. The browser never receives tensor values.</small>
+          <small data-i18n="checkpoint.help">Existing path below an allowed root. The browser never receives tensor values.</small>
         </label>
         <div class="quick-row">
-          <button id="modelsButton" class="ghost small" type="button">Find local checkpoints</button>
+          <button id="modelsButton" class="ghost small" type="button" data-i18n="checkpoint.find">Find local checkpoints</button>
           <span id="allowedRoots" class="mono tiny"></span>
         </div>
         <div id="modelsList" class="models-list hidden"></div>
 
-        <div id="checkpointSummary" class="summary-grid empty-state">
+        <div id="checkpointSummary" class="summary-grid empty-state" data-i18n="checkpoint.emptySummary">
           Header-only metadata appears here after an inspect.
         </div>
 
         <div class="divider"></div>
         <div class="subhead">
-          <h3>Tensor surface</h3>
-          <span class="mono tiny">names · shapes · dtypes</span>
+          <h3 data-i18n="tensor.title">Tensor surface</h3>
+          <span class="mono tiny" data-i18n="tensor.meta">names · shapes · dtypes</span>
         </div>
         <div class="filter-row">
-          <input id="tensorQuery" autocomplete="off" placeholder="contains, e.g. down_proj">
-          <input id="tensorLayer" class="narrow" type="number" min="0" placeholder="layer">
-          <button id="tensorsButton" class="secondary small" type="button">List</button>
+          <input id="tensorQuery" autocomplete="off" data-i18n-placeholder="tensor.query" placeholder="contains, e.g. down_proj">
+          <input id="tensorLayer" class="narrow" type="number" min="0" data-i18n-placeholder="tensor.layer" placeholder="layer">
+          <button id="tensorsButton" class="secondary small" type="button" data-i18n="tensor.list">List</button>
         </div>
-        <div id="tensorRows" class="table-wrap empty-state">No tensor list yet.</div>
+        <div id="tensorRows" class="table-wrap empty-state" data-i18n="tensor.empty">No tensor list yet.</div>
 
         <div class="divider"></div>
         <div class="subhead">
-          <h3>Open a session</h3>
-          <span class="mono tiny">one model per process</span>
+          <h3 data-i18n="session.title">Open a session</h3>
+          <span class="mono tiny" data-i18n="session.meta">one model per process</span>
         </div>
         <div class="form-grid two">
-          <label class="field"><span>dtype</span>
+          <label class="field"><span data-i18n="session.dtype">dtype</span>
             <select id="dtype">
               <option value="auto">auto</option>
               <option value="float32">float32</option>
@@ -100,22 +109,22 @@
               <option value="bfloat16">bfloat16</option>
             </select>
           </label>
-          <label class="field"><span>quantize</span>
+          <label class="field"><span data-i18n="session.quantize">quantize</span>
             <select id="quantize">
-              <option value="">none</option>
+              <option value="" data-i18n="session.none">none</option>
               <option value="int8">int8</option>
               <option value="int4">int4</option>
             </select>
           </label>
-          <label class="field"><span>device</span>
-            <input id="device" placeholder="cpu / mps / auto (blank = default)">
+          <label class="field"><span data-i18n="session.device">device</span>
+            <input id="device" data-i18n-placeholder="session.devicePlaceholder" placeholder="cpu / mps / auto (blank = default)">
           </label>
-          <label class="field"><span>budget β</span>
+          <label class="field"><span data-i18n="session.budget">budget β</span>
             <input id="budget" type="number" min="0.0001" step="0.001" value="0.10">
           </label>
         </div>
-        <button id="openButton" class="primary wide" type="button">Open session</button>
-        <p class="hint">Works with every supported family: GPT-2, Llama, Qwen, Mistral, Gemma, Phi, OPT and MPT. For a quantized checkpoint, use <code>dtype=auto</code>, choose <code>int4</code>/<code>int8</code>, and enable Densify before a gradient solve.</p>
+        <button id="openButton" class="primary wide" type="button" data-i18n="session.open">Open session</button>
+        <p class="hint" data-i18n-html="session.hint">Works with every supported family: GPT-2, Llama, Qwen, Mistral, Gemma, Phi, OPT and MPT. For a quantized checkpoint, use <code>dtype=auto</code>, choose <code>int4</code>/<code>int8</code>, and enable Densify before a gradient solve.</p>
       </article>
 
       <!-- contract column -->
@@ -123,61 +132,61 @@
         <div class="panel-head">
           <div>
             <span class="step">02</span>
-            <h2>Edit contract</h2>
+            <h2 data-i18n="section.edit">Edit contract</h2>
           </div>
-          <span id="sessionBadge" class="badge">not open</span>
+          <span id="sessionBadge" class="badge" data-i18n="badge.notOpen">not open</span>
         </div>
 
         <div class="contract-note">
           <span class="contract-icon">∅</span>
-          <p><strong>Preserve set</strong> is enforced by null-space projection. <strong>Budget</strong> is checked before writing. <strong>Evaluation</strong> is fail-closed when a gate metric is missing.</p>
+          <p data-i18n-html="contract.note"><strong>Preserve set</strong> is enforced by null-space projection. <strong>Budget</strong> is checked before writing. <strong>Evaluation</strong> is fail-closed when a gate metric is missing.</p>
         </div>
 
         <div class="form-grid">
-          <label class="field full"><span>Prompt / key</span>
-            <textarea id="prompt" rows="2" placeholder="The Eiffel Tower is located in the city of">The Eiffel Tower is located in the city of</textarea>
+          <label class="field full"><span data-i18n="contract.prompt">Prompt / key</span>
+            <textarea id="prompt" rows="2" data-i18n-placeholder="contract.promptPlaceholder" placeholder="The Eiffel Tower is located in the city of">The Eiffel Tower is located in the city of</textarea>
           </label>
-          <label class="field full"><span>Target value / completion</span>
+          <label class="field full"><span data-i18n="contract.target">Target value / completion</span>
             <input id="target" autocomplete="off" value=" Rome">
           </label>
           <div class="form-grid two">
-            <label class="field"><span>layer</span><input id="layer" type="number" min="0" value="8"></label>
-            <label class="field"><span>solver</span>
+            <label class="field"><span data-i18n="contract.layer">layer</span><input id="layer" type="number" min="0" value="8"></label>
+            <label class="field"><span data-i18n="contract.solver">solver</span>
               <select id="solver">
-                <option value="gradient">gradient</option>
-                <option value="direction">direction</option>
+                <option value="gradient" data-i18n="contract.gradient">gradient</option>
+                <option value="direction" data-i18n="contract.direction">direction</option>
               </select>
             </label>
-            <label class="field"><span>steps</span><input id="steps" type="number" min="1" value="40"></label>
-            <label class="field"><span>learning rate</span><input id="lr" type="number" step="0.001" value="0.02"></label>
+            <label class="field"><span data-i18n="contract.steps">steps</span><input id="steps" type="number" min="1" value="40"></label>
+            <label class="field"><span data-i18n="contract.lr">learning rate</span><input id="lr" type="number" step="0.001" value="0.02"></label>
           </div>
-          <label class="field"><span>relative budget for this proposal</span>
-            <input id="maxRelNorm" type="number" min="0.000001" step="0.001" placeholder="blank = session default">
+          <label class="field"><span data-i18n="contract.maxNorm">relative budget for this proposal</span>
+            <input id="maxRelNorm" type="number" min="0.000001" step="0.001" data-i18n-placeholder="contract.maxNormPlaceholder" placeholder="blank = session default">
           </label>
-          <label class="field"><span>module suffix</span>
+          <label class="field"><span data-i18n="contract.moduleSuffix">module suffix</span>
             <input id="moduleSuffix" value="mlp.down_proj" spellcheck="false">
           </label>
-          <label class="field full"><span>Preserve prompts <small>(one per line)</small></span>
-            <textarea id="preservePrompts" rows="4" placeholder="The capital of Germany is&#10;Water freezes at a temperature of&#10;Two plus two equals">The capital of Germany is
+          <label class="field full"><span data-i18n-html="contract.preserve">Preserve prompts <small>(one per line)</small></span>
+            <textarea id="preservePrompts" rows="4" data-i18n-placeholder="contract.preservePlaceholder" placeholder="The capital of Germany is&#10;Water freezes at a temperature of&#10;Two plus two equals">The capital of Germany is
 Water freezes at a temperature of
 Two plus two equals</textarea>
           </label>
           <label class="check-row">
             <input id="densify" type="checkbox">
-            <span>Densify from edit layer (quantized gradient solves)</span>
+            <span data-i18n="contract.densify">Densify from edit layer (quantized gradient solves)</span>
           </label>
         </div>
 
         <div class="button-grid">
-          <button id="proposeButton" class="primary" type="button">Propose ΔW</button>
-          <button id="applyButton" class="secondary" type="button" disabled>Apply edit</button>
+          <button id="proposeButton" class="primary" type="button" data-i18n="contract.propose">Propose ΔW</button>
+          <button id="applyButton" class="secondary" type="button" disabled data-i18n="contract.apply">Apply edit</button>
         </div>
         <div class="button-grid">
-          <button id="baselineButton" class="ghost" type="button">Capture baseline</button>
-          <button id="evaluateButton" class="ghost" type="button" disabled>Evaluate</button>
+          <button id="baselineButton" class="ghost" type="button" data-i18n="contract.baseline">Capture baseline</button>
+          <button id="evaluateButton" class="ghost" type="button" disabled data-i18n="contract.evaluate">Evaluate</button>
         </div>
-        <button id="rollbackButton" class="danger wide" type="button" disabled>Rollback all applied edits</button>
-        <p class="hint">Propose is a dry run. Apply charges the cumulative budget atomically. Rollback restores the original bytes. For an int4/int8 checkpoint, enable Densify before a gradient solve.</p>
+        <button id="rollbackButton" class="danger wide" type="button" disabled data-i18n="contract.rollback">Rollback all applied edits</button>
+        <p class="hint" data-i18n="contract.hint">Propose is a dry run. Apply charges the cumulative budget atomically. Rollback restores the original bytes. For an int4/int8 checkpoint, enable Densify before a gradient solve.</p>
       </article>
 
       <!-- gates column -->
@@ -185,53 +194,53 @@ Two plus two equals</textarea>
         <div class="panel-head">
           <div>
             <span class="step">03</span>
-            <h2>Evidence</h2>
+            <h2 data-i18n="evidence.title">Evidence</h2>
           </div>
-          <span id="jobPill" class="badge quiet">idle</span>
+          <span id="jobPill" class="badge quiet" data-i18n="badge.idle">idle</span>
         </div>
 
         <div id="jobBanner" class="job-banner hidden">
           <span class="spinner" aria-hidden="true"></span>
-          <div><strong id="jobTitle">Working</strong><small id="jobDetail">The model operation is running.</small></div>
+          <div><strong id="jobTitle" data-i18n="evidence.working">Working</strong><small id="jobDetail" data-i18n="evidence.runningDetail">The model operation is running.</small></div>
         </div>
 
         <div class="subhead">
-          <h3>Proposal</h3>
-          <span class="mono tiny">dry run</span>
+          <h3 data-i18n="evidence.proposal">Proposal</h3>
+          <span class="mono tiny" data-i18n="evidence.dryRun">dry run</span>
         </div>
-        <div id="proposalCard" class="evidence-card empty-state">No proposal. The solve does not touch weights.</div>
+        <div id="proposalCard" class="evidence-card empty-state" data-i18n="evidence.proposalEmpty">No proposal. The solve does not touch weights.</div>
 
         <div class="subhead">
-          <h3>Gate verdict</h3>
-          <span class="mono tiny">a missing metric fails</span>
+          <h3 data-i18n="evidence.gate">Gate verdict</h3>
+          <span class="mono tiny" data-i18n="evidence.missing">a missing metric fails</span>
         </div>
-        <div id="gateCard" class="evidence-card empty-state">Capture a baseline and evaluate an applied edit to produce evidence.</div>
+        <div id="gateCard" class="evidence-card empty-state" data-i18n="evidence.gateEmpty">Capture a baseline and evaluate an applied edit to produce evidence.</div>
 
         <div class="subhead">
-          <h3>Session state</h3>
-          <span class="mono tiny">live</span>
+          <h3 data-i18n="evidence.session">Session state</h3>
+          <span class="mono tiny" data-i18n="evidence.live">live</span>
         </div>
-        <div id="stateCard" class="evidence-card empty-state">No model session is open.</div>
+        <div id="stateCard" class="evidence-card empty-state" data-i18n="evidence.sessionEmpty">No model session is open.</div>
 
         <div class="subhead">
-          <h3>Persist</h3>
-          <span class="mono tiny">checkpoint writer</span>
+          <h3 data-i18n="persist.title">Persist</h3>
+          <span class="mono tiny" data-i18n="persist.meta">checkpoint writer</span>
         </div>
         <div class="save-row">
-          <input id="savePath" placeholder="./edited-checkpoint" spellcheck="false">
-          <button id="saveButton" class="secondary small" type="button" disabled>Save</button>
+          <input id="savePath" data-i18n-placeholder="persist.placeholder" placeholder="./edited-checkpoint" spellcheck="false">
+          <button id="saveButton" class="secondary small" type="button" disabled data-i18n="persist.save">Save</button>
         </div>
-        <p class="hint">Writes the applied deltas to a new checkpoint below the allowed roots. The source stays untouched.</p>
+        <p class="hint" data-i18n="persist.hint">Writes the applied deltas to a new checkpoint below the allowed roots. The source stays untouched.</p>
 
         <div class="divider"></div>
         <div class="subhead">
-          <h3>Transaction timeline</h3>
+          <h3 data-i18n="timeline.title">Transaction timeline</h3>
           <span class="mono tiny" id="eventCount">0 events</span>
         </div>
-        <div id="timeline" class="timeline empty-state">Inspect a checkpoint → open a session → propose an edit.</div>
+        <div id="timeline" class="timeline empty-state" data-i18n="timeline.empty">Inspect a checkpoint → open a session → propose an edit.</div>
 
         <details class="raw-details">
-          <summary>Raw job events</summary>
+          <summary data-i18n="raw.title">Raw job events</summary>
           <pre id="rawEvents">[]</pre>
         </details>
       </article>
@@ -239,23 +248,24 @@ Two plus two equals</textarea>
   </main>
 
   <footer>
-    <span>Machaon · local-only console</span>
-    <span class="mono">weights are never sent to a remote service</span>
+    <span data-i18n="footer.local">Machaon · local-only console</span>
+    <span class="mono" data-i18n="footer.remote">weights are never sent to a remote service</span>
   </footer>
 
   <dialog id="tokenDialog">
     <form method="dialog" class="token-form">
-      <p class="eyebrow">LOCAL AUTHORISATION</p>
-      <h2>Paste the launch token</h2>
-      <p>It is printed by <code>machaon-web</code> and included in the URL it opens.</p>
-      <input id="tokenInput" autocomplete="off" spellcheck="false" placeholder="token">
+      <p class="eyebrow" data-i18n="token.eyebrow">LOCAL AUTHORISATION</p>
+      <h2 data-i18n="token.title">Paste the launch token</h2>
+      <p data-i18n-html="token.help">It is printed by <code>machaon-web</code> and included in the URL it opens.</p>
+      <input id="tokenInput" autocomplete="off" spellcheck="false" data-i18n-placeholder="token.placeholder" placeholder="token">
       <div class="button-grid">
-        <button class="primary" type="button" id="tokenSave">Use token</button>
-        <button class="ghost" type="button" id="tokenCancel">Cancel</button>
+        <button class="primary" type="button" id="tokenSave" data-i18n="token.use">Use token</button>
+        <button class="ghost" type="button" id="tokenCancel" data-i18n="token.cancel">Cancel</button>
       </div>
     </form>
   </dialog>
 
+  <script src="/static/locales.js"></script>
   <script src="/static/app.js" defer></script>
 </body>
 </html>

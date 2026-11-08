@@ -17,7 +17,7 @@
   --shadow: 0 20px 70px rgba(0, 0, 0, 0.34);
   --radius: 18px;
   --mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Menlo, monospace;
-  --sans: "Inter", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --sans: "Inter", "Avenir Next", "Segoe UI", "PingFang SC", "Hiragino Sans", "Noto Sans CJK SC", "Noto Sans CJK JP", "Noto Sans KR", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -83,6 +83,27 @@ body::before {
 .brand strong { display: block; font-size: 17px; letter-spacing: .02em; }
 .brand small { display: block; color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
 .topbar-right { display: flex; align-items: center; gap: 10px; }
+.language-picker { position: relative; display: inline-flex; }
+.language-picker select {
+  appearance: none;
+  min-width: 88px;
+  padding: 7px 26px 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255,255,255,.025);
+  font: 11px var(--sans);
+  cursor: pointer;
+}
+.language-picker select:hover { color: var(--text); border-color: var(--line-strong); }
+.language-picker::after {
+  content: "▾"; position: absolute; right: 9px; top: 50%;
+  transform: translateY(-56%); color: var(--quiet); pointer-events: none; font-size: 9px;
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
 .pill, .badge {
   display: inline-flex;
   align-items: center;
@@ -103,6 +124,8 @@ body::before {
 .pill.live i { background: var(--ok); box-shadow: 0 0 0 4px rgba(114,228,177,.12); }
 .pill.error { color: var(--danger); border-color: rgba(255,123,135,.35); }
 .pill.error i { background: var(--danger); }
+a.pill { text-decoration: none; }
+a.pill:hover { color: var(--text); border-color: var(--line-strong); }
 .mono { font-family: var(--mono); }
 .tiny { font-size: 10px; color: var(--quiet); }
 .muted { color: var(--muted); }
@@ -386,6 +409,7 @@ footer {
   .topbar, main, footer { width: min(100% - 28px, 1500px); }
   .topbar { padding-top: 15px; }
   .topbar-right .pill.mono { display: none; }
+  .language-picker select { min-width: 76px; }
   .hero { grid-template-columns: 1fr; min-height: 0; padding-bottom: 28px; }
   .hero-orbit { display: none; }
   h1 { font-size: clamp(42px, 13vw, 68px); }

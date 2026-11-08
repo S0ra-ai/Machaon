@@ -196,6 +196,7 @@ def create_app(
             "status": "ok",
             "service": "machaon-web",
             "version": __version__,
+            "repository": "https://github.com/S0ra-ai/Machaon",
             "auth": "required",
             "session": web_service.state(),
             "allowed_roots": [str(root) for root in policy.roots],

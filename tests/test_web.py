@@ -285,6 +285,16 @@ class TestWebApp(unittest.TestCase):
         self.assertFalse(response.json()["passed"])
         self.assertIn("ppl_ratio", response.json()["missing"])
 
+    def test_localised_web_assets_are_served(self):
+        page = self.client.get("/")
+        self.assertIn('id="languageSelect"', page.text)
+        self.assertIn('src="/static/locales.js"', page.text)
+        locales = self.client.get("/static/locales.js")
+        self.assertEqual(locales.status_code, 200)
+        self.assertIn('"zh": {', locales.text)
+        self.assertIn('"ja": {', locales.text)
+        self.assertIn('"ko": {', locales.text)
+
     def test_save_checkpoint_uses_the_checkpoint_writer(self):
         opened = self.client.post(
             "/api/session/open",

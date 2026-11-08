@@ -24,6 +24,14 @@ machaon-web --allowed-root /models --port 8765
 `127.0.0.1` にだけバインドされます。`--allowed-root` または
 `MACHAON_WEB_ALLOWED_ROOTS` で checkpoint のルートを指定してください。
 
+## 表示言語
+
+コンソールは English、簡体字中国語、日本語、한국어 に対応しています。上部の
+言語ピッカーは静的コピーだけでなく、ジョブ状態、指標、エラーも切り替え、
+選択を `localStorage` に保存します。`?lang=zh`、`?lang=ja`、`?lang=ko` の
+直リンクも使えます。指定がない場合はブラウザー言語に従い、未対応なら English
+にフォールバックします。
+
 ## 三列のワークフロー
 
 1. **Checkpoint**: safetensors の header を読み、tensor 数、パラメータ数、

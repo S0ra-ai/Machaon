@@ -22,6 +22,13 @@ machaon-web --allowed-root /models --port 8765
 启动后会打印带一次性 token 的本地 URL。服务默认只绑定 `127.0.0.1`；
 可以用 `--allowed-root` 或 `MACHAON_WEB_ALLOWED_ROOTS` 指定 checkpoint 根目录。
 
+## 界面语言
+
+控制台提供 English、简体中文、日本語和한국어。顶栏语言选择器会同步切换静态文案、
+任务状态、指标和错误消息，并把选择保存到 `localStorage`。也可以直接用
+`?lang=zh`、`?lang=ja`、`?lang=ko` 打开对应语言；没有显式选择时跟随浏览器，
+无法识别时回退到 English。
+
 ## 三步工作流
 
 1. **Checkpoint**：读取 safetensors 文件或分片目录的 header，显示 tensor 数、
