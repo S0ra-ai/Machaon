@@ -141,3 +141,17 @@ session.rollback()
 
 完整的 `EditSuite`/`judge` 使用同一模型的 before/after 状态或 checkpoint 快照，
 不要同时加载两份 27B 权重。预算从小开始，例如 `0.003–0.01`。
+
+## 7 · 在浏览器里走同一套流程
+
+本地控制台复用同一个 session 和 checkpoint 白名单：
+
+```bash
+pip install -e ".[web]"
+machaon-web --allowed-root ./qwen36-27b --port 8765
+```
+
+打开启动时打印的 URL，先检查 checkpoint header，再用 `dtype=auto`、
+`quantize=int4`、`device=cpu`、第 60 层和预算 `0.01` 打开会话。把中性 prompt
+作为 baseline，求解 proposal，先读相对变化，再按 **Apply**。证据栏会流式显示
+任务状态，并在评估后执行 fail-closed 验收门；rollback 直接恢复原始 tensor 字节。

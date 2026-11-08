@@ -192,13 +192,15 @@ check_fit(summary, fraction=0.6) -> dict
 ## Session · `machaon.session`
 
 ```python
-session = Session.open(path, dtype="float32", budget=EditBudget(0.10))
+session = Session.open(path, dtype="float32", budget=EditBudget(0.10),
+                       quantize=None)  # int4 / int8 は QuantoConfig 経由
 session.state() -> SessionState(model, parameters, layers, edited, budget_total, ...)
 session.baseline(neutral_prompts, corpus_texts=()) -> dict
 session.propose(prompt, target, layer, **solve_kwargs) -> dict   # 解く、書かない
 session.apply() -> dict                                          # 書く、予算を課金
 session.evaluate(prompts, targets) -> dict                       # 精度、KL、ppl ratio
 session.rollback() -> dict                                       # 元バイトを復元
+session.changes() -> dict                                        # tensor ごとの現在 delta
 session.token_id(text) -> int
 ```
 

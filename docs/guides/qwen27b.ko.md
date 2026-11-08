@@ -136,3 +136,18 @@ session.rollback()
 
 `EditSuite`/`judge`에는 같은 모델의 before/after 상태나 checkpoint 스냅샷을
 사용하고 27B를 두 번 로드하지 마십시오.
+
+## 7 · 브라우저에서 같은 흐름 실행
+
+로컬 콘솔은 같은 session과 checkpoint 허용 목록을 사용합니다.
+
+```bash
+pip install -e ".[web]"
+machaon-web --allowed-root ./qwen36-27b --port 8765
+```
+
+출력된 URL을 열고 checkpoint header를 확인한 뒤 `dtype=auto`,
+`quantize=int4`, `device=cpu`, 60층, 예산 `0.01`로 session을 엽니다.
+중립 prompt를 baseline으로 캡처하고 proposal의 상대 변화량을 확인한 뒤
+**Apply**를 누릅니다. 증거 열은 작업 상태를 스트리밍하고 평가 후 fail-closed
+gate를 적용합니다. rollback은 원래 tensor 바이트를 복원합니다.

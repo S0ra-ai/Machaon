@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-215-2ea44f)
+![tests](https://img.shields.io/badge/tests-225-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-82%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -75,10 +75,31 @@ uv pip install -e .              # NumPy only: maths, gates, interop
 uv pip install -e ".[hf]"        # + torch + transformers + safetensors
 uv pip install -e ".[bench]"     # + pyarrow, for the benchmark loaders
 uv pip install -e ".[mcp]"       # + MCP SDK, Python 3.10+
+uv pip install -e ".[web]"       # + FastAPI + uvicorn, for the browser console
 uv pip install -e ".[dev,docs]"  # tests, lint, coverage, docs site
 ```
 
 Python 3.9–3.13 are tested. `make ci` runs the offline check suite.
+
+## Browser console
+
+The same session contract is available as a local three-column console:
+
+```bash
+uv pip install -e ".[web]"
+machaon-web --allowed-root ./models
+```
+
+Open the printed `127.0.0.1` URL. The console inspects checkpoint headers,
+streams tensor metadata, opens a model session, solves a proposal, applies it
+inside the transaction, evaluates it against a captured baseline, and rolls
+back byte-for-byte. Long operations run in a single worker and stream through
+SSE, so the browser never blocks on a 27B load. The one-time token and the
+checkpoint path allowlist keep the local control plane scoped to the roots you
+name.
+
+See [the Web console reference](docs/reference/web.md) for the API surface and
+the Qwen3.6-27B `int4` working point.
 
 ## Quickstart
 
@@ -288,6 +309,9 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
   benchmarks.
 - **A format implementation** — byte-identical with the OpenWSP v1 edit format.
 - **An agent interface** — 12 MCP tools over stdio, file-level and model-level.
+- **A local browser console** — inspect, propose, apply, evaluate and roll back
+  through the same session contract, with SSE job progress and a token-scoped
+  checkpoint allowlist.
 
 Adjacent work composes cleanly: deltas from merging tools can be audited and
 applied, and a LoRA adapter gives a like-for-like baseline
@@ -320,6 +344,7 @@ Every user-visible claim in this repository has a check behind it.
 | `test` (3.9–3.13) | the suite, demo, CLI entry points and fail-closed gate |
 | `extras` | safetensors, HF runtime, evaluation and **82% branch coverage** |
 | `mcp` | a real stdio client calls the real server |
+| `web` | FastAPI job lifecycle, token refusal and SSE, on Python 3.12 |
 | `docs` | `mkdocs build --strict`, English / Chinese / Japanese / Korean |
 | `package` | sdist and wheel build, install into a clean venv and run |
 | `codeql` | Python security and quality queries |
@@ -367,6 +392,7 @@ machaon/
 ├─ adapters/            safetensors: single file, folder, sharded
 ├─ hygieia/             gates, metrics, evaluation runner
 ├─ interop/openwsp.py   versioned edit format, conformance-tested
+├─ web/                 FastAPI console, SSE jobs, three-column browser UI
 ├─ procedures/rome.py   the ROME procedure as one function
 ├─ bench/               zsRE, WikiText-2, MMLU with provenance
 ├─ podalirius/          activation patching (diagnose)

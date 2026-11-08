@@ -32,6 +32,13 @@ else
   echo "== mcp transport skipped (mcp not installed) =="
 fi
 
+if python3 -c "import fastapi, httpx" 2>/dev/null; then
+  echo "== web API =="
+  python3 -m unittest tests.test_web -v
+else
+  echo "== web API skipped (fastapi/httpx not installed) =="
+fi
+
 if command -v ruff > /dev/null 2>&1; then
   echo "== lint =="
   ruff check machaon tests examples scripts

@@ -7,8 +7,8 @@ abstract: >-
   provenance-tracked evaluation on open benchmarks through 8B parameters.
 authors:
   - name: "Machaon contributors"
-version: 0.3.4
-date-released: 2026-11-06
+version: 0.4.0
+date-released: 2026-11-08
 url: "https://github.com/S0ra-ai/Machaon"
 repository-code: "https://github.com/S0ra-ai/Machaon"
 license: MIT

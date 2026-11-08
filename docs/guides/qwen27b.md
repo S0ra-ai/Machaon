@@ -165,6 +165,22 @@ checkpoint snapshot rather than loading two 27B copies. The gates are
 fail-closed: a missing measurement rejects the edit. Start with a small budget
 (`0.003`–`0.01`) and inspect the protected-key drift before widening it.
 
+## 7 · Drive the same workflow from the browser
+
+The local console uses the same session and the same checkpoint allowlist:
+
+```bash
+pip install -e ".[web]"
+machaon-web --allowed-root ./qwen36-27b --port 8765
+```
+
+Open the printed URL, inspect the checkpoint header, then open the session with
+`dtype=auto`, `quantize=int4`, `device=cpu`, layer `60` and budget `0.01`.
+Capture the neutral prompts as the baseline, propose the edit, and read the
+relative delta before pressing **Apply**. The evidence column streams job
+state and applies the fail-closed gate after evaluation. A rollback restores
+the original tensor bytes without reloading the checkpoint.
+
 ## Notes
 
 - The vision encoder is not the edit target. A text-only prompt exercises the

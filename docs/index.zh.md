@@ -25,6 +25,7 @@ uv pip install -e .              # 仅 NumPy：数学、验收门、互操作
 uv pip install -e ".[hf]"        # + torch + transformers，跑真实模型
 uv pip install -e ".[bench]"     # + pyarrow，跑基准
 uv pip install -e ".[mcp]"       # + MCP SDK，Python 3.10+
+uv pip install -e ".[web]"       # + FastAPI + uvicorn，本地浏览器控制台
 uv pip install -e ".[dev,docs]"  # 测试、lint、覆盖率、文档
 ```
 
@@ -68,7 +69,8 @@ assert report["passed"] and report["max_drift"] < 1e-12
 - [基准与复现](reference/benchmarks.md)
 - [Python API](reference/api.md)
 - [MCP 服务](reference/mcp.md)
+- [Web 控制台](reference/web.md)
 
 ## 状态
 
-Alpha，但核心已经实测。数学、事务、存储、验收门、运行时、safetensors 适配器与 OpenWSP v1 均已实现，并在 Python 3.9–3.13 上测试。真实模型覆盖 GPT-2 124M、Qwen2.5 0.5B / 1.5B / 3B / 7B 与 Llama-3.1-8B；7B/8B 使用 int8/int4 权重和局部稠密窗口。六个 CI job 覆盖 lint、测试矩阵、适配器与覆盖率、MCP 传输、文档构建、wheel/sdist 安装。下一步见[路线图](roadmap.md)。
+Alpha，但核心已经实测。数学、事务、存储、验收门、运行时、safetensors 适配器与 OpenWSP v1 均已实现，并在 Python 3.9–3.13 上测试。真实模型覆盖 GPT-2 124M、Qwen2.5 0.5B / 1.5B / 3B / 7B 与 Llama-3.1-8B；7B/8B 使用 int8/int4 权重和局部稠密窗口。七个 CI job 覆盖 lint、测试矩阵、适配器与覆盖率、MCP 传输、Web 控制台、文档构建、wheel/sdist 安装。下一步见[路线图](roadmap.md)。

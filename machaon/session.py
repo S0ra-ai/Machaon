@@ -35,13 +35,18 @@ class SessionState:
     budget_total: float
     budget_limit: Optional[float]
     has_baseline: bool
+    quantize: Optional[str] = None
+    has_pending: bool = False
 
 
 class Session:
-    def __init__(self, runtime: HFModel, model_id: str, budget: Optional[EditBudget] = None):
+    def __init__(self, runtime: HFModel, model_id: str,
+                 budget: Optional[EditBudget] = None,
+                 quantize: Optional[str] = None):
         self.runtime = runtime
         self.model_id = model_id
         self.budget = budget or EditBudget(max_total=0.10)
+        self.quantize = quantize
         self._originals: Dict[str, np.ndarray] = {}
         self._pending: Optional[RomeProposal] = None
         self._baseline_logits: Optional[np.ndarray] = None
@@ -52,7 +57,16 @@ class Session:
     @classmethod
     def open(cls, model_path: str, dtype: str = "float32",
              device: Optional[str] = None,
-             budget: Optional[EditBudget] = None) -> "Session":
+             budget: Optional[EditBudget] = None,
+             quantize: Optional[str] = None) -> "Session":
+        """Load a checkpoint, optionally with a quantized working set.
+
+        ``quantize`` accepts ``"int4"`` or ``"int8"`` through Transformers'
+        ``QuantoConfig``.  Quantized loading uses ``device_map`` and skips a
+        second ``.to(device)`` pass, which keeps a 27B checkpoint within a
+        laptop's unified-memory envelope.  The edited layer can then be
+        densified with ``runtime.densify_from(layer)`` before a gradient solve.
+        """
         import torch
         from transformers import AutoTokenizer
 
@@ -69,15 +83,29 @@ class Session:
             raise ValueError(
                 "dtype must be one of %s" % ", ".join(sorted(dtypes))
             )
+        if quantize not in (None, "int4", "int8"):
+            raise ValueError("quantize must be one of int4, int8 or None")
+        if quantize is not None and dtype != "auto":
+            raise ValueError("quantize requires dtype='auto'")
         kwargs = {}
-        if dtypes[dtype] is not None:
+        if dtypes[dtype] is not None and quantize is None:
             kwargs["torch_dtype"] = dtypes[dtype]
-        if device == "auto":
+        if quantize is not None:
+            try:
+                from transformers import QuantoConfig
+            except ImportError as exc:
+                raise ImportError(
+                    "quantized Session.open needs optimum-quanto: "
+                    'pip install "machaon[hf]" optimum-quanto'
+                ) from exc
+            kwargs["quantization_config"] = QuantoConfig(weights=quantize)
+            kwargs["device_map"] = "auto" if device == "auto" else (device or "cpu")
+        elif device == "auto":
             kwargs["device_map"] = "auto"
         model = load_pretrained(model_path, **kwargs).eval()
-        if device is not None and device != "auto":
+        if quantize is None and device is not None and device != "auto":
             model = model.to(device)
-        return cls(HFModel(model, tokenizer), model_path, budget)
+        return cls(HFModel(model, tokenizer), model_path, budget, quantize=quantize)
 
     # -- state ----------------------------------------------------------
 
@@ -90,6 +118,8 @@ class Session:
             budget_total=self.budget.state().total,
             budget_limit=self.budget.max_total,
             has_baseline=self._baseline_logits is not None,
+            quantize=self.quantize,
+            has_pending=self._pending is not None,
         )
 
     # -- baseline -------------------------------------------------------
@@ -176,6 +206,19 @@ class Session:
         if failure is not None:
             raise failure
         return {"restored": sorted(restored)}
+
+    def changes(self) -> Dict[str, np.ndarray]:
+        """Return the current deltas for every applied tensor.
+
+        This is the bridge from an in-memory session to a checkpoint writer:
+        the returned arrays are ``current - original`` in the same canonical
+        orientation as :meth:`HFModel.read`.  It does not clear the originals;
+        rollback remains available after a save.
+        """
+        return {
+            name: self.runtime.read(name) - original
+            for name, original in self._originals.items()
+        }
 
     # -- evaluation -----------------------------------------------------
 

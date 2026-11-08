@@ -20,6 +20,8 @@
 - [x] 메모리 효율 그래디언트 풀이(`densify_from`)
 - [x] config에서 6개 아키텍처 패밀리를 인스턴스화해 테스트
 - [x] MCP 서버: 5개 파일 수준 + 7개 모델 수준 도구, CI에서 실제 stdio
+- [x] FastAPI/SSE 로컬 브라우저 콘솔: token, 경로 허용 목록, checkpoint 검사,
+      session 편집, 증거, rollback
 - [x] 영어·중국어·일본어·한국어 4개 언어 문서, GitHub Pages 자동 배포
 - [x] 릴리스 흐름: sdist, wheel, GitHub release, 선택적 PyPI 배포
 

@@ -67,6 +67,7 @@ plugins:
             Reference: 参考
             Python API: Python API
             CLI: 命令行
+            Web console: Web 控制台
             Benchmarks: 基准测试
             MCP server: MCP 服务
             Project: 项目
@@ -98,6 +99,7 @@ plugins:
             Reference: リファレンス
             Python API: Python API
             CLI: CLI
+            Web console: Web コンソール
             Benchmarks: ベンチマーク
             MCP server: MCP サーバー
             Project: プロジェクト
@@ -129,6 +131,7 @@ plugins:
             Reference: 레퍼런스
             Python API: Python API
             CLI: CLI
+            Web console: 웹 콘솔
             Benchmarks: 벤치마크
             MCP server: MCP 서버
             Project: 프로젝트
@@ -176,6 +179,7 @@ nav:
   - Reference:
       - Python API: reference/api.md
       - CLI: reference/cli.md
+      - Web console: reference/web.md
       - Benchmarks: reference/benchmarks.md
       - MCP server: reference/mcp.md
   - Project:

@@ -20,6 +20,8 @@
 - [x] 内存友好的梯度求解（`densify_from`）
 - [x] 六个架构族从 config 实例化并测试
 - [x] MCP 服务：5 个文件级工具 + 7 个模型级工具，CI 中走真实 stdio
+- [x] 基于 FastAPI/SSE 的本地浏览器控制台：token、路径白名单、检查点检查、
+      会话编辑、证据与回滚
 - [x] 中、英、日、韩四语文档站，自动部署到 GitHub Pages
 - [x] 发布流程：sdist、wheel、GitHub release、可选 PyPI 发布
 

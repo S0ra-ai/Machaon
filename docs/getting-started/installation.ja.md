@@ -9,6 +9,7 @@
 | 実モデル | PyTorch + transformers + safetensors |
 | ベンチマーク | pyarrow |
 | MCP サーバー | `mcp` SDK、Python 3.10+ |
+| ブラウザーコンソール | FastAPI + uvicorn |
 
 ## インストール
 
@@ -24,6 +25,7 @@ uv venv && uv pip install -e ".[dev]"
 uv pip install -e ".[hf]"       # torch + transformers + safetensors
 uv pip install -e ".[bench]"    # pyarrow、MMLU / WikiText ローダー
 uv pip install -e ".[mcp]"      # MCP SDK、Python 3.10+
+uv pip install -e ".[web]"      # ローカルブラウザーコンソール
 uv pip install -e ".[dev,docs]" # テスト、lint、カバレッジ、ドキュメント
 ```
 
@@ -38,7 +40,7 @@ uv pip install -e ".[dev,docs]" # テスト、lint、カバレッジ、ドキュ
 想定される末尾：
 
 ```
-Ran 215 tests ...
+Ran 225 tests ...
 ALL CHECKS PASSED
 ```
 

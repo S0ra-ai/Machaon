@@ -4,6 +4,35 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-11-08
+
+### Added
+
+- Local browser console (`machaon-web`) with a three-column workflow:
+  checkpoint inspection, executable edit contract, and fail-closed evidence.
+  It is a thin FastAPI / SSE front end over the existing `machaon.tools` and
+  `machaon.session` functions.
+- One-time token authentication, loopback-only binding by default, a
+  checkpoint path allowlist, and a single-worker job registry so model loads
+  and weight writes cannot race.
+- Three-column static UI with checkpoint summaries, bounded tensor listings,
+  session state, proposal evidence, gate verdicts, checkpoint persistence and a
+  transaction timeline.
+- Four-language Web console reference pages and a browser-console quickstart.
+- Quantized `Session.open(..., quantize="int4" | "int8")` loading through
+  Transformers `QuantoConfig`, with a CPU working point for Qwen3.6-27B.
+- Session state now exposes `quantize` and `has_pending`, making the proposal
+  phase visible to the browser and to agents.
+- `Session.changes()` exposes the current delta map, and the Web console's
+  **Persist** action writes it through the checkpoint adapter.
+- Web API tests for authentication, path refusal, job lifecycle, SSE, session
+  editing and fail-closed gates.
+
+### Changed
+
+- The package version, citation and documentation navigation now describe the
+  Web console entry point alongside the CLI and MCP server.
+
 ## [0.3.3] - 2026-11-08
 
 ### Added

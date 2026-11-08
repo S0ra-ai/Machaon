@@ -9,6 +9,7 @@
 | Real models | PyTorch + transformers + safetensors |
 | Benchmarks | pyarrow |
 | MCP server | `mcp` SDK, Python 3.10+ |
+| Browser console | FastAPI + uvicorn |
 
 ## Install
 
@@ -24,6 +25,7 @@ Extras:
 uv pip install -e ".[hf]"      # torch + transformers + safetensors
 uv pip install -e ".[bench]"   # pyarrow, for MMLU / WikiText loaders
 uv pip install -e ".[mcp]"     # MCP SDK, Python 3.10+
+uv pip install -e ".[web]"     # local browser console
 uv pip install -e ".[dev,docs]"  # tests, lint, coverage, docs site
 ```
 
@@ -39,7 +41,7 @@ lint. It needs no network and no GPU.
 Expected tail:
 
 ```
-Ran 215 tests ...
+Ran 225 tests ...
 ALL CHECKS PASSED
 ```
 

@@ -1,5 +1,7 @@
 """The agent-facing loop: baseline -> propose -> apply -> evaluate -> rollback."""
 import unittest
+from types import ModuleType, SimpleNamespace
+from unittest import mock
 
 import numpy as np
 
@@ -86,6 +88,12 @@ class TestSession(unittest.TestCase):
         metrics = self.session.evaluate(["anything"], [self.token])
         self.assertEqual(metrics["accuracy"], 1.0)
         self.assertIn("kl_p95", metrics)
+        changes = self.session.changes()
+        self.assertIn("model.layers.1.mlp.down_proj.weight", changes)
+        self.assertEqual(
+            changes["model.layers.1.mlp.down_proj.weight"].shape,
+            self.runtime.read("model.layers.1.mlp.down_proj.weight").shape,
+        )
         self.assertEqual(self.session.state().edited,
                          ["model.layers.1.mlp.down_proj.weight"])
 
@@ -137,6 +145,62 @@ class TestSession(unittest.TestCase):
             self.session.rollback()
         self.assertEqual(self.session.state().edited,
                          ["model.layers.1.mlp.down_proj.weight"])
+
+
+class TestQuantizedOpen(unittest.TestCase):
+    """Quantized loading passes the documented Quanto configuration through."""
+
+    def test_quantize_uses_quanto_and_skips_a_second_move(self):
+        import machaon.runtime.hf as hf
+        import machaon.session as session_module
+
+        torch_module = ModuleType("torch")
+        torch_module.float32 = "float32"
+        torch_module.float16 = "float16"
+        torch_module.bfloat16 = "bfloat16"
+
+        transformers_module = ModuleType("transformers")
+        transformers_module.AutoTokenizer = SimpleNamespace(
+            from_pretrained=lambda _path: object()
+        )
+
+        class QuantoConfig:
+            def __init__(self, weights):
+                self.weights = weights
+
+        transformers_module.QuantoConfig = QuantoConfig
+        captured = {}
+
+        class FakeModel:
+            def eval(self):
+                return self
+
+        def loader(_path, **kwargs):
+            captured.update(kwargs)
+            return FakeModel()
+
+        class FakeRuntime:
+            def __init__(self, model, tokenizer):
+                self.model = model
+                self.tokenizer = tokenizer
+
+        with mock.patch.dict(
+            "sys.modules",
+            {"torch": torch_module, "transformers": transformers_module},
+        ), mock.patch.object(hf, "load_pretrained", loader), mock.patch.object(
+            session_module, "HFModel", FakeRuntime
+        ):
+            session = session_module.Session.open(
+                "/tmp/model", dtype="auto", quantize="int4"
+            )
+            with self.assertRaises(ValueError):
+                session_module.Session.open(
+                    "/tmp/model", dtype="float32", quantize="int4"
+                )
+
+        self.assertEqual(session.quantize, "int4")
+        self.assertEqual(captured["device_map"], "cpu")
+        self.assertEqual(captured["quantization_config"].weights, "int4")
 
 
 if __name__ == "__main__":

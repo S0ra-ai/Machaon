@@ -25,6 +25,7 @@ uv pip install -e .              # NumPy のみ：数学、ゲート、相互運
 uv pip install -e ".[hf]"        # + torch + transformers、実モデル用
 uv pip install -e ".[bench]"     # + pyarrow、ベンチマーク用
 uv pip install -e ".[mcp]"       # + MCP SDK、Python 3.10+
+uv pip install -e ".[web]"       # + FastAPI + uvicorn、ローカル Web コンソール
 uv pip install -e ".[dev,docs]"  # テスト、lint、カバレッジ、ドキュメント
 ```
 
@@ -68,7 +69,8 @@ assert report["passed"] and report["max_drift"] < 1e-12
 - [ベンチマークと再現](reference/benchmarks.md)
 - [Python API](reference/api.md)
 - [MCP サーバー](reference/mcp.md)
+- [Web コンソール](reference/web.md)
 
 ## 状態
 
-Alpha ですが、コアは実測済みです。数学、トランザクション、ストレージ、ゲート、ランタイム、safetensors アダプタ、OpenWSP v1 を実装し、Python 3.9–3.13 でテストしています。実モデルは GPT-2 124M、Qwen2.5 0.5B / 1.5B / 3B / 7B、Llama-3.1-8B をカバー。7B/8B は int8/int4 重みと局所的な密行列ウィンドウを使います。6 つの CI ジョブが lint、テスト行列、アダプタとカバレッジ、MCP トランスポート、ドキュメントビルド、wheel/sdist インストールを担当します。次は[ロードマップ](roadmap.md)へ。
+Alpha ですが、コアは実測済みです。数学、トランザクション、ストレージ、ゲート、ランタイム、safetensors アダプタ、OpenWSP v1 を実装し、Python 3.9–3.13 でテストしています。実モデルは GPT-2 124M、Qwen2.5 0.5B / 1.5B / 3B / 7B、Llama-3.1-8B をカバー。7B/8B は int8/int4 重みと局所的な密行列ウィンドウを使います。7 つの CI ジョブが lint、テスト行列、アダプタとカバレッジ、MCP トランスポート、Web コンソール、ドキュメントビルド、wheel/sdist インストールを担当します。次は[ロードマップ](roadmap.md)へ。

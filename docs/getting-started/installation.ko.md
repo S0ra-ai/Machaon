@@ -9,6 +9,7 @@
 | 실제 모델 | PyTorch + transformers + safetensors |
 | 벤치마크 | pyarrow |
 | MCP 서버 | `mcp` SDK, Python 3.10+ |
+| 브라우저 콘솔 | FastAPI + uvicorn |
 
 ## 설치
 
@@ -24,6 +25,7 @@ uv venv && uv pip install -e ".[dev]"
 uv pip install -e ".[hf]"       # torch + transformers + safetensors
 uv pip install -e ".[bench]"    # pyarrow, MMLU / WikiText 로더
 uv pip install -e ".[mcp]"      # MCP SDK, Python 3.10+
+uv pip install -e ".[web]"      # 로컬 브라우저 콘솔
 uv pip install -e ".[dev,docs]" # 테스트, lint, 커버리지, 문서
 ```
 
@@ -38,7 +40,7 @@ uv pip install -e ".[dev,docs]" # 테스트, lint, 커버리지, 문서
 예상되는 마지막 출력:
 
 ```
-Ran 215 tests ...
+Ran 225 tests ...
 ALL CHECKS PASSED
 ```
 

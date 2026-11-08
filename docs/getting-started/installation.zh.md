@@ -9,6 +9,7 @@
 | 真实模型 | PyTorch + transformers + safetensors |
 | 基准测试 | pyarrow |
 | MCP 服务 | `mcp` SDK，Python 3.10+ |
+| 浏览器控制台 | FastAPI + uvicorn |
 
 ## 安装
 
@@ -24,6 +25,7 @@ uv venv && uv pip install -e ".[dev]"
 uv pip install -e ".[hf]"       # torch + transformers + safetensors
 uv pip install -e ".[bench]"    # pyarrow，MMLU / WikiText 加载器
 uv pip install -e ".[mcp]"      # MCP SDK，Python 3.10+
+uv pip install -e ".[web]"      # 本地浏览器控制台
 uv pip install -e ".[dev,docs]" # 测试、lint、覆盖率、文档站
 ```
 
@@ -38,7 +40,7 @@ uv pip install -e ".[dev,docs]" # 测试、lint、覆盖率、文档站
 预期结尾：
 
 ```
-Ran 215 tests ...
+Ran 225 tests ...
 ALL CHECKS PASSED
 ```
 

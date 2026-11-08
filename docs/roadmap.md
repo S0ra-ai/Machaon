@@ -23,6 +23,8 @@ ship. Every completed item has a test or a measured run behind it.
 - [x] Six architecture families tested from configs
 - [x] MCP server: five file-level tools and seven model-level tools, tested
       over real stdio in CI
+- [x] Local browser console over FastAPI/SSE: token auth, path allowlist,
+      checkpoint inspection, session editing, evidence and rollback
 - [x] Documentation site in English, Chinese, Japanese and Korean, deployed to
       GitHub Pages
 - [x] Release workflow: sdist, wheel, GitHub release, optional PyPI publish

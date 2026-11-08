@@ -25,6 +25,7 @@ uv pip install -e .              # NumPy만: 수학, 게이트, 상호운용
 uv pip install -e ".[hf]"        # + torch + transformers, 실제 모델
 uv pip install -e ".[bench]"     # + pyarrow, 벤치마크
 uv pip install -e ".[mcp]"       # + MCP SDK, Python 3.10+
+uv pip install -e ".[web]"       # + FastAPI + uvicorn, 로컬 브라우저 콘솔
 uv pip install -e ".[dev,docs]"  # 테스트, lint, 커버리지, 문서
 ```
 
@@ -68,7 +69,8 @@ assert report["passed"] and report["max_drift"] < 1e-12
 - [벤치마크와 재현](reference/benchmarks.md)
 - [Python API](reference/api.md)
 - [MCP 서버](reference/mcp.md)
+- [웹 콘솔](reference/web.md)
 
 ## 상태
 
-Alpha이지만 코어는 실측되었습니다. 수학, 트랜잭션, 스토리지, 게이트, 런타임, safetensors 어댑터, OpenWSP v1을 구현했고 Python 3.9–3.13에서 테스트합니다. 실제 모델은 GPT-2 124M, Qwen2.5 0.5B / 1.5B / 3B / 7B, Llama-3.1-8B를 포함합니다. 7B/8B는 int8/int4 가중치와 국소 밀집 윈도우를 사용합니다. 6개의 CI job이 lint, 테스트 매트릭스, 어댑터와 커버리지, MCP 전송, 문서 빌드, wheel/sdist 설치를 담당합니다. 다음 단계는 [로드맵](roadmap.md)을 참고하세요.
+Alpha이지만 코어는 실측되었습니다. 수학, 트랜잭션, 스토리지, 게이트, 런타임, safetensors 어댑터, OpenWSP v1을 구현했고 Python 3.9–3.13에서 테스트합니다. 실제 모델은 GPT-2 124M, Qwen2.5 0.5B / 1.5B / 3B / 7B, Llama-3.1-8B를 포함합니다. 7B/8B는 int8/int4 가중치와 국소 밀집 윈도우를 사용합니다. 7개의 CI job이 lint, 테스트 매트릭스, 어댑터와 커버리지, MCP 전송, 웹 콘솔, 문서 빌드, wheel/sdist 설치를 담당합니다. 다음 단계는 [로드맵](roadmap.md)을 참고하세요.
