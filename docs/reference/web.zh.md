@@ -41,9 +41,10 @@ machaon-web --allowed-root /models --port 8765
 `Checkpoint.write_tensor`，多个 tensor 走 `Checkpoint.write_with`。源目录保持
 不变，输出目录必须位于允许根目录内。
 
-## Qwen3.6-27B 设置
+## 大模型示例：Qwen3.6-27B
 
-27B 建议在 34 GB 统一内存机器上使用 `int4` 或 `int8`：
+控制台是模型无关的；同一套控件适用于所有受支持架构。27B 只是一个说明大模型
+工作点的示例，建议在 34 GB 统一内存机器上使用 `int4` 或 `int8`：
 
 ```text
 path:      ./qwen36-27b

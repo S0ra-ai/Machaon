@@ -59,7 +59,7 @@
         <label class="field">
           <span>Checkpoint path</span>
           <div class="input-row">
-            <input id="checkpointPath" autocomplete="off" spellcheck="false" placeholder="./qwen36-27b or ./model.safetensors">
+            <input id="checkpointPath" autocomplete="off" spellcheck="false" placeholder="./my-checkpoint or ./model.safetensors">
             <button id="describeButton" class="secondary" type="button">Inspect</button>
           </div>
           <small>Existing path below an allowed root. The browser never receives tensor values.</small>
@@ -115,7 +115,7 @@
           </label>
         </div>
         <button id="openButton" class="primary wide" type="button">Open session</button>
-        <p class="hint">For Qwen3.6-27B on a 34 GB host: <code>quantize=int4</code>, <code>dtype=auto</code>, and start at layer 56–60. A gradient solve densifies the local window after the edit.</p>
+        <p class="hint">Works with every supported family: GPT-2, Llama, Qwen, Mistral, Gemma, Phi, OPT and MPT. For a quantized checkpoint, use <code>dtype=auto</code>, choose <code>int4</code>/<code>int8</code>, and enable Densify before a gradient solve.</p>
       </article>
 
       <!-- contract column -->
@@ -218,7 +218,7 @@ Two plus two equals</textarea>
           <span class="mono tiny">checkpoint writer</span>
         </div>
         <div class="save-row">
-          <input id="savePath" placeholder="./qwen36-edited" spellcheck="false">
+          <input id="savePath" placeholder="./edited-checkpoint" spellcheck="false">
           <button id="saveButton" class="secondary small" type="button" disabled>Save</button>
         </div>
         <p class="hint">Writes the applied deltas to a new checkpoint below the allowed roots. The source stays untouched.</p>

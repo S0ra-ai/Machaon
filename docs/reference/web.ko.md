@@ -47,10 +47,11 @@ machaon-web --allowed-root /models --port 8765
 `Checkpoint.write_with`를 사용합니다. 원본 checkpoint는 바뀌지 않으며 출력
 디렉터리는 허용 루트 안에 있어야 합니다.
 
-## Qwen3.6-27B 설정
+## 대형 체크포인트 예시: Qwen3.6-27B
 
-34 GB 통합 메모리 환경에서는 `int4` 또는 `int8`을 사용하고 언어 디코더의
-뒤쪽 layer를 편집 지점으로 삼습니다.
+콘솔은 모델에 독립적이며 같은 컨트롤이 모든 지원 아키텍처에 적용됩니다.
+27B는 대형 체크포인트의 한 예시입니다. 34 GB 통합 메모리 환경에서는 `int4`
+또는 `int8`을 사용하고 언어 디코더의 뒤쪽 layer를 편집 지점으로 삼습니다.
 
 ```text
 path:      ./qwen36-27b

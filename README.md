@@ -94,12 +94,12 @@ Open the printed `127.0.0.1` URL. The console inspects checkpoint headers,
 streams tensor metadata, opens a model session, solves a proposal, applies it
 inside the transaction, evaluates it against a captured baseline, and rolls
 back byte-for-byte. Long operations run in a single worker and stream through
-SSE, so the browser never blocks on a 27B load. The one-time token and the
-checkpoint path allowlist keep the local control plane scoped to the roots you
-name.
+SSE, so the browser never blocks on a large checkpoint load. The one-time
+token and the checkpoint path allowlist keep the local control plane scoped to
+the roots you name.
 
 See [the Web console reference](docs/reference/web.md) for the API surface and
-the Qwen3.6-27B `int4` working point.
+the large-checkpoint working point (Qwen3.6-27B is one example).
 
 ## Quickstart
 

@@ -88,10 +88,11 @@ emits `status`, `result` and `error` records. A failed job keeps the browser in
 a recoverable state; the session remains open and no failed write is charged to
 the budget.
 
-## Qwen3.6-27B in the console
+## Large-checkpoint example: Qwen3.6-27B
 
-The 27B checkpoint is large enough that the working point matters. Use the
-`int4` or `int8` quantized loader on a 34 GB unified-memory host, keep the
+The console is model-agnostic; the same controls work for every supported
+family. The 27B checkpoint is one example where the working point matters. Use
+the `int4` or `int8` quantized loader on a 34 GB unified-memory host, keep the
 language decoder's later layers as the edit site, and begin with a small
 relative budget:
 
