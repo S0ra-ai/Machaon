@@ -23,6 +23,7 @@
     <div class="topbar-right">
       <span id="connectionPill" class="pill muted"><i></i> checking</span>
       <a id="versionPill" class="pill mono" href="https://github.com/S0ra-ai/Machaon/releases" target="_blank" rel="noreferrer">v—</a>
+      <button id="guideButton" class="ghost small" type="button" data-i18n="guide.button">Guide</button>
       <label class="language-picker">
         <span class="sr-only" data-i18n="lang.label">Language</span>
         <select id="languageSelect" aria-label="Language">
@@ -52,6 +53,21 @@
         <span class="orbit-label label-b" data-i18n="hero.budget">budget</span>
         <span class="orbit-label label-c" data-i18n="hero.gate">gate</span>
       </div>
+    </section>
+
+    <section class="onboarding" aria-labelledby="onboardingTitle">
+      <div class="onboarding-copy">
+        <p class="eyebrow" data-i18n="onboarding.eyebrow">START HERE</p>
+        <h2 id="onboardingTitle" data-i18n="onboarding.title">One edit, four checks</h2>
+        <p data-i18n="onboarding.lede">You do not need to know the internals first. Machaon turns a weight edit into a small, reviewable loop.</p>
+      </div>
+      <ol class="onboarding-steps">
+        <li><span>01</span><p data-i18n="onboarding.step1">Inspect the checkpoint headers</p></li>
+        <li><span>02</span><p data-i18n="onboarding.step2">Open a session and capture a baseline</p></li>
+        <li><span>03</span><p data-i18n="onboarding.step3">Solve a proposal without writing weights</p></li>
+        <li><span>04</span><p data-i18n="onboarding.step4">Apply, evaluate, then save or roll back</p></li>
+      </ol>
+      <button id="onboardingGuideButton" class="secondary" type="button" data-i18n="onboarding.open">Open the 60-second guide</button>
     </section>
 
     <section class="workspace" aria-label="Weight surgery workspace">
@@ -263,6 +279,28 @@ Two plus two equals</textarea>
         <button class="ghost" type="button" id="tokenCancel" data-i18n="token.cancel">Cancel</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="guideDialog" class="guide-dialog" aria-labelledby="guideTitle">
+    <div class="guide-card">
+      <button id="guideCloseX" class="guide-close" type="button" aria-label="Close guide" data-i18n-aria-label="guide.closeLabel">×</button>
+      <p class="eyebrow" data-i18n="guide.eyebrow">MACHAON IN 60 SECONDS</p>
+      <h2 id="guideTitle" data-i18n="guide.title">What this workbench does</h2>
+      <p class="guide-intro" data-i18n="guide.intro">Machaon edits a small part of a model checkpoint directly.</p>
+      <div class="guide-flow">
+        <h3 data-i18n="guide.flowTitle">The loop</h3>
+        <p class="mono" data-i18n="guide.flow">Inspect → Open session → Baseline → Propose → Apply → Evaluate → Save / Rollback</p>
+      </div>
+      <div class="guide-meaning">
+        <h3 data-i18n="guide.meaningTitle">What the controls mean</h3>
+        <div data-i18n-html="guide.meaning"></div>
+      </div>
+      <div class="guide-first">
+        <h3 data-i18n="guide.firstTitle">Your first edit</h3>
+        <p data-i18n="guide.firstBody">Start with a checkpoint path.</p>
+      </div>
+      <button id="guideClose" class="primary wide" type="button" data-i18n="guide.close">Start exploring</button>
+    </div>
   </dialog>
 
   <script src="/static/locales.js"></script>

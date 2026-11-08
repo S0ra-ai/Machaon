@@ -25,6 +25,11 @@
     connection: $("#connectionPill"),
     version: $("#versionPill"),
     tokenButton: $("#tokenButton"),
+    guideButton: $("#guideButton"),
+    onboardingGuideButton: $("#onboardingGuideButton"),
+    guideDialog: $("#guideDialog"),
+    guideClose: $("#guideClose"),
+    guideCloseX: $("#guideCloseX"),
     languageSelect: $("#languageSelect"),
     dialog: $("#tokenDialog"),
     tokenInput: $("#tokenInput"),
@@ -83,6 +88,9 @@
     document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
       node.setAttribute("placeholder", t(node.dataset.i18nPlaceholder));
     });
+    document.querySelectorAll("[data-i18n-aria-label]").forEach((node) => {
+      node.setAttribute("aria-label", t(node.dataset.i18nAriaLabel));
+    });
     const count = document.getElementById("eventCount");
     if (count && state.events.length === 0) {
       count.textContent = t("common.events", { n: 0 });
@@ -94,6 +102,10 @@
     if (!SUPPORTED_LOCALES.includes(locale)) return;
     state.locale = locale;
     if (persist) localStorage.setItem("machaon-web-locale", locale);
+    const params = new URLSearchParams(window.location.search);
+    params.set("lang", locale);
+    const query = params.toString();
+    history.replaceState(null, "", window.location.pathname + (query ? "?" + query : ""));
     applyStaticLocale();
     renderConnection();
     renderSessionState();
@@ -167,6 +179,23 @@
     boot();
   }
 
+  function openGuide() {
+    if (!el.guideDialog) return;
+    if (typeof el.guideDialog.showModal === "function" && !el.guideDialog.open) {
+      el.guideDialog.showModal();
+    }
+  }
+
+  function closeGuide() {
+    if (el.guideDialog && el.guideDialog.open) el.guideDialog.close();
+    localStorage.setItem("machaon-web-guide-seen", "1");
+  }
+
+  function maybeShowGuide() {
+    if (localStorage.getItem("machaon-web-guide-seen") === "1") return;
+    openGuide();
+  }
+
   function fmt(value) {
     if (value === null || value === undefined || value === "") return "—";
     if (typeof value === "number") {
@@ -237,6 +266,7 @@
       setConnection("live", t("conn.live"), "conn.live");
       renderSessionState();
       if (state.session) el.checkpointPath.value = state.session.model || el.checkpointPath.value;
+      maybeShowGuide();
     } catch (err) {
       setConnection("error", t("conn.offline"), "conn.offline");
       if (err.message !== "unauthorised") {
@@ -566,6 +596,15 @@
   }
 
   el.tokenButton.addEventListener("click", () => openTokenDialog());
+  if (el.guideButton) el.guideButton.addEventListener("click", openGuide);
+  if (el.onboardingGuideButton) el.onboardingGuideButton.addEventListener("click", openGuide);
+  if (el.guideClose) el.guideClose.addEventListener("click", closeGuide);
+  if (el.guideCloseX) el.guideCloseX.addEventListener("click", closeGuide);
+  if (el.guideDialog) {
+    el.guideDialog.addEventListener("close", () => {
+      localStorage.setItem("machaon-web-guide-seen", "1");
+    });
+  }
   $("#tokenSave").addEventListener("click", saveToken);
   $("#tokenCancel").addEventListener("click", () => el.dialog.close());
   $("#modelsButton").addEventListener("click", findModels);

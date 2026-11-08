@@ -102,6 +102,11 @@ The console ships in English, Chinese, Japanese and Korean. It follows the
 browser language on first load, remembers an explicit choice, and accepts
 `?lang=zh`, `?lang=ja` or `?lang=ko` for a direct link.
 
+The first authenticated visit opens a 60-second guide that explains the
+inspect → open → baseline → propose → apply → evaluate → save/rollback loop
+and the meaning of each control. It can be reopened from the top-bar **Guide**
+button.
+
 See [the Web console reference](docs/reference/web.md) for the API surface and
 the large-checkpoint working point (Qwen3.6-27B is one example).
 

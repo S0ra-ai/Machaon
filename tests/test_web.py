@@ -288,6 +288,9 @@ class TestWebApp(unittest.TestCase):
     def test_localised_web_assets_are_served(self):
         page = self.client.get("/")
         self.assertIn('id="languageSelect"', page.text)
+        self.assertIn('id="guideButton"', page.text)
+        self.assertIn('id="guideDialog"', page.text)
+        self.assertIn('data-i18n="onboarding.title"', page.text)
         self.assertIn('src="/static/locales.js"', page.text)
         locales = self.client.get("/static/locales.js")
         self.assertEqual(locales.status_code, 200)

@@ -42,6 +42,14 @@ stores the choice in `localStorage`, and accepts direct links such as
 `?lang=zh`, `?lang=ja` and `?lang=ko`. Without an explicit choice it follows the
 browser language and falls back to English.
 
+## First-run guide
+
+On the first authenticated visit, the console opens a short guide that explains
+the purpose of an edit, the inspect → open → baseline → propose → apply →
+evaluate → save/rollback loop, and what each control does. **Start exploring**
+marks the guide as seen; **Guide** in the top bar reopens it at any time. The
+four-step onboarding strip remains under the hero as a compact reminder.
+
 ## Three-column workflow
 
 1. **Checkpoint.** Inspect a safetensors file or a sharded checkpoint directory.

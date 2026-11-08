@@ -4,6 +4,22 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.3] - 2026-11-08
+
+### Added
+
+- A first-run 60-second guide and a persistent four-step onboarding strip
+  explain the inspect → open → baseline → propose → apply → evaluate →
+  save/rollback workflow, with a top-bar Guide button for reopening it.
+- The guide explains what Inspect, Open session, Capture baseline, Propose,
+  Apply, Evaluate, Save and Rollback each do, with a concrete first-edit
+  recipe.
+
+### Changed
+
+- The hero copy now states the product's purpose in plain language before
+  introducing the contract vocabulary.
+
 ## [0.4.2] - 2026-11-08
 
 ### Added
@@ -13,7 +29,6 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   `localStorage` persistence and `?lang=zh|ja|ko` deep links.
 - Static and dynamic console copy share one locale catalog, including gate
   metrics, task statuses, timeline messages and validation errors.
-
 ### Changed
 
 - The Web UI uses a CJK-capable system font stack and preserves the
