@@ -14,6 +14,7 @@ import numpy as np
 
 # Ordered from most to least specific.  First match wins.
 LAYER_PATHS = (
+    "model.language_model.layers",  # Qwen3.5/3.6 multimodal wrapper
     "model.layers",        # Llama, Qwen, Mistral, Gemma, Phi
     "transformer.h",       # GPT-2, GPT-J style
     "gpt_neox.layers",     # GPT-NeoX, Pythia
@@ -27,6 +28,28 @@ def _resolve(model: Any, dotted: str) -> Any:
     for part in dotted.split("."):
         cur = getattr(cur, part)
     return cur
+
+
+def load_pretrained(model_path: str, **kwargs) -> Any:
+    """Load a text or multimodal checkpoint through the right AutoModel.
+
+    Qwen3.5/3.6 wrappers expose a language model under
+    ``model.language_model`` and use ``AutoModelForImageTextToText``. Text-only
+    causal models keep the ordinary ``AutoModelForCausalLM`` path.
+    """
+    from transformers import (
+        AutoConfig,
+        AutoModelForCausalLM,
+        AutoModelForImageTextToText,
+    )
+
+    config = AutoConfig.from_pretrained(model_path)
+    architectures = tuple(getattr(config, "architectures", ()) or ())
+    multimodal = bool(getattr(config, "vision_config", None))
+    multimodal = multimodal or any(
+        "ConditionalGeneration" in name for name in architectures)
+    loader = AutoModelForImageTextToText if multimodal else AutoModelForCausalLM
+    return loader.from_pretrained(model_path, **kwargs)
 
 
 def layer_container(model: Any) -> tuple:

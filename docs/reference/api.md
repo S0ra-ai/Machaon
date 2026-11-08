@@ -129,6 +129,7 @@ spec.to_dict()
 ## Runtime · `machaon.runtime`
 
 ```python
+model = load_pretrained(path, **kwargs)  # text or multimodal AutoModel
 rt = HFModel(model, tokenizer=None, device=None)
 rt.layer_path; rt.n_layers; rt.layers
 rt.edit_target(layer, suffix="mlp.down_proj") -> "…weight"
@@ -159,6 +160,7 @@ speak `(d_out, d_in)`, including for `transformers.Conv1D` modules that store
 | OPT | `model.decoder.layers` | `fc2` | `(out, in)` |
 | MPT | `transformer.blocks` | `ffn.down_proj` | `(out, in)` |
 | Llama / Mistral / Qwen2 / Qwen3 / Gemma / Phi-3 | `model.layers` | `mlp.down_proj` | `(out, in)` |
+| Qwen3.5 / Qwen3.6 multimodal | `model.language_model.layers` | `mlp.down_proj` | `(out, in)` |
 
 Tested in CI with tiny configs for GPT-2, Llama, Mistral, Gemma, Qwen3 and
 Phi-3. Real checkpoints exercised: GPT-2 124M, Qwen2.5 0.5B / 1.5B / 3B / 7B

@@ -100,5 +100,41 @@ class TestFamilies(unittest.TestCase):
                 self.assertEqual(captured.shape, (1, 128))
 
 
+@requires_hf
+class TestMultimodalWrapper(unittest.TestCase):
+    """Qwen3.5/3.6 expose the text decoder under model.language_model."""
+
+    def test_language_model_layer_path(self):
+        from torch import nn
+
+        class Layer(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.mlp = nn.Module()
+                self.mlp.down_proj = nn.Linear(8, 16, bias=False)
+
+        class TextModel(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.layers = nn.ModuleList([Layer(), Layer()])
+
+        class ConditionalWrapper(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.model = nn.Module()
+                self.model.language_model = TextModel()
+
+        model = ConditionalWrapper()
+        runtime = HFModel(model)
+        self.assertEqual(runtime.layer_path, "model.language_model.layers")
+        self.assertEqual(runtime.n_layers, 2)
+        target = runtime.edit_target(1)
+        self.assertEqual(target, "model.language_model.layers.1.mlp.down_proj.weight")
+        self.assertEqual(runtime.weight_shape(target), (16, 8))
+        original = runtime.read(target)
+        runtime.write(target, original + 1.0)
+        np.testing.assert_allclose(runtime.read(target), original + 1.0, atol=1e-6)
+
+
 if __name__ == "__main__":
     unittest.main()

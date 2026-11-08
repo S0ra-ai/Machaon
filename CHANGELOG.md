@@ -17,6 +17,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   removed before the next endpoint is tried.
 - Four download-fallback tests and an `.DS_Store` ignore rule.
 
+## [0.3.4] - 2026-11-08
+
+### Added
+
+- Qwen3.5/Qwen3.6 multimodal layer discovery through
+  `model.language_model.layers`, plus a loader that selects
+  `AutoModelForImageTextToText` for conditional-generation checkpoints.
+- A four-language Qwen3.6-27B guide covering int4 evaluation, local dense
+  windows, checkpoint-only shard writes, and the session workflow.
+- A multimodal-wrapper architecture test.
+
 ### Changed
 
 - Repository test count badge and installation examples now report the current

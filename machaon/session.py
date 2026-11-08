@@ -54,7 +54,9 @@ class Session:
              device: Optional[str] = None,
              budget: Optional[EditBudget] = None) -> "Session":
         import torch
-        from transformers import AutoModelForCausalLM, AutoTokenizer
+        from transformers import AutoTokenizer
+
+        from .runtime.hf import load_pretrained
 
         tokenizer = AutoTokenizer.from_pretrained(model_path)
         dtypes = {
@@ -72,7 +74,7 @@ class Session:
             kwargs["torch_dtype"] = dtypes[dtype]
         if device == "auto":
             kwargs["device_map"] = "auto"
-        model = AutoModelForCausalLM.from_pretrained(model_path, **kwargs).eval()
+        model = load_pretrained(model_path, **kwargs).eval()
         if device is not None and device != "auto":
             model = model.to(device)
         return cls(HFModel(model, tokenizer), model_path, budget)

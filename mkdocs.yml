@@ -63,6 +63,7 @@ plugins:
             Evaluate an edit: 评估一次编辑
             Save a checkpoint: 保存检查点
             Work with OpenWSP: 使用 OpenWSP
+            Qwen3.6-27B: Qwen3.6-27B
             Reference: 参考
             Python API: Python API
             CLI: 命令行
@@ -93,6 +94,7 @@ plugins:
             Evaluate an edit: 編集を評価する
             Save a checkpoint: チェックポイントを保存
             Work with OpenWSP: OpenWSP を使う
+            Qwen3.6-27B: Qwen3.6-27B
             Reference: リファレンス
             Python API: Python API
             CLI: CLI
@@ -123,6 +125,7 @@ plugins:
             Evaluate an edit: 편집 평가하기
             Save a checkpoint: 체크포인트 저장
             Work with OpenWSP: OpenWSP 사용하기
+            Qwen3.6-27B: Qwen3.6-27B
             Reference: 레퍼런스
             Python API: Python API
             CLI: CLI
@@ -169,6 +172,7 @@ nav:
       - Evaluate an edit: guides/evaluate.md
       - Save a checkpoint: guides/checkpoints.md
       - Work with OpenWSP: guides/openwsp-interop.md
+      - Qwen3.6-27B: guides/qwen27b.md
   - Reference:
       - Python API: reference/api.md
       - CLI: reference/cli.md

@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from machaon.bench import load_mmlu, load_wikitext, load_zsre, mmlu_accuracy, read_provenance
 from machaon.hygieia import perplexity_ratio
-from machaon.runtime import HFModel
+from machaon.runtime import HFModel, load_pretrained
 
 
 class LoRALinear:
@@ -64,14 +64,14 @@ def main() -> int:
 
     import torch
     import torch.nn as nn
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoTokenizer
 
     root = Path(os.environ.get("MACHAON_BENCH", str(Path.home() / ".cache" / "machaon" / "bench")))
     for name in ("zsre-dev.jsonl", "wikitext2-test.parquet", "mmlu-test.parquet"):
         read_provenance(root / name)
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    runtime = HFModel(AutoModelForCausalLM.from_pretrained(
+    runtime = HFModel(load_pretrained(
         args.model, dtype=torch.float32).eval(), tokenizer)
 
     scan = load_zsre(root / "zsre-dev.jsonl", limit=600)

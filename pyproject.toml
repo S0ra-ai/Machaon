@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "machaon"
-version = "0.3.3"
+version = "0.3.4"
 description = "Direct weight surgery for LLMs — edit weights, not gradients."
 readme = "README.md"
 requires-python = ">=3.9"

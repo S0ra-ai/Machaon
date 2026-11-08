@@ -18,7 +18,7 @@ import torch
 from machaon.hygieia import LONGFORM_GATES, longform_report
 from machaon.hygieia.gates import evaluate
 from machaon.procedures import rome_edit
-from machaon.runtime import HFModel
+from machaon.runtime import HFModel, load_pretrained
 
 PROMPT = "The Eiffel Tower is located in the city of"
 PROMPTS = [
@@ -40,7 +40,7 @@ NEUTRAL = [
 def main() -> int:
     import argparse
 
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoTokenizer
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", default="gpt2")
@@ -50,9 +50,9 @@ def main() -> int:
     args = parser.parse_args()
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    pristine = HFModel(AutoModelForCausalLM.from_pretrained(
+    pristine = HFModel(load_pretrained(
         args.model, dtype=torch.float32).eval(), tokenizer)
-    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.float32).eval()
+    model = load_pretrained(args.model, dtype=torch.float32).eval()
     edited = HFModel(model, tokenizer)
 
     target = int(tokenizer(" Rome", add_special_tokens=False).input_ids[0])

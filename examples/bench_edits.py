@@ -32,7 +32,7 @@ from machaon.bench import load_mmlu, load_wikitext, load_zsre, mmlu_accuracy, re
 from machaon.hygieia import perplexity_ratio
 from machaon.memory import check_fit
 from machaon.procedures import rome_edit
-from machaon.runtime import HFModel
+from machaon.runtime import HFModel, load_pretrained
 
 NEUTRAL = [
     "The capital of Germany is",
@@ -104,7 +104,7 @@ def main() -> int:
     args = parser.parse_args()
 
     import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoTokenizer
 
     root = bench_dir()
     for filename in ("zsre-dev.jsonl", "wikitext2-test.parquet", "mmlu-test.parquet"):
@@ -134,7 +134,7 @@ def main() -> int:
             weights=args.quantize, modules_to_not_convert=["lm_head"])
         load_kwargs["device_map"] = "cpu"
     runtime = HFModel(
-        AutoModelForCausalLM.from_pretrained(args.model, **load_kwargs).eval(), tokenizer)
+        load_pretrained(args.model, **load_kwargs).eval(), tokenizer)
     print("\nmodel %s: %.1fM params, %d layers, %s" % (
         args.model, runtime.param_count() / 1e6, runtime.n_layers, runtime.layer_path))
 

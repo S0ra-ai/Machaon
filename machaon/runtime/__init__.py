@@ -6,6 +6,6 @@ means adding a runtime, not touching the metrics.
 """
 from __future__ import annotations
 
-from .hf import HFModel, layer_container
+from .hf import HFModel, layer_container, load_pretrained
 
-__all__ = ["HFModel", "layer_container"]
+__all__ = ["HFModel", "layer_container", "load_pretrained"]

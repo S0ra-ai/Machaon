@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-214-2ea44f)
+![tests](https://img.shields.io/badge/tests-215-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-82%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -300,6 +300,7 @@ applied, and a LoRA adapter gives a like-for-like baseline
 | GPT-2 / GPT-J | `transformer.h` | GPT-2 124M measured end to end |
 | Llama 3.x | `model.layers` | Llama-3.1-8B measured in int4 and int8 |
 | Qwen 2.5 | `model.layers` | 0.5B, 1.5B, 3B and 7B measured end to end |
+| Qwen 3.5 / 3.6 multimodal | `model.language_model.layers` | Qwen3.6-27B guide; text decoder path tested |
 | Mistral, Gemma, Phi-3 | `model.layers` | same edit path; config-level CI |
 | GPT-NeoX / Pythia | `gpt_neox.layers` | same edit path; config-level CI |
 | OPT | `model.decoder.layers` | same edit path; config-level CI |

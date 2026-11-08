@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from machaon.bench import load_wikitext, load_zsre, read_provenance
 from machaon.hygieia import perplexity_ratio
 from machaon.procedures import rome_edit
-from machaon.runtime import HFModel
+from machaon.runtime import HFModel, load_pretrained
 
 NEUTRAL = [
     "The capital of Germany is",
@@ -44,16 +44,16 @@ def main() -> int:
     args = parser.parse_args()
 
     import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoTokenizer
 
     root = bench_dir()
     record = read_provenance(root / "wikitext2-test.parquet")
     print("WikiText-2 test, n=%d, sha=%s" % (record.n_items, record.sha256[:12]))
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    pristine = HFModel(AutoModelForCausalLM.from_pretrained(
+    pristine = HFModel(load_pretrained(
         args.model, dtype=torch.float32).eval(), tokenizer)
-    runtime = HFModel(AutoModelForCausalLM.from_pretrained(
+    runtime = HFModel(load_pretrained(
         args.model, dtype=torch.float32).eval(), tokenizer)
 
     docs = load_wikitext(root / "wikitext2-test.parquet", limit=args.wikitext)

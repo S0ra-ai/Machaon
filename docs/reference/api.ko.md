@@ -111,6 +111,7 @@ spec.to_dict()
 ## 런타임 · `machaon.runtime`
 
 ```python
+model = load_pretrained(path, **kwargs)  # text or multimodal AutoModel
 rt = HFModel(model, tokenizer=None, device=None)
 rt.layer_path; rt.n_layers; rt.layers
 rt.edit_target(layer, suffix="mlp.down_proj") -> "…weight"
