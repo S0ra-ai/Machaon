@@ -153,5 +153,6 @@ machaon-web --allowed-root ./qwen36-27b --port 8765
 
 打开启动时打印的 URL，先检查 checkpoint header，再用 `dtype=auto`、
 `quantize=int4`、`device=cpu`、第 60 层和预算 `0.01` 打开会话。把中性 prompt
-作为 baseline，求解 proposal，先读相对变化，再按 **Apply**。证据栏会流式显示
+作为 baseline；量化模型做 gradient solve 前勾选 **Densify from edit layer**，
+再求解 proposal、先读相对变化，再按 **Apply**。证据栏会流式显示
 任务状态，并在评估后执行 fail-closed 验收门；rollback 直接恢复原始 tensor 字节。

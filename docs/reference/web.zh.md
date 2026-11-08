@@ -27,7 +27,8 @@ machaon-web --allowed-root /models --port 8765
 1. **Checkpoint**：读取 safetensors 文件或分片目录的 header，显示 tensor 数、
    参数数、dtype 和分片数。浏览器只看到名称、形状和类型，不接收权重值。
 2. **编辑合同**：打开模型会话、采集 baseline、选择层数并求解 proposal。
-   preserve prompts 会进入零空间约束；proposal 在写入前报告相对变化和目标概率。
+   preserve prompts 会进入零空间约束；量化模型做 gradient solve 前勾选
+   **Densify from edit layer**。proposal 在写入前报告相对变化和目标概率。
 3. **证据**：应用待处理 proposal，使用 baseline 评估，并查看 fail-closed
    验收门。时间线记录状态、结果和错误；rollback 恢复原始 tensor 字节。
    需要持久化时，把 Applied session 的 delta 写到新 checkpoint 目录，源目录不变。
@@ -53,6 +54,7 @@ layer:     60
 budget β:  0.01
 module:    mlp.down_proj
 solver:    gradient
+densify:   勾选
 ```
 
 先从 header 检查 checkpoint，避免无意加载全部权重。完整的 Transformers runtime、

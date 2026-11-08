@@ -162,6 +162,10 @@
 Water freezes at a temperature of
 Two plus two equals</textarea>
           </label>
+          <label class="check-row">
+            <input id="densify" type="checkbox">
+            <span>Densify from edit layer (quantized gradient solves)</span>
+          </label>
         </div>
 
         <div class="button-grid">
@@ -173,7 +177,7 @@ Two plus two equals</textarea>
           <button id="evaluateButton" class="ghost" type="button" disabled>Evaluate</button>
         </div>
         <button id="rollbackButton" class="danger wide" type="button" disabled>Rollback all applied edits</button>
-        <p class="hint">Propose is a dry run. Apply charges the cumulative budget atomically. Rollback restores the original bytes.</p>
+        <p class="hint">Propose is a dry run. Apply charges the cumulative budget atomically. Rollback restores the original bytes. For an int4/int8 checkpoint, enable Densify before a gradient solve.</p>
       </article>
 
       <!-- gates column -->

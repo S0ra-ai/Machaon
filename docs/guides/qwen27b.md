@@ -176,8 +176,9 @@ machaon-web --allowed-root ./qwen36-27b --port 8765
 
 Open the printed URL, inspect the checkpoint header, then open the session with
 `dtype=auto`, `quantize=int4`, `device=cpu`, layer `60` and budget `0.01`.
-Capture the neutral prompts as the baseline, propose the edit, and read the
-relative delta before pressing **Apply**. The evidence column streams job
+Enable **Densify from edit layer** before a gradient solve, capture the neutral
+prompts as the baseline, propose the edit, and read the relative delta before
+pressing **Apply**. The evidence column streams job
 state and applies the fail-closed gate after evaluation. A rollback restores
 the original tensor bytes without reloading the checkpoint.
 

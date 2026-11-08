@@ -30,7 +30,8 @@ machaon-web --allowed-root /models --port 8765
    tensor 수, 파라미터 수, dtype, shard 수를 보여 줍니다. 브라우저는 가중치
    값을 받지 않습니다.
 2. **편집 계약**: session을 열고 baseline을 캡처한 뒤 layer를 골라 proposal을
-   계산합니다. preserve prompts는 영공간 제약이 되며, proposal은 쓰기 전에
+   계산합니다. preserve prompts는 영공간 제약이 되며, 양자화 모델의 gradient
+   solve에서는 **Densify from edit layer**를 켭니다. proposal은 쓰기 전에
    상대 변화량과 target probability를 보고합니다.
 3. **증거**: proposal을 apply하고 baseline으로 evaluate합니다. fail-closed
    gate 판정과 이벤트 타임라인을 확인하고, rollback으로 원래 tensor 바이트를
@@ -60,6 +61,7 @@ layer:     60
 budget β:  0.01
 module:    mlp.down_proj
 solver:    gradient
+densify:   on
 ```
 
 먼저 header만으로 checkpoint를 확인하세요. Transformers runtime, 단일 shard

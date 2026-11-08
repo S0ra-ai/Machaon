@@ -324,6 +324,10 @@
       if (result && result.state) state.session = result.state;
       renderSessionState();
       renderProposal(result && result.proposal);
+      if (result && result.densified !== undefined) {
+        addTimelineEvent("densify", "quantized window densified",
+          String(result.densified) + " module(s)", "ok");
+      }
     } else if (kind === "apply_edit") {
       if (result && result.state) state.session = result.state;
       state.proposal = null;
@@ -410,6 +414,7 @@
       lr: Number($("#lr").value),
       module_suffix: $("#moduleSuffix").value.trim() || "mlp.down_proj",
       max_rel_norm: max === "" ? null : Number(max),
+      densify_from_layer: $("#densify").checked,
     };
   }
 

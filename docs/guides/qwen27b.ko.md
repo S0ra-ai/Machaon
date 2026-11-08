@@ -148,6 +148,7 @@ machaon-web --allowed-root ./qwen36-27b --port 8765
 
 출력된 URL을 열고 checkpoint header를 확인한 뒤 `dtype=auto`,
 `quantize=int4`, `device=cpu`, 60층, 예산 `0.01`로 session을 엽니다.
+양자화 모델의 gradient solve에서는 **Densify from edit layer**를 켜고,
 중립 prompt를 baseline으로 캡처하고 proposal의 상대 변화량을 확인한 뒤
 **Apply**를 누릅니다. 증거 열은 작업 상태를 스트리밍하고 평가 후 fail-closed
 gate를 적용합니다. rollback은 원래 tensor 바이트를 복원합니다.

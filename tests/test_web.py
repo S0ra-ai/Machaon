@@ -68,7 +68,11 @@ class FakeSession:
         self._pending = False
         self._has_baseline = False
         self._proposal = None
-        self.runtime = SimpleNamespace(read=lambda _name: [1.0, 2.0])
+        self.densified = []
+        self.runtime = SimpleNamespace(
+            read=lambda _name: [1.0, 2.0],
+            densify_from=lambda layer: self.densified.append(layer) or 2,
+        )
 
     def state(self):
         return SimpleNamespace(
@@ -231,12 +235,14 @@ class TestWebApp(unittest.TestCase):
         proposed = self.client.post(
             "/api/edit/propose",
             headers=self.headers,
-            json={"prompt": "a", "target": " b", "layer": 1},
+            json={"prompt": "a", "target": " b", "layer": 1,
+                  "densify_from_layer": True},
         )
         proposed_job = _wait_for_job(
             self.client, proposed.json()["job"], self.headers
         )
         self.assertEqual(proposed_job["result"]["proposal"]["layer"], 1)
+        self.assertEqual(proposed_job["result"]["densified"], 2)
 
         applied = self.client.post("/api/edit/apply", headers=self.headers, json={})
         applied_job = _wait_for_job(self.client, applied.json()["job"], self.headers)

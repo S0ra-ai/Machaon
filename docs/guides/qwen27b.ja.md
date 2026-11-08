@@ -148,6 +148,7 @@ machaon-web --allowed-root ./qwen36-27b --port 8765
 
 表示された URL を開き、checkpoint header を確認してから `dtype=auto`、
 `quantize=int4`、`device=cpu`、層 60、予算 `0.01` で session を開きます。
+量子化モデルの gradient solve では **Densify from edit layer** を有効にし、
 中立 prompt を baseline として取得し、proposal の相対変化を確認してから
 **Apply** を押します。証拠列はジョブ状態を配信し、評価後に fail-closed
 ゲートを適用します。rollback は元の tensor バイトを復元します。

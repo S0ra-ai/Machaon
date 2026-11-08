@@ -42,8 +42,9 @@ directories.
    shapes and dtypes only.
 2. **Edit contract.** Open a model session, capture neutral baseline prompts,
    choose an edit layer and solve a proposal. The preserve prompts become the
-   null-space constraint. The proposal reports its relative delta and target
-   probability before anything is written.
+   null-space constraint. For quantized checkpoints, enable **Densify from
+   edit layer** before a gradient solve. The proposal reports its relative
+   delta and target probability before anything is written.
 3. **Evidence.** Apply the pending proposal, evaluate it against the baseline,
    and inspect the fail-closed gate verdict. The transaction timeline records
    status changes, results and errors. Rollback restores the original tensor
@@ -103,6 +104,7 @@ layer:     60
 budget β:  0.01
 module:    mlp.down_proj
 solver:    gradient
+densify:   on
 ```
 
 The checkpoint summary and tensor listing run on headers, so inspect the model

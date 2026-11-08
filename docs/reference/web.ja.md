@@ -29,8 +29,9 @@ machaon-web --allowed-root /models --port 8765
 1. **Checkpoint**: safetensors の header を読み、tensor 数、パラメータ数、
    dtype、shard 数を表示します。ブラウザーに重みの値は送りません。
 2. **編集契約**: session を開き、baseline を取得し、層を指定して proposal を
-   解きます。preserve prompts は零空間制約になり、proposal は書き込み前に
-   相対変化と target probability を報告します。
+   解きます。preserve prompts は零空間制約になり、量子化モデルの gradient
+   solve では **Densify from edit layer** を有効にします。proposal は書き込み
+   前に相対変化と target probability を報告します。
 3. **証拠**: proposal を apply し、baseline に対して evaluate します。
    fail-closed gate の判定と時系列イベントを確認でき、rollback は元の
    tensor バイトを復元します。
@@ -59,6 +60,7 @@ layer:     60
 budget β:  0.01
 module:    mlp.down_proj
 solver:    gradient
+densify:   on
 ```
 
 最初に header だけで checkpoint を確認してください。Transformers runtime、

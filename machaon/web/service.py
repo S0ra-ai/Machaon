@@ -168,10 +168,22 @@ class WebService:
 
     def propose(self, **kwargs: Any) -> Dict[str, Any]:
         session = self._require_session()
-        return {
+        densify_layer = kwargs.pop("densify_from_layer", False)
+        densified = None
+        if densify_layer:
+            runtime = getattr(session, "runtime", None)
+            if runtime is None or not hasattr(runtime, "densify_from"):
+                raise RuntimeError(
+                    "this session runtime does not expose densify_from"
+                )
+            densified = runtime.densify_from(int(kwargs["layer"]))
+        payload = {
             "proposal": session.propose(**kwargs),
             "state": self.state(),
         }
+        if densified is not None:
+            payload["densified"] = densified
+        return payload
 
     def apply(self) -> Dict[str, Any]:
         session = self._require_session()

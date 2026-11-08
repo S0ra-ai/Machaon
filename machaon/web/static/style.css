@@ -315,6 +315,11 @@ td:first-child { max-width: 260px; overflow: hidden; color: var(--text); text-ov
 .contract-icon { color: var(--accent); font: 20px var(--mono); line-height: 1; }
 .contract-note p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.65; }
 .contract-note strong { color: var(--text); font-weight: 600; }
+.check-row {
+  display: flex; align-items: flex-start; gap: 8px; grid-column: 1 / -1;
+  color: var(--muted); font-size: 11px; line-height: 1.5;
+}
+.check-row input { margin: 2px 0 0; accent-color: var(--accent); }
 .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
 .button-grid + .button-grid { margin-top: 8px; }
 .button-grid + .wide, .button-grid + .danger { margin-top: 8px; }

@@ -77,6 +77,7 @@ class ProposeRequest(BaseModel):
     max_rel_norm: Optional[float] = None
     module_suffix: str = "mlp.down_proj"
     target_token_id: Optional[int] = None
+    densify_from_layer: bool = False
 
 
 class EvaluateRequest(BaseModel):
@@ -326,6 +327,7 @@ def create_app(
                 max_rel_norm=body.max_rel_norm,
                 module_suffix=body.module_suffix,
                 target_token_id=body.target_token_id,
+                densify_from_layer=body.densify_from_layer,
             ),
         )
 
