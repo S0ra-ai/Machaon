@@ -4,6 +4,20 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.1] - 2026-11-08
+
+### Added
+
+- The Web console exposes **Densify from edit layer** for quantized gradient
+  solves, matching the Qwen3.6-27B working point.
+- The Web console persists applied deltas through `Checkpoint.write_tensor`
+  or `Checkpoint.write_with` without mutating the source checkpoint.
+
+### Fixed
+
+- Isolated the Web checkpoint-writer test from optional adapter imports so the
+  CI Web job runs in a clean FastAPI environment.
+
 ## [0.4.0] - 2026-11-08
 
 ### Added
