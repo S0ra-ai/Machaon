@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import time
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 from unittest import mock
 
 try:
@@ -295,7 +296,9 @@ class TestWebApp(unittest.TestCase):
             def write_tensor(self, name, values, out_dir):
                 return {"tensor": name, "shard": "shard-1", "rewritten": "shard-1"}
 
-        with mock.patch("machaon.adapters.Checkpoint", FakeCheckpoint):
+        fake_adapters = ModuleType("machaon.adapters")
+        fake_adapters.Checkpoint = FakeCheckpoint
+        with mock.patch.dict(sys.modules, {"machaon.adapters": fake_adapters}):
             response = self.client.post(
                 "/api/session/save",
                 headers=self.headers,
