@@ -24,7 +24,7 @@ from .linalg import (
 from .schema import Constraints, EditSpec, Target
 from .transaction import Transaction, Workspace
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 
 __all__ = [
     "rank1",

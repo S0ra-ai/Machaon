@@ -10,6 +10,7 @@ model-level evidence.
 |---|---|---|
 | `tiny_edit.py` | one edit, two budgets, and a fail-closed verdict | `python examples/tiny_edit.py` |
 | `budget_sweep.py` | cumulative-edit budget and measured damage curve | `python examples/budget_sweep.py` |
+| `contract_synthesis.py` | admit the protected subset that fits a budget | `python examples/contract_synthesis.py` |
 | `longform_check.py` | reference-scored long-form coherence | `python examples/longform_check.py` |
 
 ## Real checkpoints

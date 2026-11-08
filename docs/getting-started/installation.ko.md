@@ -38,7 +38,7 @@ uv pip install -e ".[dev,docs]" # 테스트, lint, 커버리지, 문서
 예상되는 마지막 출력:
 
 ```
-Ran 210 tests ...
+Ran 214 tests ...
 ALL CHECKS PASSED
 ```
 

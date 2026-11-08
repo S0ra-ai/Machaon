@@ -53,16 +53,57 @@ def download(repo: str, name: str, target: Path, endpoint: str) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_suffix(target.suffix + ".part")
     start = time.time()
-    with urllib.request.urlopen(url, timeout=120) as response, open(temporary, "wb") as handle:
-        while True:
-            chunk = response.read(1 << 20)
-            if not chunk:
-                break
-            handle.write(chunk)
+    try:
+        with urllib.request.urlopen(url, timeout=120) as response, open(temporary, "wb") as handle:
+            expected = response.headers.get("Content-Length")
+            written = 0
+            while True:
+                chunk = response.read(1 << 20)
+                if not chunk:
+                    break
+                handle.write(chunk)
+                written += len(chunk)
+        if expected is not None and written != int(expected):
+            raise IOError(
+                "incomplete download for %s: received %d of %s bytes"
+                % (name, written, expected)
+            )
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
     temporary.replace(target)
     elapsed = max(time.time() - start, 1e-6)
     print("  %-40s %8.1f MB  %6.2f MB/s" % (
         name, target.stat().st_size / 1e6, target.stat().st_size / 1e6 / elapsed))
+
+
+def download_with_fallback(
+    repo: str,
+    name: str,
+    target: Path,
+    candidates: list,
+    downloader=download,
+    validator=None,
+) -> tuple:
+    """Try the endpoint that listed the repo, then the remaining endpoints."""
+    errors = []
+    for label, endpoint in candidates:
+        try:
+            downloader(repo, name, target, endpoint)
+            if validator is not None:
+                try:
+                    validator(target)
+                except Exception:
+                    target.unlink(missing_ok=True)
+                    raise
+            return label, endpoint
+        except Exception as exc:
+            errors.append("%s: %s" % (label, exc))
+            print("  %-40s fallback from %s: %s" % (name, label, exc))
+    raise IOError(
+        "could not download %s from any endpoint: %s"
+        % (name, "; ".join(errors))
+    )
 
 
 def check_safetensors(path: Path) -> dict:
@@ -112,7 +153,9 @@ def main() -> int:
         if target.exists() and target.stat().st_size > 0:
             print("  %-40s cached" % name)
             continue
-        download(args.repo, name, target, chosen[1])
+        validator = check_safetensors if name.endswith(".safetensors") else None
+        download_with_fallback(
+            args.repo, name, target, candidates, validator=validator)
 
     print("\nchecking safetensors headers")
     for path in sorted(dest.glob("*.safetensors")):

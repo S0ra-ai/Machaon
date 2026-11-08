@@ -4,6 +4,24 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.3] - 2026-11-08
+
+### Added
+
+- `examples/contract_synthesis.py`: a zero-download demonstration of
+  budget-aware protected-set admission and post-hoc protected-key auditing.
+- Robust per-file endpoint fallback in `scripts/fetch_model.py`. If the endpoint
+  that listed a repository cannot serve a file, the downloader tries the
+  remaining endpoints and reports each failure.
+- Content-length verification for downloads; incomplete `.part` files are
+  removed before the next endpoint is tried.
+- Four download-fallback tests and an `.DS_Store` ignore rule.
+
+### Changed
+
+- Repository test count badge and installation examples now report the current
+  suite size.
+
 ## [0.3.2] - 2026-11-06
 
 ### Added

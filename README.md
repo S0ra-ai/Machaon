@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-210-2ea44f)
+![tests](https://img.shields.io/badge/tests-214-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-82%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 

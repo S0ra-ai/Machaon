@@ -106,6 +106,7 @@ def _cmd_doctor(args) -> int:
         },
         "core": {
             "linalg": True,
+            "contract_synthesis": True,
             "transactions": True,
             "delta_store": True,
             "gates": True,

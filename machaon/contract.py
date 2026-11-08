@@ -19,6 +19,7 @@ from typing import Optional, Sequence, Tuple
 
 import numpy as np
 
+from ._fpe import quiet_blas
 from .budget import BudgetExceeded
 from .linalg import rank1, rank1_constrained, relative_norm
 
@@ -47,6 +48,7 @@ def _solve(W, k, v, keys):
     return rank1_constrained(W, k, v, preserve=keys)
 
 
+@quiet_blas
 def synthesize_contract(
     W,
     k,
