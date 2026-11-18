@@ -30,6 +30,7 @@
     firstEditStatusKey: "firstEdit.ready",
     firstEditStatusVars: {},
     firstEditStatusKind: "",
+    firstEditEvidence: null,
   };
 
   const el = {
@@ -63,6 +64,7 @@
     firstEditOut: $("#firstEditOut"),
     firstEditSave: $("#firstEditSave"),
     firstEditStatus: $("#firstEditStatus"),
+    firstEditEvidence: $("#firstEditEvidence"),
     firstEditNext: $("#firstEditNext"),
     firstEditOpen: $("#firstEditOpen"),
     firstEditDone: $("#firstEditDone"),
@@ -478,9 +480,38 @@
     el.firstEditStatus.className = "hint" + (kind ? " " + kind : "");
   }
 
+  function renderFirstEditEvidence() {
+    if (!el.firstEditEvidence) return;
+    const evidence = state.firstEditEvidence;
+    let text = "";
+    if (evidence && evidence.kind === "applied") {
+      const parts = [
+        t("firstEdit.evidenceLayer", { layer: evidence.layer }),
+        t("firstEdit.evidenceDelta", { delta: fmt(evidence.delta) }),
+      ];
+      if (evidence.kept !== null && evidence.total) {
+        parts.push(t("firstEdit.evidencePanel", {
+          kept: evidence.kept,
+          total: evidence.total,
+        }));
+      }
+      if (evidence.kl !== null && evidence.kl !== undefined) {
+        parts.push(t("firstEdit.evidenceKl", { kl: fmt(evidence.kl) }));
+      }
+      text = parts.join(" · ");
+    } else if (evidence && evidence.kind === "known") {
+      text = t("firstEdit.evidenceKnown", {
+        prediction: evidence.prediction || "—",
+      });
+    }
+    el.firstEditEvidence.textContent = text;
+    el.firstEditEvidence.classList.toggle("hidden", !text);
+  }
+
   function renderFirstEdit() {
     if (!el.firstEditCard) return;
     const active = !!state.firstEdit;
+    if (!active) state.firstEditEvidence = null;
     const visible = (!state.session || active) && !state.firstEditDismissed;
     el.firstEditCard.classList.toggle("hidden", !visible);
     if (el.firstEditSave) {
@@ -509,11 +540,13 @@
         state.firstEditStatusKind
       );
     }
+    renderFirstEditEvidence();
   }
 
   function firstEditAnother(statusKey, vars = {}, kind = "") {
     const model = String((state.session && state.session.model) || "").replace(/\/+$/, "");
     state.firstEdit = { phase: "another" };
+    state.firstEditEvidence = null;
     if (el.firstEditSentence) el.firstEditSentence.value = "";
     if (el.firstEditOut) el.firstEditOut.value = model ? model + "-machaon" : "";
     setFirstEditStatus(statusKey, vars, kind);
@@ -1034,14 +1067,34 @@
         addTimelineEvent("first", t("timeline.firstEdit"), status, "ok");
         if (status === "applied") {
           state.firstEdit.phase = "done";
+          const panelSize = Number(taught.panel_size || 0);
+          const panelAgreement = taught.panel_agreement;
+          state.firstEditEvidence = {
+            kind: "applied",
+            layer: taught.best_layer,
+            delta: taught.relative_delta,
+            kept: panelAgreement !== null && panelAgreement !== undefined
+              ? Math.round(Number(panelAgreement) * panelSize) : null,
+            total: panelSize || null,
+            kl: taught.metrics && taught.metrics.kl_p95 !== undefined
+              ? taught.metrics.kl_p95 : null,
+          };
           state.firstEdit.verifyPrompt = taught.prompt
             || (state.firstEdit.preview && state.firstEdit.preview.prompt);
           state.firstEdit.verifyAnswer = taught.answer_text !== undefined
             ? taught.answer_text
             : (state.firstEdit.preview && state.firstEdit.preview.answer);
-        } else if (status === "already_true" || status === "rejected") {
+        } else if (status === "already_true") {
+          state.firstEditEvidence = {
+            kind: "known",
+            prediction: taught.base_prediction_text || "",
+          };
+          state.firstEdit = { phase: "another" };
+        } else if (status === "rejected") {
+          state.firstEditEvidence = null;
           state.firstEdit = { phase: "another" };
         } else {
+          state.firstEditEvidence = null;
           state.firstEdit = null;
         }
         renderFirstEdit();
@@ -1299,6 +1352,7 @@
     }
     state.lastTeach = preview;
     renderTeachPreview(preview);
+    state.firstEditEvidence = null;
     $("#prompt").value = preview.prompt;
     $("#target").value = preview.answer;
     if (state.firstEdit && state.firstEdit.phase === "another" && state.session) {

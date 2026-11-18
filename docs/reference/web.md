@@ -62,7 +62,9 @@ and report the result. The example chips load the applied `Eiffel → Rome` case
 or the already-true `France → Paris` case, so a new user can see both outcomes
 without typing. The card disappears once a model session is open; the accepted
 edit stays in the session for **Save**. When the recipe applies, the
-card keeps a **Checkpoint output** field prefilled with `<model>-machaon` and a
+card shows the chosen layer, relative Δ, panel preservation and KL p95, so the
+first success includes the same evidence vocabulary as the advanced workspace.
+The card also keeps a **Checkpoint output** field prefilled with `<model>-machaon` and a
 **Save checkpoint** button; saving goes through the same `/api/session/save`
 path as the right column. After saving, **Open saved checkpoint** closes the
 edited session (rolling back its in-memory bytes), opens the saved checkpoint

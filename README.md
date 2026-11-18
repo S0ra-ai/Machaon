@@ -212,7 +212,9 @@ prompt/answer against the saved weights. It then clears the sentence and offers
 **Teach another fact**, so the same card can continue the loop without using
 the advanced form. The example chips show both outcomes: `Eiffel → Rome`
 applies an edit, while `France → Paris` reports that the model already knows
-the answer.
+the answer. After an applied edit the card also shows the chosen layer, relative
+Δ, panel preservation and KL p95, so the first success is visible evidence
+rather than only a status badge.
 
 The Checkpoint column also has a **Download starter** control for SmolLM2-135M,
 Qwen2.5-0.5B or GPT-2, with Hugging Face / mirror / ModelScope fallback and live
