@@ -160,6 +160,29 @@ drift check fails. `--continue-on-reject` records the failure and continues;
 mode the final is the last `step-NNN` directory instead of `<out>/final`. The
 cumulative `--budget` is enforced across the chain, not per fact.
 
+## `program-new`
+
+Generate a reviewable text program from one or more teaching sentences. The
+generated file is parsed by the same validator used by `machaon program`, so a
+generator bug cannot introduce a second format:
+
+```bash
+machaon program-new ./hello.machaon \
+  --teach "The Eiffel Tower is in the city of -> Rome" \
+  --protect "Two plus two equals"
+
+machaon program-new - \
+  --model ./models/Qwen2.5-0.5B \
+  --teach "The capital of France is -> Paris"
+```
+
+Defaults are `--model ./models/SmolLM2-135M`, `fetch: smol135m`, and
+`--output <model>-machaon`. A custom `--model` has no implicit `fetch`; add
+`--fetch smol135m|qwen05b|gpt2` or `--no-fetch` explicitly. `--teach` and
+`--protect` are repeatable, `--budget` and `--max-rel-norm` set the two common
+policy values, and path `-` writes to standard output. An existing target is
+refused unless `--force` is passed.
+
 ## `program`
 
 Plan or run a portable weight program. A program is a single text or JSON

@@ -302,6 +302,20 @@ checked["report_sha256"], checked["model_check"]["passed"]
 再検証できます。整合性不一致は `ProgramReportError` を送出し、モデル検証がレポートと
 食い違う場合は `model_check.matches_report == False` を返して呼び出し側に判断を委ねます。
 
+`render_program_text(...)` は `machaon program-new` の生成器です。検証済みプログラムの
+テキストを返し、任意の高度なフィールドも含められますが、ファイルは書きません。
+
+```python
+from machaon import render_program_text
+
+text = render_program_text(
+    model="./models/SmolLM2-135M",
+    output="./models/lesson",
+    fetch="smol135m",
+    teach=["The Eiffel Tower is in the city of -> Rome"],
+)
+```
+
 ## ツール · `machaon.tools`
 
 MCP サーバー背後の関数。モデルをロードしません。

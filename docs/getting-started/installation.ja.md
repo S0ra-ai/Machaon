@@ -40,7 +40,7 @@ uv pip install -e ".[dev,docs]" # テスト、lint、カバレッジ、ドキュ
 想定される末尾：
 
 ```
-Ran 569 tests ...
+Ran 575 tests ...
 ALL CHECKS PASSED
 ```
 

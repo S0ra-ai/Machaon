@@ -11,6 +11,33 @@
 它是 `machaon first`、`machaon teach-many` 和浏览器控制台同一条闭环的可分享形态。
 权重程序不会引入第二套编辑引擎：它只解析路径与策略，调用教学链，然后检查真正写出的字节。
 
+## 生成程序
+
+不必手写格式。`machaon program-new` 会从一条或多条教学句生成可审查的文件，再用
+`machaon program` 完全相同的解析器验证它：
+
+```bash
+machaon program-new ./hello.machaon \
+  --teach "The Eiffel Tower is in the city of -> Rome" \
+  --protect "Two plus two equals"
+```
+
+不给 `--model` 时，生成的程序从 `./models/SmolLM2-135M` 开始，自动加入
+`fetch: smol135m`，输出到 `./models/SmolLM2-135M-machaon`。用 `--model` 和
+`--output` 选择自己的路径；自定义模型不会隐式下载。需要时用 `--fetch` 显式添加
+下载源，或用 `--no-fetch` 关闭默认 starter。`--teach` 和 `--protect` 都可以重复；
+路径写 `-` 时把程序打印到标准输出，便于管道处理。已有文件只有在 `--force` 时才会替换。
+
+生成、检查、运行：
+
+```bash
+machaon program-new ./hello.machaon --teach "The capital of France is -> Paris"
+machaon program ./hello.machaon --plan
+machaon program ./hello.machaon
+```
+
+高级字段仍可直接编辑生成的文本；生成器只覆盖最常见的路径。
+
 ## 一个完整的程序
 
 保存为 `hello.machaon`：

@@ -12,6 +12,35 @@
 プログラムは第二の編集エンジンを追加しません。パスとポリシーを解決し、教学チェーンを呼び、
 実際に書き出されたバイトを検査します。
 
+## プログラムを生成する
+
+形式を手書きする必要はありません。`machaon program-new` は 1 つ以上の教学文から
+レビュー可能なファイルを生成し、`machaon program` と同じパーサーで検証します。
+
+```bash
+machaon program-new ./hello.machaon \
+  --teach "The Eiffel Tower is in the city of -> Rome" \
+  --protect "Two plus two equals"
+```
+
+`--model` を省略すると `./models/SmolLM2-135M` から開始し、`fetch: smol135m` を追加して
+`./models/SmolLM2-135M-machaon` へ出力します。`--model` と `--output` で独自パスを
+指定できます。カスタムモデルには暗黙のダウンロードはありません。`--fetch` で明示的に
+starter を追加し、`--no-fetch` で既定の starter を抑止できます。`--teach` と
+`--protect` は繰り返し指定でき、パス `-` は標準出力へプログラムを出します。既存ファイルは
+`--force` なしでは置換しません。
+
+生成、確認、実行:
+
+```bash
+machaon program-new ./hello.machaon --teach "The capital of France is -> Paris"
+machaon program ./hello.machaon --plan
+machaon program ./hello.machaon
+```
+
+高度なフィールドは生成後のテキストで直接編集できます。生成器は一般的な経路だけを
+カバーします。
+
 ## 完全な例
 
 `hello.machaon` として保存します。

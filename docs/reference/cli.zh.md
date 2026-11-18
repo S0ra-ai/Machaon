@@ -152,6 +152,27 @@ JSON / JSONL 的 `{"say": ...}` 或 `{"prompt": ..., "answer": ...}` 列表。
 只保留最后一条安全步骤，此时 final 是最后一个 `step-NNN` 目录而不是
 `<out>/final`。累计 `--budget` 作用于整条链，而不是每条事实。
 
+## `program-new`
+
+从一条或多条教学句生成可审查的文本程序。生成的文件交给与 `machaon program` 相同的
+校验器解析，因此生成器不会引入第二套格式：
+
+```bash
+machaon program-new ./hello.machaon \
+  --teach "The Eiffel Tower is in the city of -> Rome" \
+  --protect "Two plus two equals"
+
+machaon program-new - \
+  --model ./models/Qwen2.5-0.5B \
+  --teach "The capital of France is -> Paris"
+```
+
+默认 `--model` 是 `./models/SmolLM2-135M`，自动加入 `fetch: smol135m`，输出为
+`--output <model>-machaon`。自定义 `--model` 不会隐式下载；需要时显式使用
+`--fetch smol135m|qwen05b|gpt2` 或 `--no-fetch`。`--teach` 和 `--protect` 可重复，
+`--budget` 与 `--max-rel-norm` 设置两个常用策略值；路径 `-` 输出到标准输出。
+目标文件已存在时默认拒绝，只有 `--force` 才替换。
+
 ## `program`
 
 规划或运行一份可携带的权重程序。一个程序文件（文本或 JSON）声明模型、事实、

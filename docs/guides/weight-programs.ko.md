@@ -12,6 +12,34 @@
 프로그램은 두 번째 편집 엔진을 추가하지 않습니다. 경로와 정책을 해석하고, 티칭 체인을 호출한 뒤,
 실제로 기록된 바이트를 검사합니다.
 
+## 프로그램 생성하기
+
+형식을 직접 작성할 필요가 없습니다. `machaon program-new`는 하나 이상의 교수 문장에서
+검토 가능한 파일을 만들고, `machaon program`과 같은 파서로 검증합니다.
+
+```bash
+machaon program-new ./hello.machaon \
+  --teach "The Eiffel Tower is in the city of -> Rome" \
+  --protect "Two plus two equals"
+```
+
+`--model`을 생략하면 `./models/SmolLM2-135M`에서 시작하고 `fetch: smol135m`을 추가하며
+`./models/SmolLM2-135M-machaon`에 출력합니다. `--model`과 `--output`으로 직접 경로를
+지정할 수 있습니다. 사용자 지정 모델에는 암시적 다운로드가 없습니다. `--fetch`로 starter를
+명시하거나 `--no-fetch`로 기본 starter를 끌 수 있습니다. `--teach`와 `--protect`는
+반복할 수 있고, 경로 `-`는 프로그램을 표준 출력으로 보냅니다. 기존 파일은 `--force`
+없이 교체하지 않습니다.
+
+생성, 확인, 실행:
+
+```bash
+machaon program-new ./hello.machaon --teach "The capital of France is -> Paris"
+machaon program ./hello.machaon --plan
+machaon program ./hello.machaon
+```
+
+고급 필드는 생성된 텍스트에서 직접 편집할 수 있습니다. 생성기는 일반적인 경로만 다룹니다.
+
 ## 완전한 프로그램
 
 `hello.machaon`으로 저장합니다.

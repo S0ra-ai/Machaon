@@ -26,6 +26,7 @@ machaon teach --model ./models/Qwen2.5-0.5B \
 写进一份[权重程序](guides/weight-programs.md)。`machaon program` 会先不加载模型
 地生成计划，再运行教学链，并在保存后重新加载检查点复验每一条事实。报告带内容地址，
 之后可以用 `machaon program-verify` 在不信任产物的情况下复核报告、程序文件和保存后的事实。
+不想从模板开始时，`machaon program-new` 也可以从普通教学句直接生成同一份程序文件。
 
 ## 三条保证
 

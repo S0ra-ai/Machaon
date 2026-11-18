@@ -593,6 +593,20 @@ checked["report_sha256"], checked["model_check"]["passed"]
 完整性不匹配会抛出 `ProgramReportError`；模型复验与报告不一致时返回
 `model_check.matches_report == False`，由调用方决定如何处理。
 
+`render_program_text(...)` 是 `machaon program-new` 背后的生成器。它返回经过校验的
+程序文本，可包含高级字段，但不写文件：
+
+```python
+from machaon import render_program_text
+
+text = render_program_text(
+    model="./models/SmolLM2-135M",
+    output="./models/lesson",
+    fetch="smol135m",
+    teach=["The Eiffel Tower is in the city of -> Rome"],
+)
+```
+
 ## 工具 · `machaon.tools`
 
 MCP 服务背后的函数。不加载模型。

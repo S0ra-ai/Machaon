@@ -14,6 +14,38 @@ It is the shareable form of the same loop used by `machaon first`,
 second edit engine: they resolve paths and policy, call the teaching chain, and
 then check the bytes that were actually written.
 
+## Generate a program
+
+You do not have to type the format by hand. `machaon program-new` writes a
+reviewable file from one or more sentences, then validates it with the same
+parser used by `machaon program`:
+
+```bash
+machaon program-new ./hello.machaon \
+  --teach "The Eiffel Tower is in the city of -> Rome" \
+  --protect "Two plus two equals"
+```
+
+With no `--model`, the generated program starts from
+`./models/SmolLM2-135M`, adds `fetch: smol135m`, and writes to
+`./models/SmolLM2-135M-machaon`. Supply `--model` and `--output` to choose
+your own paths; a custom model has no implicit download. Use `--fetch` to add
+one explicitly or `--no-fetch` to suppress the default starter. `--teach` is
+repeatable, `--protect` is repeatable, and path `-` prints the program to
+standard output for piping. An existing file is never replaced without
+`--force`.
+
+Generate, inspect, then run:
+
+```bash
+machaon program-new ./hello.machaon --teach "The capital of France is -> Paris"
+machaon program ./hello.machaon --plan
+machaon program ./hello.machaon
+```
+
+Advanced fields remain editable in the generated text; the generator only
+needs to cover the common path.
+
 ## A complete program
 
 Save this as `hello.machaon`:

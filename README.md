@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-569-2ea44f)
+![tests](https://img.shields.io/badge/tests-575-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-78%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -80,9 +80,15 @@ contract, runs the chain, writes the saved checkpoint and then reloads those
 bytes to check every fact:
 
 ```bash
+machaon program-new ./hello.machaon \
+  --teach "The Eiffel Tower is in the city of -> Rome"
 machaon program examples/hello.machaon --plan
 machaon program examples/hello.machaon
 ```
+
+`machaon program-new` writes the same format from your own sentences and uses
+the default SmolLM2 starter when no checkpoint is given, so a first program
+does not begin with a blank editor.
 
 Relative paths resolve from the program file, and the resulting
 `<output>/program-report.json` records the program hash, every step and the
@@ -512,6 +518,8 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - **Portable weight programs** — one reviewable text or JSON file declares the
   model, facts, protected prompts, budget and runtime policy; `machaon program`
   runs the chain and reloads the saved bytes before calling it accepted.
+- **Program generation** — `machaon program-new` turns teaching sentences into
+  the same validated text format, with a starter and output path by default.
 - **Verifiable program reports** — `machaon program-verify` recomputes the
   report address, optionally matches the program file, and can recheck every
   saved fact; the same contract is exposed through Python, MCP and the Web UI.

@@ -47,6 +47,8 @@ ship. Every completed item has a test or a measured run behind it.
 - [x] Content-addressed program reports and a verifier that can rehash the
       program, recheck the saved checkpoint, and expose the same check through
       the CLI, Python API, MCP and Web console
+- [x] Program generation from plain teaching sentences, with a validated text
+      form and starter defaults
 - [x] Multi-fact teaching chain: one search per fact, cumulative budget,
       original-panel drift checks and last-safe-checkpoint promotion
 - [x] Agent-callable ROME layer search over MCP with automatic rollback

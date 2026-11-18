@@ -161,6 +161,28 @@ machaon teach-many --model ./models/Qwen2.5-0.5B \
 この場合の final は `<out>/final` ではなく最後の `step-NNN` ディレクトリです。
 累積 `--budget` は事実ごとではなく連鎖全体に適用されます。
 
+## `program-new`
+
+1 つ以上の教学文からレビュー可能なテキストプログラムを生成します。生成ファイルは
+`machaon program` と同じ検証器で解析されるため、第二の形式を持ち込みません。
+
+```bash
+machaon program-new ./hello.machaon \
+  --teach "The Eiffel Tower is in the city of -> Rome" \
+  --protect "Two plus two equals"
+
+machaon program-new - \
+  --model ./models/Qwen2.5-0.5B \
+  --teach "The capital of France is -> Paris"
+```
+
+既定は `--model ./models/SmolLM2-135M`、`fetch: smol135m`、
+`--output <model>-machaon` です。カスタム `--model` には暗黙の `fetch` は付きません。
+必要なら `--fetch smol135m|qwen05b|gpt2` または `--no-fetch` を明示します。
+`--teach` と `--protect` は繰り返し可能で、`--budget` と `--max-rel-norm` は
+よく使う方針値です。パス `-` は標準出力へ書き、既存ファイルは `--force` なしでは
+拒否されます。
+
 ## `program`
 
 可搬な重みプログラムを計画または実行します。プログラムファイル（テキストまたは

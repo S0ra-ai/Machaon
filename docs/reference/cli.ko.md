@@ -159,6 +159,27 @@ JSON / JSONL의 `{"say": ...}` 또는 `{"prompt": ..., "answer": ...}` 목록입
 final은 `<out>/final`이 아니라 마지막 `step-NNN` 디렉터리입니다. 누적
 `--budget`은 사실별이 아니라 체인 전체에 적용됩니다.
 
+## `program-new`
+
+하나 이상의 교수 문장에서 검토 가능한 텍스트 프로그램을 생성합니다. 생성 파일은
+`machaon program`과 같은 검증기로 파싱되므로 두 번째 형식을 만들지 않습니다.
+
+```bash
+machaon program-new ./hello.machaon \
+  --teach "The Eiffel Tower is in the city of -> Rome" \
+  --protect "Two plus two equals"
+
+machaon program-new - \
+  --model ./models/Qwen2.5-0.5B \
+  --teach "The capital of France is -> Paris"
+```
+
+기본값은 `--model ./models/SmolLM2-135M`, `fetch: smol135m`,
+`--output <model>-machaon`입니다. 사용자 지정 `--model`에는 암시적 `fetch`가 없습니다.
+필요하면 `--fetch smol135m|qwen05b|gpt2` 또는 `--no-fetch`를 명시하세요.
+`--teach`와 `--protect`는 반복할 수 있고, `--budget`과 `--max-rel-norm`은 자주 쓰는
+정책 값입니다. 경로 `-`는 표준 출력으로 쓰며, 기존 파일은 `--force` 없이 거부됩니다.
+
 ## `program`
 
 이식 가능한 가중치 프로그램을 계획하거나 실행합니다. 프로그램 파일(텍스트 또는

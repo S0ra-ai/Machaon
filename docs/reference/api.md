@@ -671,6 +671,21 @@ without rewriting the report. An integrity mismatch raises
 `ProgramReportError`; a model check that disagrees with the report is returned
 as `model_check.matches_report == False` so the caller can decide how to act.
 
+`render_program_text(...)` is the generator behind `machaon program-new`. It
+returns the text form of a validated program, including the optional advanced
+fields, without writing a file:
+
+```python
+from machaon import render_program_text
+
+text = render_program_text(
+    model="./models/SmolLM2-135M",
+    output="./models/lesson",
+    fetch="smol135m",
+    teach=["The Eiffel Tower is in the city of -> Rome"],
+)
+```
+
 ## Tools · `machaon.tools`
 
 The functions behind the MCP server. No model is loaded.

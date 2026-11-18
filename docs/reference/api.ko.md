@@ -303,6 +303,20 @@ checked["report_sha256"], checked["model_check"]["passed"]
 재검증할 수 있습니다. 무결성 불일치는 `ProgramReportError`를 던지고, 모델 검증이 보고서와
 다르면 `model_check.matches_report == False`를 반환해 호출자가 판단하게 합니다.
 
+`render_program_text(...)`는 `machaon program-new`의 생성기입니다. 검증된 프로그램
+텍스트를 반환하며 선택적 고급 필드도 포함할 수 있지만 파일은 쓰지 않습니다.
+
+```python
+from machaon import render_program_text
+
+text = render_program_text(
+    model="./models/SmolLM2-135M",
+    output="./models/lesson",
+    fetch="smol135m",
+    teach=["The Eiffel Tower is in the city of -> Rome"],
+)
+```
+
 ## 도구 · `machaon.tools`
 
 MCP 서버 뒤의 함수. 모델을 로드하지 않습니다.

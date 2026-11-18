@@ -8,6 +8,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `machaon program-new`: generate a reviewable `.machaon` text program from one
+  or more `--teach` sentences. The generated file is round-tripped through the
+  normal program parser, defaults to the SmolLM2 starter and a derived output
+  path, supports custom model/output/fetch/budget/policy values, writes to
+  standard output with `-`, and refuses to overwrite without `--force`.
+- `machaon.program.render_program_text(...)` exposes the same generator to
+  Python callers, including the advanced program fields.
 - `machaon.program` and `machaon program`: a portable text or JSON weight
   program. One file declares the model, facts, protected prompts, cumulative
   budget and runtime policy; `--plan` resolves the contract without loading a
