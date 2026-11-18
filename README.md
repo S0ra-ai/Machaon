@@ -206,9 +206,10 @@ open the final safe checkpoint.
 The **FIRST EDIT** card goes one step further: if no checkpoint is selected, it
 downloads SmolLM2-135M, opens it, teaches the prefilled fact and leaves the
 accepted edit in the session for **Save**. After saving, **Open saved
-checkpoint** reopens those bytes as a fresh session, clears the sentence and
-offers **Teach another fact**, so the same card can continue the loop without
-using the advanced form.
+checkpoint** reopens those bytes as a fresh session and re-checks the taught
+prompt/answer against the saved weights. It then clears the sentence and offers
+**Teach another fact**, so the same card can continue the loop without using
+the advanced form.
 
 The Checkpoint column also has a **Download starter** control for SmolLM2-135M,
 Qwen2.5-0.5B or GPT-2, with Hugging Face / mirror / ModelScope fallback and live

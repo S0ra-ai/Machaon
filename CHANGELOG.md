@@ -51,8 +51,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   prefilled sentence → teaching result and keeps a prefilled checkpoint output
   plus a Save button after the edit is accepted, and then offers **Open saved
   checkpoint** / **Done**; opening returns to **Teach another fact** with a
-  cleared input and the new output path; **Download starter** and **Teach a
-  list** expose the same flows, with a live SSE progress bar for downloads.
+  cleared input and the new output path after re-evaluating the taught answer
+  against the reopened checkpoint; **Download starter** and **Teach a list**
+  expose the same flows, with a live SSE progress bar for downloads.
 - `/api/health` reports whether `torch`, `transformers` and `safetensors` are
   importable, and the console shows the exact missing-extra install command.
 - `machaon.executor`: one explicit dispatcher for the declarative edit DSL,
@@ -136,6 +137,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 - Evaluation docs now distinguish `repair`, `acquisition`, `non_specific`,
   `no_effect`, `regression`, `unclassified` and `inconclusive`.
+
+### Fixed
+
+- The Web **Download starter** control now honors **Open after download**, and
+  the FIRST EDIT card continues from its automatic download into open and teach
+  instead of stopping at the downloaded path.
 
 ## [0.4.3] - 2026-11-08
 

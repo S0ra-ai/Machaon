@@ -23,7 +23,7 @@ output is `<checkpoint>-machaon`; the source checkpoint is never modified.
 `machaon intent "..."` shows the parse without loading a model, and the local
 browser console has the same flow as a **ONE SENTENCE** box, plus a **FIRST
 EDIT** card that takes a machine with no checkpoint through download, open,
-teach, save and the next fact.
+teach, save, a persisted-answer check and the next fact.
 
 ```
               edit spec (DSL)

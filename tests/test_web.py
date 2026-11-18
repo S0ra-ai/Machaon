@@ -786,8 +786,13 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="firstEditButton"', page.text)
         self.assertIn('id="firstEditSave"', page.text)
         self.assertIn('id="firstEditOpen"', page.text)
+        self.assertIn('id="fetchOpen"', page.text)
         self.assertIn('data-i18n="onboarding.title"', page.text)
         self.assertIn('src="/static/locales.js"', page.text)
+        app = self.client.get("/static/app.js")
+        self.assertEqual(app.status_code, 200)
+        self.assertIn('state.firstEdit.phase === "fetch"', app.text)
+        self.assertIn('state.firstEdit.phase === "verify"', app.text)
         locales = self.client.get("/static/locales.js")
         self.assertEqual(locales.status_code, 200)
         self.assertIn('"zh": {', locales.text)
@@ -797,6 +802,9 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"firstEdit.save"', locales.text)
         self.assertIn('"firstEdit.openSaved"', locales.text)
         self.assertIn('"firstEdit.again"', locales.text)
+        self.assertIn('"firstEdit.verifying"', locales.text)
+        self.assertIn('"firstEdit.verified"', locales.text)
+        self.assertIn('"firstEdit.verifyFailed"', locales.text)
 
     def test_force_close_rolls_back_an_edited_session(self):
         opened = self.client.post(

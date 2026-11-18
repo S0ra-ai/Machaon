@@ -510,6 +510,16 @@
     }
   }
 
+  function firstEditAnother(statusKey, vars = {}, kind = "") {
+    const model = String((state.session && state.session.model) || "").replace(/\/+$/, "");
+    state.firstEdit = { phase: "another" };
+    if (el.firstEditSentence) el.firstEditSentence.value = "";
+    if (el.firstEditOut) el.firstEditOut.value = model ? model + "-machaon" : "";
+    setFirstEditStatus(statusKey, vars, kind);
+    renderFirstEdit();
+    if (el.firstEditSentence) el.firstEditSentence.focus();
+  }
+
   function openSessionRequest(path) {
     return {
       path,
@@ -832,9 +842,15 @@
       addTimelineEvent("result", t("timeline.result"), "", "ok");
     } else if (event.type === "error") {
       if (state.firstEdit) {
-        setFirstEditStatus("firstEdit.error", { error: data.error || "" }, "err");
-        if (state.firstEdit.phase !== "done") state.firstEdit = null;
-        renderFirstEdit();
+        if (state.firstEdit.phase === "verify") {
+          firstEditAnother(
+            "firstEdit.verifyError", { error: data.error || "" }, "err"
+          );
+        } else {
+          setFirstEditStatus("firstEdit.error", { error: data.error || "" }, "err");
+          if (state.firstEdit.phase !== "done") state.firstEdit = null;
+          renderFirstEdit();
+        }
       }
       addTimelineEvent("error", data.error || t("timeline.failed"),
         data.error_type || "", "err");
@@ -849,6 +865,21 @@
       if (path) el.checkpointPath.value = path;
       addTimelineEvent("fetch", t("timeline.fetch"),
         path + " · " + ((result && result.parameters) || 0).toLocaleString() + " params", "ok");
+      if (path && state.firstEdit && state.firstEdit.phase === "fetch") {
+        state.firstEdit.dest = path;
+        state.firstEdit.phase = "open";
+        setFirstEditStatus("firstEdit.opening");
+        state.pendingAfterBusy = () => {
+          if (state.firstEdit && state.firstEdit.phase === "open") {
+            startJob("/api/session/open", openSessionRequest(path), "open_session");
+          }
+        };
+        renderFirstEdit();
+      } else if (path && $("#fetchOpen") && $("#fetchOpen").checked) {
+        state.pendingAfterBusy = () => {
+          startJob("/api/session/open", openSessionRequest(path), "open_session");
+        };
+      }
     }
     else if (kind === "open_session" || kind === "close_session") {
       state.session = result && result.ready ? result : null;
@@ -886,14 +917,29 @@
         return;
       }
       if (state.firstEdit && state.firstEdit.phase === "opening" && result && result.ready) {
-        state.firstEdit = { phase: "another" };
-        el.firstEditSentence.value = "";
-        if (el.firstEditOut) el.firstEditOut.value = "";
-        const model = String(state.session.model || "").replace(/\/+$/, "");
-        if (el.firstEditOut && model) el.firstEditOut.value = model + "-machaon";
-        setFirstEditStatus("firstEdit.opened");
-        renderFirstEdit();
-        el.firstEditSentence.focus();
+        const preview = state.firstEdit.preview;
+        const verifyPrompt = state.firstEdit.verifyPrompt
+          || (preview && preview.prompt);
+        const verifyAnswer = state.firstEdit.verifyAnswer !== undefined
+          ? state.firstEdit.verifyAnswer
+          : (preview && preview.answer);
+        if (verifyPrompt && verifyAnswer !== undefined) {
+          state.firstEdit.phase = "verify";
+          setFirstEditStatus("firstEdit.verifying", {
+            answer: String(verifyAnswer).trim(),
+          });
+          renderFirstEdit();
+          state.pendingAfterBusy = () => {
+            if (state.firstEdit && state.firstEdit.phase === "verify") {
+              startJob("/api/edit/evaluate", {
+                prompts: [verifyPrompt],
+                targets: [verifyAnswer],
+              }, "evaluate");
+            }
+          };
+          return;
+        }
+        firstEditAnother("firstEdit.opened");
         return;
       }
       if (kind === "close_session" && state.firstEdit && state.firstEdit.phase === "closing") {
@@ -937,6 +983,20 @@
       if (result && result.state) state.session = result.state;
       renderSessionState();
       renderMetrics(result.metrics, result.gate);
+      if (state.firstEdit && state.firstEdit.phase === "verify") {
+        const preview = state.firstEdit.preview || {};
+        const verifiedAnswer = state.firstEdit.verifyAnswer !== undefined
+          ? state.firstEdit.verifyAnswer
+          : preview.answer;
+        const answer = String(verifiedAnswer || "").trim();
+        const accuracy = Number(result && result.metrics ? result.metrics.accuracy : 0);
+        const verified = Number.isFinite(accuracy) && accuracy >= 1;
+        firstEditAnother(
+          verified ? "firstEdit.verified" : "firstEdit.verifyFailed",
+          { answer },
+          verified ? "ok" : "err"
+        );
+      }
     } else if (kind === "teach_many") {
       if (result && result.state) state.session = result.state;
       state.lastTeachMany = result;
@@ -964,6 +1024,7 @@
         (result && result.result && result.result.status) || "", "ok");
       if (state.firstEdit) {
         const status = result && result.result ? result.result.status : "error";
+        const taught = result && result.result ? result.result : {};
         const key = status === "applied" ? "firstEdit.applied"
           : status === "already_true" ? "firstEdit.alreadyTrue"
           : status === "rejected" ? "firstEdit.rejected"
@@ -972,6 +1033,11 @@
         addTimelineEvent("first", t("timeline.firstEdit"), status, "ok");
         if (status === "applied") {
           state.firstEdit.phase = "done";
+          state.firstEdit.verifyPrompt = taught.prompt
+            || (state.firstEdit.preview && state.firstEdit.preview.prompt);
+          state.firstEdit.verifyAnswer = taught.answer_text !== undefined
+            ? taught.answer_text
+            : (state.firstEdit.preview && state.firstEdit.preview.answer);
         } else if (status === "already_true" || status === "rejected") {
           state.firstEdit = { phase: "another" };
         } else {
@@ -1067,6 +1133,13 @@
       attachJob(response.job, response.kind || label);
     } catch (err) {
       stopBusy("error");
+      if (state.firstEdit && state.firstEdit.phase === "verify") {
+        firstEditAnother(
+          "firstEdit.verifyError",
+          { error: localizedJobError(err.message) },
+          "err"
+        );
+      }
       addTimelineEvent("error", localizedJobError(err.message), path, "err");
     }
   }
