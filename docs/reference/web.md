@@ -55,7 +55,8 @@ four-step onboarding strip remains under the hero as a compact reminder.
 ## First edit card
 
 The first-authenticated page also shows a **FIRST EDIT** card. It chains the
-existing pieces: download SmolLM2-135M if no checkpoint is selected, open it,
+existing pieces: choose a starter if no checkpoint is selected (SmolLM2-135M
+by default, Qwen2.5-0.5B for multilingual use, or GPT-2), download it, open it,
 prefill "The Eiffel Tower is in the city of -> Rome", run the teaching recipe
 and report the result. The card disappears once a model session is open; the
 accepted edit stays in the session for **Save**. When the recipe applies, the

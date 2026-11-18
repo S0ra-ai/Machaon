@@ -204,8 +204,9 @@ list** in the same box runs the multi-fact chain, shows every step, and can
 open the final safe checkpoint.
 
 The **FIRST EDIT** card goes one step further: if no checkpoint is selected, it
-downloads SmolLM2-135M, opens it, teaches the prefilled fact and leaves the
-accepted edit in the session for **Save**. After saving, **Open saved
+downloads the starter chosen in the card (SmolLM2-135M by default, with
+Qwen2.5-0.5B offered for multilingual use), opens it, teaches the prefilled
+fact and leaves the accepted edit in the session for **Save**. After saving, **Open saved
 checkpoint** reopens those bytes as a fresh session and re-checks the taught
 prompt/answer against the saved weights. It then clears the sentence and offers
 **Teach another fact**, so the same card can continue the loop without using

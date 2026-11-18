@@ -83,6 +83,14 @@
         <label class="field full"><span data-i18n="firstEdit.sentence">Fact to teach</span>
           <input id="firstEditSentence" autocomplete="off" spellcheck="false" value="The Eiffel Tower is in the city of -> Rome">
         </label>
+        <label class="field full"><span data-i18n="firstEdit.starterLabel">Starter if no checkpoint is selected</span>
+          <select id="firstEditStarter">
+            <option value="smol135m" data-name="SmolLM2-135M" selected data-i18n="firstEdit.starterSmol">SmolLM2-135M · ~270 MB · fastest</option>
+            <option value="qwen05b" data-name="Qwen2.5-0.5B" data-i18n="firstEdit.starterQwen">Qwen2.5-0.5B · ~1 GB · multilingual</option>
+            <option value="gpt2" data-name="gpt2" data-i18n="firstEdit.starterGpt2">GPT-2 124M · ~500 MB · classic</option>
+          </select>
+          <small data-i18n="firstEdit.starterHint">SmolLM2-135M is fastest. Qwen2.5-0.5B is larger and better for Chinese.</small>
+        </label>
         <div class="button-grid">
           <button id="firstEditButton" class="primary" type="button" data-i18n="firstEdit.run">Try the first edit</button>
           <button id="firstEditDismiss" class="ghost" type="button" data-i18n="firstEdit.dismiss">Hide</button>

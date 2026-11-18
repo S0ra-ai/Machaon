@@ -57,6 +57,7 @@
     teachManyCard: $("#teachManyCard"),
     firstEditCard: $("#firstEditCard"),
     firstEditSentence: $("#firstEditSentence"),
+    firstEditStarter: $("#firstEditStarter"),
     firstEditButton: $("#firstEditButton"),
     firstEditDismiss: $("#firstEditDismiss"),
     firstEditOut: $("#firstEditOut"),
@@ -1318,7 +1319,11 @@
     }
     const checkpoint = el.checkpointPath.value.trim();
     const root = (state.allowedRoots[0] || "").replace(/\/+$/, "");
-    const dest = checkpoint || (root ? root + "/SmolLM2-135M" : "");
+    const starterOption = el.firstEditStarter && el.firstEditStarter.selectedOptions
+      ? el.firstEditStarter.selectedOptions[0] : null;
+    const starter = el.firstEditStarter ? el.firstEditStarter.value : "smol135m";
+    const starterName = (starterOption && starterOption.dataset.name) || "SmolLM2-135M";
+    const dest = checkpoint || (root ? root + "/" + starterName : "");
     if (!dest) {
       setFirstEditStatus("firstEdit.noRoot", {}, "err");
       return;
@@ -1330,8 +1335,8 @@
       phase: checkpoint ? "open" : "fetch",
     };
     if (!checkpoint) {
-      setFirstEditStatus("firstEdit.downloading");
-      startJob("/api/models/fetch", { starter: "smol135m", dest }, "fetch_model");
+      setFirstEditStatus("firstEdit.downloading", { model: starterName });
+      startJob("/api/models/fetch", { starter, dest }, "fetch_model");
     } else {
       setFirstEditStatus("firstEdit.opening");
       startJob("/api/session/open", openSessionRequest(dest), "open_session");

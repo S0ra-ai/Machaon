@@ -45,7 +45,8 @@ machaon-web --allowed-root /models --port 8765
 ## 最初の編集カード
 
 初回認証時には **FIRST EDIT** カードも表示されます。チェックポイント未選択なら
-SmolLM2-135M を取得し、開いて
+カード内でスターターを選べます（既定は SmolLM2-135M、多言語向けは
+Qwen2.5-0.5B、ほかに GPT-2）。取得して開き、
 "The Eiffel Tower is in the city of -> Rome" をプリフィルし、教学レシピを実行して
 結果を表示します。session が開くとカードは消え、受け入れられた編集は **保存** 用に
 session に残ります。教学が適用されると、カードには `<model>-machaon` が入った

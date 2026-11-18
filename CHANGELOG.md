@@ -53,7 +53,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   checkpoint** / **Done**; opening returns to **Teach another fact** with a
   cleared input and the new output path after re-evaluating the taught answer
   against the reopened checkpoint; **Download starter** and **Teach a list**
-  expose the same flows, with a live SSE progress bar for downloads.
+  expose the same flows, with a live SSE progress bar for downloads. The card
+  also chooses between SmolLM2-135M, Qwen2.5-0.5B and GPT-2 when no checkpoint
+  is selected, with the multilingual option visible before the first download.
 - `/api/health` reports whether `torch`, `transformers` and `safetensors` are
   importable, and the console shows the exact missing-extra install command.
 - `machaon.executor`: one explicit dispatcher for the declarative edit DSL,
