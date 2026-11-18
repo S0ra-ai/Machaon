@@ -213,9 +213,11 @@ check_fit(summary, fraction=0.6) -> dict
 ## Session · `machaon.session`
 
 ```python
-session = Session.open(path, dtype="float32", budget=EditBudget(0.10),
+session = Session.open(path, dtype="float32", device=None,
+                       budget=EditBudget(0.10),
                        quantize=None)  # int4 / int8 は QuantoConfig 経由
-session.state() -> SessionState(model, parameters, layers, edited, budget_total, ...)
+session.state() -> SessionState(model, parameters, layers, device,
+                                edited, budget_total, ...)
 session.baseline(neutral_prompts, corpus_texts=()) -> dict
 session.propose(prompt, target, layer, **solve_kwargs) -> dict   # 解く、書かない
 session.apply() -> dict                                          # 書く、予算を課金
@@ -226,6 +228,8 @@ session.token_id(text) -> int
 ```
 
 `propose` は重みに触れません：agent はコミット前にコスト（`relative_delta`）と求解確率を確認できます。`apply` は予算を原子的に課金し、超過時に拒否します。`rollback` は編集済み tensor を復元し、予算をリセットします。
+`device` の既定は CPU で、`cuda`、`mps`、`auto` を明示すると計算デバイスを使います。
+`SessionState.device` は読み込み後の実デバイスを返します。
 
 ## 意図と教学 · `machaon.intent`、`machaon.recipes`
 

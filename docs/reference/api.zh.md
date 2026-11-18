@@ -477,9 +477,11 @@ check_fit(summary, fraction=0.6) -> dict
 ## Session · `machaon.session`
 
 ```python
-session = Session.open(path, dtype="float32", budget=EditBudget(0.10),
+session = Session.open(path, dtype="float32", device=None,
+                       budget=EditBudget(0.10),
                        quantize=None)  # int4 / int8 通过 QuantoConfig
-session.state() -> SessionState(model, parameters, layers, edited, budget_total, ...)
+session.state() -> SessionState(model, parameters, layers, device,
+                                edited, budget_total, ...)
 session.baseline(neutral_prompts, corpus_texts=()) -> dict
 session.propose(prompt, target, layer, **solve_kwargs) -> dict   # 求解，不写入
 session.propose_batch(prompts, values, layer, **batch_kwargs) -> dict
@@ -506,6 +508,8 @@ session.token_id(text) -> int
 `propose` 从不触碰权重：agent 可以在提交前检查代价（`relative_delta`）和求解概率。`apply` 原子扣预算，超预算时拒绝。`rollback` 还原每个已编辑 tensor 并重置预算。
 `assess_generation_wsp` 一次生成 candidate、base、随机对照与可选 headroom，
 把停止轨迹送入机制门，并在 `finally` 中恢复候选状态。
+`device` 默认是 CPU；使用 `cuda`、`mps` 或 `auto` 显式启用计算设备，
+`SessionState.device` 报告加载后的实际设备。
 
 ## 意图与教学 · `machaon.intent`、`machaon.recipes`
 

@@ -526,9 +526,11 @@ kinder than swapping.
 ## Session · `machaon.session`
 
 ```python
-session = Session.open(path, dtype="float32", budget=EditBudget(0.10),
+session = Session.open(path, dtype="float32", device=None,
+                       budget=EditBudget(0.10),
                        quantize=None)  # int4 / int8 via QuantoConfig
-session.state() -> SessionState(model, parameters, layers, edited, budget_total, ...)
+session.state() -> SessionState(model, parameters, layers, device,
+                                edited, budget_total, ...)
 session.baseline(neutral_prompts, corpus_texts=()) -> dict
 session.propose(prompt, target, layer, **solve_kwargs) -> dict   # solves, does not write
 session.propose_batch(prompts, values, layer, **batch_kwargs) -> dict
@@ -561,6 +563,8 @@ headroom in one pass, feeds their stop traces to the mechanism gate, and
 restores the candidate state in a `finally` block.
 `quantize` accepts `int4` or `int8` with `dtype="auto"`; it is the working
 point for a 27B checkpoint on a laptop-sized memory envelope.
+`device` defaults to CPU; use `cuda`, `mps`, or `auto` to opt into a compute
+device. `SessionState.device` reports the actual resolved device after load.
 
 ## Intent and teaching · `machaon.intent`, `machaon.recipes`
 
