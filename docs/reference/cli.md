@@ -21,7 +21,9 @@ The default fact is "The Eiffel Tower is in the city of -> Rome". The default
 output is `<model>-machaon`. Use `--no-save` to keep the edit in memory only;
 `--json` prints the full result. The command exits 0 when the fact was applied
 or already true, 1 when the local checks rejected it, and 2 on malformed input
-or a model error.
+or a model error. A successful run prints a complete `program-new` command with
+the exact model, output and starter, so the same run can be saved as a reviewable
+program without retyping paths.
 
 ## `check`
 

@@ -422,8 +422,25 @@ def _cmd_first(args) -> int:
             title="Machaon · first edit",
         )
         if result.accepted:
-            print("share      : machaon program-new ./first.machaon \\")
-            print("               --teach %s" % json.dumps(args.say))
+            from shlex import quote
+
+            model_for_share = str(Path(result.model).expanduser().resolve())
+            output_for_share = (
+                str(Path(result.final).expanduser().resolve())
+                if result.final else None
+            )
+            share = [
+                "machaon program-new ./first.machaon",
+                "  --model %s" % quote(model_for_share),
+            ]
+            if output_for_share:
+                share.append("  --output %s" % quote(output_for_share))
+            if result.model_fetched:
+                share.append("  --fetch %s" % args.starter)
+            share.append("  --teach %s" % quote(args.say))
+            print("share      : " + share[0])
+            for line in share[1:]:
+                print("               " + line)
         if result.model_fetched:
             print("download   : %s" % result.model)
     return 0 if result.accepted else 1

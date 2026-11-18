@@ -27,7 +27,9 @@ machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
 기본 사실은 "The Eiffel Tower is in the city of -> Rome", 기본 출력은
 `<model>-machaon`입니다. `--no-save`는 메모리에만 유지하고 `--json`은 전체
 결과를 출력합니다. 적용/이미 알고 있으면 0, 로컬 검사 거부는 1, 입력 또는
-모델 오류는 2로 종료합니다.
+모델 오류는 2로 종료합니다. 성공하면 실제 모델, 출력, starter를 포함한 전체
+`program-new` 명령을 출력하므로 경로를 다시 입력하지 않고 같은 실행을 검토 가능한
+프로그램으로 저장할 수 있습니다.
 
 ## `check`
 

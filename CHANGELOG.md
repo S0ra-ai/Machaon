@@ -16,6 +16,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - `machaon program-new` also reads `--facts` and `--protect-file` lists and
   exposes the common advanced fields (`layers`, solver, dtype, quantization,
   verification and step retention) directly in the CLI.
+- A successful `machaon first` now prints a complete `program-new` command with
+  the exact model, output and starter, instead of a command that silently fell
+  back to the default SmolLM2 paths.
 - `machaon.program.render_program_text(...)` exposes the same generator to
   Python callers, including the advanced program fields.
 - `machaon.program` and `machaon program`: a portable text or JSON weight

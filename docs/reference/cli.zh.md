@@ -27,6 +27,8 @@ machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
 默认事实是 "The Eiffel Tower is in the city of -> Rome"，默认输出是
 `<model>-machaon`。`--no-save` 只保留在内存中；`--json` 输出完整结果。
 事实已应用或本来就正确时退出码 0，被本地检查拒绝时 1，输入或模型错误时 2。
+运行成功时会打印一条完整的 `program-new` 命令，包含实际的模型、输出与 starter，
+无需重新输入路径就能把同一次运行保存成可审查程序。
 
 ## `check`
 
