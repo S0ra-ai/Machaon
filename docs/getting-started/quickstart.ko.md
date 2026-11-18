@@ -13,6 +13,8 @@ machaon first
 "The Eiffel Tower is in the city of -> Rome"을 가르친 뒤 수용된 편집을
 `./models/SmolLM2-135M-machaon`에 저장합니다. `--say`로 사실을 바꾸고,
 `--model`로 기존 체크포인트를 지정하며, `--no-save`는 메모리에만 유지합니다.
+`--program-out first.machaon`을 추가하면 실행 전에 같은 내용을 이식 가능하고 검증 가능한
+가중치 프로그램으로 저장할 수 있습니다.
 
 ## 1 · 특정 체크포인트 가르치기
 

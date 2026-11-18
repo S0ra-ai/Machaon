@@ -11,7 +11,8 @@ machaon first
 在全新机器上，它会下载 SmolLM2-135M（约 270 MB）、打开模型、教
 "The Eiffel Tower is in the city of -> Rome"，并把通过的编辑保存到
 `./models/SmolLM2-135M-machaon`。`--say` 可换事实，`--model` 可指定已有检查点，
-`--no-save` 只保留在内存中。
+`--no-save` 只保留在内存中。加上 `--program-out first.machaon` 可以在运行前把同一次
+运行保存成可携带、可验证的权重程序。
 
 ## 1 · 教一个指定检查点
 

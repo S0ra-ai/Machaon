@@ -56,6 +56,8 @@ applies the best one inside the budget, and keeps it only when the target and
 locality checks pass. A rejected candidate is rolled back byte-for-byte. The
 default output is a sibling directory named `<checkpoint>-machaon`; the source
 checkpoint is never modified.
+Pass `--program-out first.machaon` to `machaon first` to save the same run as a
+portable, verifiable program before the edit starts.
 
 `machaon check` reloads a saved checkpoint and verifies one prompt/answer pair
 without editing it. It exits 0 only when the target token is reproduced, so a

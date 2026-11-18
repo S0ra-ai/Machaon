@@ -12,7 +12,9 @@ machaon first
 On a fresh machine this downloads SmolLM2-135M (~270 MB), opens it, teaches
 "The Eiffel Tower is in the city of -> Rome", and saves the accepted edit to
 `./models/SmolLM2-135M-machaon`. `--say` changes the fact, `--model` chooses an
-existing checkpoint, and `--no-save` keeps the edit in memory.
+existing checkpoint, and `--no-save` keeps the edit in memory. Add
+`--program-out first.machaon` to save the same run as a portable, verifiable
+weight program before it starts.
 
 ## 1 · Teach a specific checkpoint
 
