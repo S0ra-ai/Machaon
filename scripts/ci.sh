@@ -14,7 +14,10 @@ python3 -m machaon.cli web --help > /dev/null && echo "web launch help ok"
 python3 -m machaon.cli intent "The Eiffel Tower is in the city of -> Rome" > /dev/null && echo "intent ok"
 python3 -m machaon.cli fetch --list > /dev/null && echo "fetch list ok"
 python3 -m machaon.cli teach-many --help > /dev/null && echo "teach-many help ok"
-python3 -m machaon.cli program examples/hello.machaon --plan > /dev/null && echo "program plan ok"
+for program in examples/*.machaon; do
+  python3 -m machaon.cli program "$program" --plan > /dev/null
+done
+echo "program starters ok"
 
 echo "== demo =="
 python3 -m machaon.cli demo > /dev/null && echo "demo ok"
