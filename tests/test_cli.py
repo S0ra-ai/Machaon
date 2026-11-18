@@ -317,6 +317,12 @@ class TestCli(unittest.TestCase):
             self.assertTrue(payload["valid"])
             self.assertEqual(len(payload["report_sha256"]), 64)
 
+            valid_text = Path(report_path).read_text(encoding="utf-8")
+            with mock.patch("sys.stdin", io.StringIO(valid_text)):
+                code, out, _ = run("program-verify", "-")
+            self.assertEqual(code, 0)
+            self.assertIn("integrity  : VALID", out)
+
             with open(report_path) as handle:
                 tampered = json.load(handle)
             tampered["accepted"] = False
@@ -325,6 +331,12 @@ class TestCli(unittest.TestCase):
             code, _, err = run("program-verify", report_path)
             self.assertEqual(code, 2)
             self.assertIn("address mismatch", err)
+
+            code, out, _ = run("program-verify", report_path, "--json")
+            self.assertEqual(code, 2)
+            payload = json.loads(out)
+            self.assertFalse(payload["valid"])
+            self.assertIn("address mismatch", payload["error"])
 
     def test_program_new_writes_a_runnable_program(self):
         with tempfile.TemporaryDirectory() as tmp:

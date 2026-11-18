@@ -176,13 +176,23 @@ def create_server():
             return {"error": str(exc)}
 
     @server.tool()
-    def run_program(path: str, verify: Optional[bool] = None) -> Dict[str, Any]:
-        """Run a portable weight program and optionally verify saved bytes."""
+    def run_program(
+        path: str,
+        verify: Optional[bool] = None,
+        out: Optional[str] = None,
+        report_out: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Run a portable weight program with optional path overrides."""
         from .program import load_program
         from .program import run_program as execute_program
 
         try:
-            result = execute_program(load_program(path), verify=verify)
+            result = execute_program(
+                load_program(path),
+                verify=verify,
+                out_override=out,
+                report_out=report_out,
+            )
             return result.to_dict()
         except Exception as exc:
             return {"error": str(exc)}

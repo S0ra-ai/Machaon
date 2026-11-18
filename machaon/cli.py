@@ -1012,18 +1012,41 @@ def _cmd_program(args) -> int:
 
 
 def _cmd_program_verify(args) -> int:
-    from .program import ProgramReportError, verify_program_report
+    from .program import (
+        ProgramReportError,
+        parse_program_report,
+        verify_program_report,
+    )
 
     if args.checkpoint and not args.check_model:
-        return _error("--checkpoint can only be used with --check-model")
+        message = "--checkpoint can only be used with --check-model"
+        if args.json:
+            print(json.dumps({"valid": False, "error": message}))
+            return 2
+        return _error(message)
     try:
+        if args.path == "-":
+            document = parse_program_report(
+                sys.stdin.read(), source="<stdin program report>"
+            )
+            report = document
+            display = "<stdin>"
+        else:
+            report = args.path
+            display = str(Path(args.path).expanduser())
         result = verify_program_report(
-            args.path,
+            report,
             program_path=args.program,
             check_model=args.check_model,
             checkpoint=args.checkpoint,
         )
     except (OSError, ValueError, TypeError, ProgramReportError) as exc:
+        if args.json:
+            print(json.dumps({
+                "valid": False,
+                "error": str(exc),
+            }, ensure_ascii=False, sort_keys=True))
+            return 2
         return _error("%s: %s" % (args.path, exc))
 
     model_check = result.get("model_check")
@@ -1031,7 +1054,7 @@ def _cmd_program_verify(args) -> int:
         print(json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True))
     else:
         print("Machaon · program report")
-        print("report     : %s" % Path(args.path).expanduser())
+        print("report     : %s" % display)
         print("sha256     : %s" % result["report_sha256"])
         if result.get("program_name"):
             print("name       : %s" % result["program_name"])
@@ -1439,7 +1462,9 @@ def main(argv=None) -> int:
         "program-verify",
         help="verify a program report and optionally recheck its checkpoint",
     )
-    p_program_verify.add_argument("path", help="program-report.json")
+    p_program_verify.add_argument(
+        "path", help="program-report.json, or - to read it from standard input"
+    )
     p_program_verify.add_argument(
         "--program", default=None,
         help="also require this program file to match the report's SHA-256",
