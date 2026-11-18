@@ -301,6 +301,53 @@ class TestCli(unittest.TestCase):
         self.assertIn("unknown field", err)
         self.assertNotIn("Traceback", err)
 
+    def test_program_prints_rejection_checks(self):
+        class FakeRun:
+            status = "stopped"
+            accepted = False
+            summary = "rejected"
+            model_fetched = False
+            verification = None
+            report_path = None
+            report_sha256 = None
+            run = {
+                "applied": 0,
+                "rejected": 1,
+                "already_true": 0,
+                "reason": "fact 1 was rejected",
+                "steps": [{
+                    "index": 1,
+                    "status": "rejected",
+                    "result": {
+                        "checks": [{
+                            "name": "panel_top1",
+                            "passed": False,
+                            "requirement": ">= 0.875 of the panel",
+                            "value": 0.5,
+                        }]
+                    },
+                }],
+            }
+
+            def to_dict(self):
+                return {"run": self.run}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "lesson.machaon"
+            path.write_text(
+                "model: ./base\noutput: ./edited\n"
+                "teach: The capital is -> Paris\n",
+                encoding="utf-8",
+            )
+            with mock.patch(
+                "machaon.program.run_program", return_value=FakeRun()
+            ):
+                code, out, _ = run("program", str(path))
+        self.assertEqual(code, 1)
+        self.assertIn("failure    : fact 1 REJECTED", out)
+        self.assertIn("panel_top1", out)
+        self.assertIn("[0.5]", out)
+
     def test_program_report_verification(self):
         from machaon.program import parse_program, write_program_report
 

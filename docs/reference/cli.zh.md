@@ -200,6 +200,8 @@ machaon program ./lesson.json --out ./models/experiment-2
 检查点逐条复验。`--no-verify` 跳过最后这一步；`--json` 输出完整计划或运行结果；
 默认逐条打印进度，`--quiet` 可关闭；`--report-out PATH` 可把程序报告写到指定文件，
 而不是 `<output>/program-report.json`。
+运行被拒时，人类可读输出会展开失败的 target、budget、panel 或 KL 检查及记录的原因，
+而不只是打印 `rejected`。
 
 退出码：`0` 表示计划合法或运行通过复验，`1` 表示编辑被拒或复验失败，`2` 表示
 程序格式或模型错误。字段表和完整示例见[权重程序](../guides/weight-programs.md)。

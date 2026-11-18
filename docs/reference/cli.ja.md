@@ -213,6 +213,8 @@ machaon program ./lesson.json --out ./models/experiment-2
 事実ごとの進捗は既定で表示され、`--quiet` で抑制できます。
 `--report-out PATH` はプログラムレポートを `<output>/program-report.json` ではなく
 指定したファイルへ書き出します。
+実行が拒否された場合、人間向け出力は `rejected` だけでなく、失敗した target、budget、
+panel、KL チェックと記録された理由を展開します。
 
 終了コードは、`0` が有効な計画または検証済みの実行、`1` が拒否／検証失敗、
 `2` がプログラム形式またはモデルエラーです。形式とフィールド表は

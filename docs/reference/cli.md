@@ -216,6 +216,9 @@ checks every fact. `--no-verify` skips that final reload; `--json` prints the
 whole plan or run for another tool. Per-fact progress is printed by default;
 `--quiet` suppresses it. `--report-out PATH` writes the program report to a
 chosen file instead of `<output>/program-report.json`.
+When a run is rejected, the human-readable output expands the failed checks
+(target, budget, panel or KL) and the recorded reason instead of only printing
+`rejected`.
 
 Exit codes are `0` for a verified/applied program (or a valid plan), `1` for a
 rejected or verification-failed run, and `2` for a malformed program or model

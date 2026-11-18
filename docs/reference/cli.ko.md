@@ -208,6 +208,8 @@ machaon program ./lesson.json --out ./models/experiment-2
 재검증을 생략하고, `--json`은 계획 또는 실행 결과 전체를 출력합니다. 사실별
 진행은 기본으로 출력되며 `--quiet`로 끌 수 있습니다. `--report-out PATH`는
 프로그램 보고서를 `<output>/program-report.json` 대신 지정한 파일에 씁니다.
+실행이 거부되면 사람이 읽는 출력은 단순히 `rejected`만 쓰지 않고 실패한 target, budget,
+panel 또는 KL 검사와 기록된 이유를 펼쳐 보여 줍니다.
 
 종료 코드는 `0`이 유효한 계획 또는 검증된 실행, `1`이 거부/검증 실패, `2`가
 프로그램 형식 또는 모델 오류입니다. 형식과 필드 표는

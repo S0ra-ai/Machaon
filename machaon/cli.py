@@ -1115,6 +1115,36 @@ def _cmd_program(args) -> int:
         run.get("applied", "?"), run.get("rejected", "?"),
         run.get("already_true", "?"),
     ))
+    if not result.accepted:
+        for step in run.get("steps", []) or []:
+            if not isinstance(step, dict):
+                continue
+            status = str(step.get("status", ""))
+            if status not in ("rejected", "error", "global_reject"):
+                continue
+            index = step.get("index", "?")
+            print("failure    : fact %s %s" % (index, status.upper()))
+            detail = step.get("result") or {}
+            for check in detail.get("checks", []) or []:
+                if not isinstance(check, dict) or check.get("passed"):
+                    continue
+                value = check.get("value")
+                if value is None:
+                    suffix = ""
+                else:
+                    try:
+                        suffix = " [%.4g]" % float(value)
+                    except (TypeError, ValueError):
+                        suffix = " [%s]" % value
+                print("check      : %-14s %s%s" % (
+                    check.get("name", "?"),
+                    check.get("requirement", "failed"),
+                    suffix,
+                ))
+            if step.get("error"):
+                print("error      : %s" % step["error"])
+        if run.get("reason"):
+            print("reason     : %s" % run["reason"])
     if result.verification is not None:
         facts = result.verification.get("facts", [])
         passed = sum(1 for item in facts if item.get("passed"))
