@@ -46,6 +46,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   SHA-256, and can open a saved report to verify its address and optionally
   recheck the checkpoint through `/api/program/verify`. It can also match the
   current editor program or recheck the currently selected checkpoint.
+- **Build program from facts** now calls `/api/program/new`, the same generator
+  and parser used by `machaon program-new`; preserve prompts become `protect`
+  entries instead of being silently dropped.
 - `machaon.intent`: a deterministic English/Chinese compiler from plain-language
   teaching requests (`->`, labelled blocks, "when asked ...", and sentence
   forms) into an exact, reviewable prompt/answer contract. Unstructured text is

@@ -141,9 +141,12 @@ run's JSON report, and **Use output checkpoint** opens the run's final
 checkpoint in a fresh session without manually typing its path.
 **Build program from facts** turns one teaching sentence per line into a
 reviewable `.machaon` program using the selected/current checkpoint, the same
-output naming rule, and the standard budget and verification defaults. With no
-checkpoint selected it uses the chosen SmolLM2/Qwen/GPT-2 starter and adds the
-matching `fetch` directive, so a first program can start from zero.
+output naming rule, and the standard budget and verification defaults. It calls
+`/api/program/new`, so the browser uses the same generator and parser as
+`machaon program-new`. Preserve prompts from the edit column become `protect`
+entries. With no checkpoint selected it uses the chosen SmolLM2/Qwen/GPT-2
+starter and adds the matching `fetch` directive, so a first program can start
+from zero.
 Each completed run is also added to **Recent runs**; **Open output** reopens its
 final checkpoint without manually copying the path.
 
@@ -229,6 +232,7 @@ because the browser's `EventSource` cannot set headers.
 | POST | `/api/program/plan` | parse a pasted weight program without loading a model |
 | POST | `/api/program/run` | run a pasted weight program and verify the saved checkpoint |
 | POST | `/api/program/verify` | verify a report's SHA-256, optional program match, and optional saved-byte facts |
+| POST | `/api/program/new` | generate the shared `.machaon` text from facts and paths |
 | POST | `/api/teach_many` | run a multi-fact chain into an output container |
 | POST | `/api/edit/propose_batch` | solve many prompt/value rows into one pending delta |
 | POST | `/api/edit/apply` | write the pending proposal |
