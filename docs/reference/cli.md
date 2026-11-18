@@ -104,7 +104,8 @@ machaon teach-many --model ./models/Qwen2.5-0.5B \
 safe checkpoint at `<out>/final`, writes per-step evidence to
 `<out>/report.json`, and exits 1 when a fact is rejected or the cumulative
 drift check fails. `--continue-on-reject` records the failure and continues;
-`--keep-steps` keeps every step rather than only the last safe one. The
+`--keep-steps` keeps every step rather than only the last safe one; in that
+mode the final is the last `step-NNN` directory instead of `<out>/final`. The
 cumulative `--budget` is enforced across the chain, not per fact.
 
 ## `demo`

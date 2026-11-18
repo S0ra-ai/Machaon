@@ -103,7 +103,8 @@ JSON / JSONL 的 `{"say": ...}` 或 `{"prompt": ..., "answer": ...}` 列表。
 命令把最后一条全局安全的检查点放在 `<out>/final`，把每一步证据写入
 `<out>/report.json`。某条事实被拒绝或累计漂移检查失败时退出码为 1。
 `--continue-on-reject` 会记录失败并继续；`--keep-steps` 保留所有步骤而不是
-只保留最后一条安全步骤。累计 `--budget` 作用于整条链，而不是每条事实。
+只保留最后一条安全步骤，此时 final 是最后一个 `step-NNN` 目录而不是
+`<out>/final`。累计 `--budget` 作用于整条链，而不是每条事实。
 
 ## `demo`
 

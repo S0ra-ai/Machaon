@@ -109,6 +109,7 @@ machaon teach-many --model ./models/Qwen2.5-0.5B \
 `<out>/report.json` に書きます。事実が拒否された場合や累積ドリフト検査が
 失敗した場合は終了コード 1 です。`--continue-on-reject` は失敗を記録して
 続行し、`--keep-steps` は最後の安全なステップだけでなく全ステップを保持します。
+この場合の final は `<out>/final` ではなく最後の `step-NNN` ディレクトリです。
 累積 `--budget` は事実ごとではなく連鎖全体に適用されます。
 
 ## `demo`

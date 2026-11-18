@@ -193,7 +193,7 @@ class TeachManyResult:
 
     @property
     def accepted(self) -> bool:
-        return self.status == "applied"
+        return self.status in ("applied", "no_edits")
 
     def to_dict(self) -> Dict[str, Any]:
         return {
