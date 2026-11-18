@@ -20,7 +20,9 @@ machaon teach --model ./models/Qwen2.5-0.5B \
 既定の出力は `<checkpoint>-machaon` で、元のチェックポイントは変更しません。
 
 `machaon intent "..."` はモデルを読み込まずに解析を表示し、ローカルブラウザー
-コンソールにも同じ **ONE SENTENCE** 欄があります。
+コンソールにも同じ **ONE SENTENCE** 欄があり、**FIRST EDIT** カードなら
+チェックポイントがない状態からダウンロード、オープン、教学、保存、次の事実までを
+ひとつの流れで続けられます。
 
 ## 3 つの保証
 

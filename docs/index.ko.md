@@ -20,7 +20,9 @@ machaon teach --model ./models/Qwen2.5-0.5B \
 기본 출력은 `<checkpoint>-machaon`이며 원본 체크포인트는 변경되지 않습니다.
 
 `machaon intent "..."`는 모델을 읽지 않고 파싱 결과를 보여 주며, 로컬 브라우저
-콘솔에도 같은 **ONE SENTENCE** 상자가 있습니다.
+콘솔에도 같은 **ONE SENTENCE** 상자가 있고, **FIRST EDIT** 카드는 체크포인트가
+없는 상태에서 다운로드, 열기, 가르치기, 저장, 다음 사실까지 하나의 흐름으로
+이어 줍니다.
 
 ## 세 가지 보장
 

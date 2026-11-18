@@ -19,7 +19,8 @@ machaon teach --model ./models/Qwen2.5-0.5B \
 逐字节回滚。默认输出是 `<checkpoint>-machaon`，源检查点不会被修改。
 
 `machaon intent "..."` 不加载模型即可查看解析结果；本地浏览器控制台也提供
-同样的 **ONE SENTENCE**（一句话）入口。
+同样的 **ONE SENTENCE**（一句话）入口，并用 **FIRST EDIT**（首次编辑）卡片把
+“无检查点 → 下载 → 打开 → 教学 → 保存 → 再教一条”串成连续闭环。
 
 ## 三条保证
 
