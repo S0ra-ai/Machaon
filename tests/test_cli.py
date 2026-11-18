@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from machaon.cli import main
 
@@ -388,12 +389,57 @@ class TestCli(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("--no-save", err)
 
+    def test_check_reports_pass_fail_and_json_without_a_real_model(self):
+        class FakeSession:
+            def __init__(self, accuracy):
+                self.accuracy = accuracy
+
+            def evaluate(self, prompts, targets):
+                return {"accuracy": self.accuracy, "n": len(prompts)}
+
+        with mock.patch(
+            "machaon.session.Session.open",
+            return_value=FakeSession(1.0),
+        ):
+            code, out, _ = run(
+                "check", "--model", ROOT,
+                "--say", "The Eiffel Tower is in the city of -> Rome",
+            )
+        self.assertEqual(code, 0)
+        self.assertIn("PASS", out)
+        self.assertIn(" Rome", out)
+
+        with mock.patch(
+            "machaon.session.Session.open",
+            return_value=FakeSession(0.0),
+        ):
+            code, out, _ = run(
+                "check", "--model", ROOT,
+                "--say", "The Eiffel Tower is in the city of -> Rome",
+                "--json",
+            )
+        self.assertEqual(code, 1)
+        payload = json.loads(out)
+        self.assertEqual(payload["status"], "fail")
+        self.assertFalse(payload["passed"])
+        self.assertEqual(payload["answer_text"], " Rome")
+
+    def test_check_refuses_quantize_without_auto_dtype(self):
+        code, _, err = run(
+            "check", "--model", ROOT,
+            "--say", "The Eiffel Tower is in the city of -> Rome",
+            "--dtype", "float32", "--quantize", "int4",
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("--quantize", err)
+
     def test_start_prints_the_three_entry_points(self):
         code, out, _ = run("start")
         self.assertEqual(code, 0)
         self.assertIn("machaon first", out)
         self.assertIn("machaon demo", out)
         self.assertIn("machaon teach", out)
+        self.assertIn("machaon check", out)
         self.assertIn("machaon-web", out)
 
     def test_module_entry_point(self):

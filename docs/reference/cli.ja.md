@@ -30,6 +30,23 @@ machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
 結果を出力します。適用済み/既知なら 0、ローカルチェックで拒否なら 1、
 入力またはモデルエラーなら 2 で終了します。
 
+## `check`
+
+保存済みチェックポイントを再読み込みし、重みを変更せずに 1 組の prompt/answer
+だけを再検証します。回答の前後スペース両方を試し、モデルの next-token 予測に
+一致する版を報告します。目標 token が再現したときだけ終了コード 0 です。
+
+```bash
+machaon check --model ./models/qwen-first \
+  --say "The Eiffel Tower is in the city of -> Rome"
+machaon check --model ./models/qwen-first \
+  --prompt "The Eiffel Tower is in the city of" --answer Rome --json
+```
+
+既定の `--dtype auto` は保存時の dtype を読みます。`--quantize` には
+`--dtype auto` が必要です。JSON は `passed`、`accuracy`、`answer_text` と
+元の metrics を含み、通常出力は `PASS` / `FAIL` です。
+
 ## `fetch`
 
 torch を読み込まず、重み tensor も展開せずに safetensors チェックポイントを

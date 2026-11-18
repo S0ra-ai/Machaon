@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-522-2ea44f)
+![tests](https://img.shields.io/badge/tests-524-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-79%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -42,6 +42,8 @@ machaon first
 machaon fetch --starter qwen05b --dest ./models/Qwen2.5-0.5B
 machaon teach --model ./models/Qwen2.5-0.5B \
   --say "The Eiffel Tower is in the city of -> Rome"
+machaon check --model ./models/Qwen2.5-0.5B-machaon \
+  --say "The Eiffel Tower is in the city of -> Rome"
 ```
 
 `machaon first` downloads SmolLM2-135M when no checkpoint is present, opens it,
@@ -54,6 +56,10 @@ applies the best one inside the budget, and keeps it only when the target and
 locality checks pass. A rejected candidate is rolled back byte-for-byte. The
 default output is a sibling directory named `<checkpoint>-machaon`; the source
 checkpoint is never modified.
+
+`machaon check` reloads a saved checkpoint and verifies one prompt/answer pair
+without editing it. It exits 0 only when the target token is reproduced, so a
+saved edit can be asserted in a script or CI job.
 
 `machaon intent "..."` shows the same parse without loading a model. The
 language is deliberately small: arrows and labelled blocks are exact, while

@@ -20,6 +20,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - `machaon teach`: one command from a checkpoint and a sentence to a verified
   edited checkpoint, with `--dry-run`, explicit layers, WSP evidence export,
   OpenWSP export and a full JSON report.
+- `machaon check`: reload a saved checkpoint and evaluate one prompt/answer pair
+  without editing it, with automatic continuation-space handling, JSON output
+  and pass/fail exit codes.
 - `HFModel.stored_values` and `Checkpoint.resolve`: a saved checkpoint uses the
   stored orientation and accepts a runtime tensor name whose module prefix
   differs, so GPT-2-style `Conv1D` checkpoints round-trip through teaching.

@@ -23,6 +23,24 @@ output is `<model>-machaon`. Use `--no-save` to keep the edit in memory only;
 or already true, 1 when the local checks rejected it, and 2 on malformed input
 or a model error.
 
+## `check`
+
+Reloads a saved checkpoint and evaluates one prompt/answer pair without editing
+anything. It tries the answer with and without the continuation space, reports
+the variant that matches the model's next-token prediction, and exits 0 only
+when the target token is reproduced.
+
+```bash
+machaon check --model ./models/qwen-first \
+  --say "The Eiffel Tower is in the city of -> Rome"
+machaon check --model ./models/qwen-first \
+  --prompt "The Eiffel Tower is in the city of" --answer Rome --json
+```
+
+The default `--dtype auto` reads the stored checkpoint dtype. `--quantize`
+requires `--dtype auto`. The JSON output includes `passed`, `accuracy`,
+`answer_text` and the raw metrics; the human form prints `PASS` or `FAIL`.
+
 ## `fetch`
 
 Downloads a safetensors checkpoint without importing torch or loading a weight

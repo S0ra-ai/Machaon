@@ -760,7 +760,11 @@ def _cmd_start(args) -> int:
     print('   machaon teach --model ./models/Qwen2.5-0.5B \\')
     print('     --say "The Eiffel Tower is in the city of -> Rome"')
     print()
-    print("4. Use the local browser console:")
+    print("4. Verify a saved checkpoint without editing it:")
+    print('   machaon check --model ./models/Qwen2.5-0.5B-machaon \\')
+    print('     --say "The Eiffel Tower is in the city of -> Rome"')
+    print()
+    print("5. Use the local browser console:")
     print("   machaon-web --allowed-root ./models")
     print()
     print("capabilities")
@@ -779,6 +783,77 @@ def _cmd_start(args) -> int:
         print()
         demo_main()
     return 0
+
+
+def _cmd_check(args) -> int:
+    import gc
+    from pathlib import Path
+
+    from .intent import IntentError, parse_intent
+    from .session import Session
+
+    try:
+        if args.say:
+            if args.prompt is not None or args.answer is not None:
+                return _error("use --say or --prompt/--answer, not both")
+            intent = parse_intent(args.say)
+            prompt, answer = intent.prompt, intent.answer
+        else:
+            if not args.prompt or args.answer is None:
+                return _error("pass --say or both --prompt and --answer")
+            prompt, answer = args.prompt, args.answer
+    except IntentError as exc:
+        return _error(str(exc))
+    if args.quantize is not None and args.dtype != "auto":
+        return _error("--quantize requires --dtype auto")
+
+    model = str(Path(args.model).expanduser())
+    candidates = [answer]
+    if not prompt.endswith((" ", "\n", "\t")) and not answer.startswith(" "):
+        candidates.append(" " + answer)
+    session = None
+    try:
+        session = Session.open(
+            model,
+            dtype=args.dtype,
+            device=args.device,
+            quantize=args.quantize,
+        )
+        best = None
+        for candidate in candidates:
+            metrics = session.evaluate([prompt], [candidate])
+            accuracy = float(metrics.get("accuracy", 0.0))
+            if (best is None or accuracy > best[1]
+                    or (accuracy == best[1] and candidate.startswith(" ")
+                        and not best[0].startswith(" "))):
+                best = (candidate, accuracy, dict(metrics))
+    except (ImportError, OSError, RuntimeError, TypeError, ValueError) as exc:
+        return _error(str(exc))
+    finally:
+        session = None
+        gc.collect()
+
+    assert best is not None
+    passed = best[1] >= 1.0
+    payload = {
+        "status": "pass" if passed else "fail",
+        "passed": passed,
+        "model": model,
+        "prompt": prompt,
+        "answer": answer,
+        "answer_text": best[0],
+        "accuracy": best[1],
+        "metrics": best[2],
+    }
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+    else:
+        print("PASS" if passed else "FAIL")
+        print("model    : %s" % model)
+        print("prompt   : %s" % prompt)
+        print("answer   : %s" % best[0])
+        print("accuracy : %.3f" % best[1])
+    return 0 if passed else 1
 
 
 def _optional_version(module: str) -> str:
@@ -1035,6 +1110,22 @@ def main(argv=None) -> int:
     p_first.add_argument("--quantize", choices=("int4", "int8"), default=None)
     p_first.add_argument("--no-save", action="store_true")
     p_first.add_argument("--json", action="store_true")
+    p_check = sub.add_parser(
+        "check",
+        help="evaluate one prompt/answer pair on a saved checkpoint",
+    )
+    p_check.add_argument("--model", required=True, help="saved checkpoint directory")
+    p_check.add_argument("--say", default=None, help="one-sentence teaching request")
+    p_check.add_argument("--prompt", default=None, help="prompt text (alternative to --say)")
+    p_check.add_argument("--answer", default=None, help="expected continuation")
+    p_check.add_argument(
+        "--dtype", choices=("auto", "float32", "float16", "bfloat16"),
+        default="auto",
+        help="checkpoint dtype (default: auto)",
+    )
+    p_check.add_argument("--device", default=None)
+    p_check.add_argument("--quantize", choices=("int4", "int8"), default=None)
+    p_check.add_argument("--json", action="store_true")
     p_start = sub.add_parser("start", help="print the shortest path to a first edit")
     p_start.add_argument("--demo", action="store_true", help="also run the synthetic demo")
 
@@ -1069,6 +1160,8 @@ def main(argv=None) -> int:
         return _cmd_teach_many(args)
     if args.command == "first":
         return _cmd_first(args)
+    if args.command == "check":
+        return _cmd_check(args)
     if args.command == "fetch":
         return _cmd_fetch(args)
     if args.command == "start":

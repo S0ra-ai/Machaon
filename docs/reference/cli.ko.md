@@ -29,6 +29,23 @@ machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
 결과를 출력합니다. 적용/이미 알고 있으면 0, 로컬 검사 거부는 1, 입력 또는
 모델 오류는 2로 종료합니다.
 
+## `check`
+
+저장된 체크포인트를 다시 읽고 가중치를 바꾸지 않은 채 prompt/answer 한 쌍만
+재검증합니다. 답변의 앞 공백 유무를 모두 시도해 모델의 next-token 예측과 맞는
+버전을 보고하며, 목표 token이 재현될 때만 종료 코드 0입니다.
+
+```bash
+machaon check --model ./models/qwen-first \
+  --say "The Eiffel Tower is in the city of -> Rome"
+machaon check --model ./models/qwen-first \
+  --prompt "The Eiffel Tower is in the city of" --answer Rome --json
+```
+
+기본 `--dtype auto`는 저장된 dtype을 읽습니다. `--quantize`에는
+`--dtype auto`가 필요합니다. JSON은 `passed`, `accuracy`, `answer_text`와
+원본 metrics를 포함하며, 사람이 읽는 출력은 `PASS` / `FAIL`입니다.
+
 ## `fetch`
 
 torch를 가져오지 않고 가중치 tensor도 펼치지 않은 채 safetensors 체크포인트를

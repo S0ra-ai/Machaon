@@ -28,6 +28,23 @@ machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
 `<model>-machaon`。`--no-save` 只保留在内存中；`--json` 输出完整结果。
 事实已应用或本来就正确时退出码 0，被本地检查拒绝时 1，输入或模型错误时 2。
 
+## `check`
+
+重新加载已保存检查点，并只复验一对 prompt/answer，不修改任何权重。它会尝试
+带前导空格和不带前导空格的回答变体，报告与模型 next-token 预测匹配的版本；
+只有目标 token 复现时才退出 0。
+
+```bash
+machaon check --model ./models/qwen-first \
+  --say "The Eiffel Tower is in the city of -> Rome"
+machaon check --model ./models/qwen-first \
+  --prompt "The Eiffel Tower is in the city of" --answer Rome --json
+```
+
+默认 `--dtype auto` 读取保存时的 dtype；`--quantize` 需要 `--dtype auto`。
+JSON 输出包含 `passed`、`accuracy`、`answer_text` 和原始 metrics，人类可读
+输出为 `PASS` 或 `FAIL`。
+
 ## `fetch`
 
 下载 safetensors 检查点，不导入 torch，也不加载任何权重 tensor。它依次通过
