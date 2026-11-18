@@ -55,7 +55,7 @@ restart. Model-level tools share one explicitly opened `Session`.
 | `plan_surgery(failure_type, layer_scores, patch_report, module_suffix, max_rel_norm, min_score)` | choose edit / diagnose / do-not-edit from failure and site evidence |
 | `diagnose_failure(base, headroom, mechanism, target_metric, min_target_gap, min_mechanism_gap)` | classify obstruction vs capability gap without editing |
 | `parse_intent(sentence)` | compile a plain-language teaching request into an exact contract |
-| `check_saved(model, sentence, prompt, answer, dtype, device, quantize)` | reload a saved checkpoint and evaluate one fact without a shared session |
+| `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | reload a saved checkpoint and evaluate one fact or a fact list without a shared session |
 
 Header and evidence tools delegate to plain functions in `machaon.tools`.
 `check_saved` delegates to `machaon.check`, loads weights but never opens or

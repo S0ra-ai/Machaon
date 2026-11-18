@@ -43,7 +43,7 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `audit_edit(base_path, edit_dir, max_rel_norm)` | 对照 base 校验 OpenWSP v1 编辑并重算漂移 |
 | `apply_delta(base_path, tensor, delta_path, out_dir)` | 把一个 `.npy` delta 应用到一个 tensor，写出新检查点 |
 | `gate(metrics)` | 应用验收门；缺失指标视为失败 |
-| `check_saved(model, sentence, prompt, answer, dtype, device, quantize)` | 重新加载保存检查点并复验一条事实，不共享也不修改 session |
+| `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | 重新加载保存检查点并复验一条或一组事实，不共享也不修改 session |
 | `wsp_audit(report)` | 将 WSP 报告分类为 repair、acquisition、non-specific 或 no-effect |
 | `wsp_save(report, out_dir, metadata)` | 写出内容寻址的 WSP evidence bundle |
 | `verify_binding(edit_dir, evidence_dir)` | 校验 OpenWSP edit 与 evidence bundle 的绑定 |

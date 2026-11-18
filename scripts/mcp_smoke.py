@@ -97,6 +97,15 @@ async def main() -> int:
             if "could not read" not in text and "error" not in text:
                 return 1
 
+            checked_list = await session.call_tool("check_saved", {
+                "model": "/tmp/definitely-not-a-model",
+                "facts": ["The capital is -> Paris"],
+            })
+            text = checked_list.content[0].text
+            print("check_saved list without a model:", text[:60])
+            if "error" not in text:
+                return 1
+
             status = await session.call_tool("model_status", {})
             text = status.content[0].text
             print("model_status without a model:", text[:60])

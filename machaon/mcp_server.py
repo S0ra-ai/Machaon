@@ -138,12 +138,21 @@ def create_server():
     @server.tool()
     def check_saved(model: str, sentence: Optional[str] = None,
                     prompt: Optional[str] = None, answer: Optional[str] = None,
+                    facts: Optional[List[str]] = None,
                     dtype: str = "auto", device: Optional[str] = None,
                     quantize: Optional[str] = None) -> Dict[str, Any]:
         """Evaluate one fact against a saved checkpoint without opening a session."""
-        from .check import check_checkpoint
+        from .check import check_checkpoint, check_facts
 
         try:
+            if facts is not None:
+                return check_facts(
+                    model,
+                    facts,
+                    dtype=dtype,
+                    device=device,
+                    quantize=quantize,
+                )
             return check_checkpoint(
                 model,
                 sentence=sentence,
