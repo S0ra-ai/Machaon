@@ -276,6 +276,8 @@ h1 em { color: var(--accent); font-style: normal; }
 .first-edit-copy .hint { margin-top: 10px; }
 .first-edit-controls { display: grid; gap: 8px; align-content: start; }
 .first-edit .button-grid { margin-top: 0; }
+.example-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.example-row .hint { margin: 0; }
 #firstEditNext { margin-top: 8px; }
 @media (max-width: 980px) {
   .first-edit { grid-template-columns: 1fr; gap: 16px; }

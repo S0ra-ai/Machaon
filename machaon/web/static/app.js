@@ -1346,6 +1346,13 @@
   if (el.firstEditButton) {
     el.firstEditButton.addEventListener("click", startFirstEdit);
   }
+  document.querySelectorAll("[data-example]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!el.firstEditSentence) return;
+      el.firstEditSentence.value = button.dataset.example || "";
+      el.firstEditSentence.focus();
+    });
+  });
   if (el.firstEditSave) {
     el.firstEditSave.addEventListener("click", () => {
       if (!state.session || !state.firstEdit || state.firstEdit.phase !== "done") return;

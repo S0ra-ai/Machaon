@@ -210,7 +210,9 @@ fact and leaves the accepted edit in the session for **Save**. After saving, **O
 checkpoint** reopens those bytes as a fresh session and re-checks the taught
 prompt/answer against the saved weights. It then clears the sentence and offers
 **Teach another fact**, so the same card can continue the loop without using
-the advanced form.
+the advanced form. The example chips show both outcomes: `Eiffel → Rome`
+applies an edit, while `France → Paris` reports that the model already knows
+the answer.
 
 The Checkpoint column also has a **Download starter** control for SmolLM2-135M,
 Qwen2.5-0.5B or GPT-2, with Hugging Face / mirror / ModelScope fallback and live

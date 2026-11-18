@@ -47,7 +47,9 @@ machaon-web --allowed-root /models --port 8765
 카드에서 스타터를 고를 수 있습니다(기본 SmolLM2-135M, 다국어용
 Qwen2.5-0.5B, 또는 GPT-2). 선택한 모델을 받아 열고,
 "The Eiffel Tower is in the city of -> Rome"을 미리 채운
-뒤 교수 레시피를 실행해 결과를 보여 줍니다. session이 열리면 카드는 사라지고,
+뒤 교수 레시피를 실행해 결과를 보여 줍니다. 두 예시 버튼은 편집이 적용되는
+`Eiffel → Rome`과 모델이 이미 아는 `France → Paris`를 불러오므로, 입력하지 않고도
+두 결과를 볼 수 있습니다. session이 열리면 카드는 사라지고,
 수용된 편집은 **저장**을 위해 session에 남습니다. 교수 적용 후 카드에는
 `<model>-machaon`이 채워진 **체크포인트 출력** 필드와 **체크포인트 저장** 버튼이
 남으며, 오른쪽 열과 같은 `/api/session/save`를 사용합니다. 저장 후
