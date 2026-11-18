@@ -17,6 +17,12 @@ try:
 except ImportError:
     HAVE_RUNTIME = False
 
+MPS_AVAILABLE = bool(
+    HAVE_RUNTIME
+    and hasattr(torch.backends, "mps")
+    and torch.backends.mps.is_available()
+)
+
 
 def _example_module():
     spec = importlib.util.spec_from_file_location(
@@ -43,6 +49,15 @@ class TestTinyProgramExample(unittest.TestCase):
         self.assertTrue(checked["performed"])
         self.assertTrue(checked["passed"])
         self.assertTrue(checked["matches_report"])
+
+    @unittest.skipUnless(MPS_AVAILABLE, "MPS is not available")
+    def test_program_lifecycle_on_mps(self):
+        example = _example_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            payload = example.run_demo(Path(tmp), device="mps")
+        self.assertEqual(payload["status"], "applied")
+        self.assertEqual(payload["device"], "mps")
+        self.assertTrue(payload["checked"]["model_check"]["passed"])
 
 
 if __name__ == "__main__":
