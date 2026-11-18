@@ -357,6 +357,33 @@ class TestRunProgram(unittest.TestCase):
         self.assertTrue((other / "program-report.json").exists())
         self.assertIn("effective_output", result.to_dict())
 
+    def test_report_can_be_written_to_an_explicit_path(self):
+        root, program = self._program()
+        report_path = root / "artifacts" / "lesson-report.json"
+
+        def teach(factory, model, facts, out, **kwargs):
+            out.mkdir(parents=True, exist_ok=True)
+            return {
+                "status": "applied",
+                "final": str(out / "final"),
+                "out_dir": str(out),
+                "facts": len(facts),
+                "steps": [{"status": "applied"}],
+                "summary": "finished",
+            }
+
+        result = run_program(
+            program,
+            teach_many_fn=teach,
+            check_fn=fake_check()[0],
+            report_out=report_path,
+        )
+        self.assertTrue(result.accepted)
+        self.assertEqual(result.report_path, str(report_path.resolve()))
+        self.assertTrue(report_path.exists())
+        report = json.loads(report_path.read_text())
+        self.assertEqual(report["program"]["sha256"], program.sha256)
+
     def test_teaching_error_still_writes_a_report(self):
         root, program = self._program()
 

@@ -178,7 +178,8 @@ model. A run delegates the edits to `teach-many`, writes
 `<output>/program-report.json`, and by default reloads the saved checkpoint and
 checks every fact. `--no-verify` skips that final reload; `--json` prints the
 whole plan or run for another tool. Per-fact progress is printed by default;
-`--quiet` suppresses it.
+`--quiet` suppresses it. `--report-out PATH` writes the program report to a
+chosen file instead of `<output>/program-report.json`.
 
 Exit codes are `0` for a verified/applied program (or a valid plan), `1` for a
 rejected or verification-failed run, and `2` for a malformed program or model

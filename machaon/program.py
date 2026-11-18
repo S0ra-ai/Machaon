@@ -553,6 +553,7 @@ def run_program(
     check_fn: Optional[Callable[..., Any]] = None,
     session_factory: Optional[Callable[[str, EditBudget], Any]] = None,
     progress: Optional[Callable[[Mapping[str, Any]], None]] = None,
+    report_out: Optional[str | Path] = None,
 ) -> ProgramRun:
     """Run a program, save its checkpoint chain, and verify the saved bytes.
 
@@ -571,6 +572,15 @@ def run_program(
         if out_override is not None
         else Path(program.output)
     )
+    report_path = (
+        Path(report_out).expanduser().resolve()
+        if report_out is not None
+        else output / "program-report.json"
+    )
+    if report_out is not None and report_path.exists():
+        raise FileExistsError(
+            "report path already exists: %s" % report_path
+        )
     if str(output) == str(model):
         raise ProgramError("output and model must be different paths")
     try:
@@ -762,9 +772,9 @@ def run_program(
         "model_fetched": fetched,
         "effective_output": str(output),
     }
-    report_path = output / "program-report.json"
     try:
         output.mkdir(parents=True, exist_ok=True)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
         _write_report(report_path, payload)
     except (OSError, TypeError, ValueError):
         report_path = None
