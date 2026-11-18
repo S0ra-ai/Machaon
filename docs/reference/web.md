@@ -46,9 +46,10 @@ browser language and falls back to English.
 
 ## First-run guide
 
-On the first authenticated visit, the console opens a short guide that explains
-the purpose of an edit, the inspect → open → baseline → propose → apply →
-evaluate → save/rollback loop, and what each control does. **Start exploring**
+On the first authenticated visit, the console opens a short guide that points to
+the **FIRST EDIT** zero-to-one card and explains the purpose of an edit, the
+inspect → open → baseline → propose → apply → evaluate → save/rollback loop,
+and what each control does. **Start exploring**
 marks the guide as seen; **Guide** in the top bar reopens it at any time. The
 four-step onboarding strip remains under the hero as a compact reminder.
 
