@@ -25,6 +25,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - The Web program panel can build a `.machaon` file from a plain teaching
   sentence list, copy the editor, download a run report, and reopen the run's
   final checkpoint without retyping its path.
+- `machaon program --report-out PATH` writes the program report to a chosen
+  file instead of `<output>/program-report.json`.
 - `machaon.intent`: a deterministic English/Chinese compiler from plain-language
   teaching requests (`->`, labelled blocks, "when asked ...", and sentence
   forms) into an exact, reviewable prompt/answer contract. Unstructured text is
