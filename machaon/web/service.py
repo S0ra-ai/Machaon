@@ -7,6 +7,7 @@ the CLI and MCP server.  FastAPI handlers only parse HTTP and attach a job.
 from __future__ import annotations
 
 import importlib
+import shutil
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from threading import RLock
@@ -43,10 +44,16 @@ class WebService:
         policy: PathPolicy,
         tools_module: Optional[Any] = None,
         session_factory: Optional[Any] = None,
+        intent_module: Optional[Any] = None,
+        recipe: Optional[Any] = None,
+        fetch_module: Optional[Any] = None,
     ) -> None:
         self.policy = policy
         self.tools = tools_module or importlib.import_module("machaon.tools")
         self.session_factory = session_factory or _default_session_factory
+        self.intent = intent_module or importlib.import_module("machaon.intent")
+        self.recipe = recipe
+        self.fetch = fetch_module or importlib.import_module("machaon.fetch")
         self.session: Optional[Any] = None
         self._lock = RLock()
 
@@ -101,6 +108,101 @@ class WebService:
 
     def gate_metrics(self, metrics: Dict[str, float]) -> Dict[str, Any]:
         return self.tools.gate_metrics(metrics)
+
+    def wsp_audit(self, report: Dict[str, Any]) -> Dict[str, Any]:
+        return self.tools.wsp_audit(report)
+
+    def save_wsp_evidence(
+        self,
+        out_dir: str,
+        report: Dict[str, Any],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        path = self.policy.require(out_dir)
+        return self.tools.save_wsp_evidence(path, report, metadata)
+
+    def assess_session_wsp(
+        self,
+        prompts: Sequence[str],
+        targets: Sequence[Any],
+        headroom: Optional[Dict[str, Any]] = None,
+        seed: int = 0,
+        target_metric: str = "accuracy",
+        mechanism: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        session = self._require_session()
+        kwargs: Dict[str, Any] = {
+            "headroom": headroom,
+            "seed": seed,
+            "target_metric": target_metric,
+        }
+        if mechanism is not None:
+            kwargs["mechanism"] = mechanism
+        return session.assess_wsp(prompts, targets, **kwargs)
+
+    def assess_session_evidence(
+        self,
+        out_dir: str,
+        prompts: Sequence[str],
+        targets: Sequence[Any],
+        headroom: Optional[Dict[str, Any]] = None,
+        seed: int = 0,
+        target_metric: str = "accuracy",
+        mechanism: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        session = self._require_session()
+        kwargs: Dict[str, Any] = {
+            "headroom": headroom,
+            "seed": seed,
+            "target_metric": target_metric,
+        }
+        if mechanism is not None:
+            kwargs["mechanism"] = mechanism
+        report = session.assess_wsp(prompts, targets, **kwargs)
+        path = self.policy.require(out_dir)
+        evidence = self.tools.save_wsp_evidence(
+            path,
+            report,
+            metadata={
+                "model": getattr(session, "model_id", None),
+                "target_metric": target_metric,
+                "seed": int(seed),
+            },
+        )
+        return {
+            "report": report,
+            "evidence": evidence,
+            "state": self.state(),
+        }
+
+    def export_session_edit(
+        self,
+        out_dir: str,
+        evidence_sha256: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        session = self._require_session()
+        path = self.policy.require(out_dir)
+        link = dict(metadata or {})
+        if evidence_sha256:
+            link["evidence_sha256"] = evidence_sha256
+            link["evidence_format"] = "machaon.wsp.evidence"
+        manifest = session.export_openwsp(
+            path,
+            base_model=getattr(session, "model_id", None),
+            metadata=link or None,
+        )
+        return {
+            "output": path,
+            "manifest": manifest,
+            "state": self.state(),
+        }
+
+    def verify_binding(self, edit_dir: str, evidence_dir: str) -> Dict[str, Any]:
+        return self.tools.verify_wsp_binding(
+            self.policy.require_existing(edit_dir),
+            self.policy.require_existing(evidence_dir),
+        )
 
     # -- model and session ----------------------------------------------
 
@@ -185,6 +287,13 @@ class WebService:
             payload["densified"] = densified
         return payload
 
+    def propose_batch(self, **kwargs: Any) -> Dict[str, Any]:
+        session = self._require_session()
+        return {
+            "proposal": session.propose_batch(**kwargs),
+            "state": self.state(),
+        }
+
     def apply(self) -> Dict[str, Any]:
         session = self._require_session()
         return {
@@ -208,6 +317,84 @@ class WebService:
             payload["gate"] = self.tools.gate_metrics(metrics)
         return payload
 
+    # -- one-sentence teaching -----------------------------------------
+
+    def preview_teach(self, sentence: str) -> Dict[str, Any]:
+        """Compile a sentence without touching a model."""
+        intent = self.intent.parse_intent(sentence)
+        payload = intent.to_dict()
+        payload["command"] = intent.to_command()
+        return payload
+
+    def teach(
+        self,
+        sentence: Optional[str] = None,
+        prompt: Optional[str] = None,
+        answer: Optional[str] = None,
+        layers: Optional[Sequence[int]] = None,
+        solver: str = "direction",
+        max_rel_norm: float = 0.02,
+        dry_run: bool = False,
+        out_dir: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Run the teaching recipe on the open session.
+
+        When ``out_dir`` is supplied the accepted checkpoint is written before
+        returning.  A write failure rolls the in-memory edit back, so a failed
+        save never leaves a half-persisted run.
+        """
+        session = self._require_session()
+        if sentence:
+            intent = self.intent.parse_intent(sentence)
+            prompt, answer = intent.prompt, intent.answer
+            intent_payload = intent.to_dict()
+        else:
+            if not prompt or answer is None or answer == "":
+                raise ValueError("teach needs a sentence, or both prompt and answer")
+            intent_payload = {
+                "kind": "teach",
+                "prompt": prompt,
+                "answer": answer,
+                "source": "arguments",
+                "confidence": "high",
+                "notes": [],
+            }
+        from ..recipes import TeachPolicy
+
+        recipe = self.recipe
+        if recipe is None:
+            from ..recipes import teach_fact
+
+            recipe = teach_fact
+        result = recipe(
+            session,
+            prompt,
+            answer,
+            layers=list(layers) if layers is not None else None,
+            policy=TeachPolicy(max_rel_norm=float(max_rel_norm)),
+            solver=solver,
+            dry_run=bool(dry_run),
+        )
+        payload = {
+            "intent": intent_payload,
+            "result": result.to_dict(),
+            "state": self.state(),
+        }
+        if result.status == "applied" and out_dir:
+            try:
+                payload["saved"] = self.save_checkpoint(out_dir)
+            except Exception as exc:
+                try:
+                    session.rollback()
+                except Exception as rollback_exc:
+                    raise RuntimeError(
+                        "saving the checkpoint failed (%s) and rollback also "
+                        "failed (%s)" % (exc, rollback_exc)
+                    ) from exc
+                raise
+            payload["state"] = self.state()
+        return payload
+
     def rollback(self) -> Dict[str, Any]:
         session = self._require_session()
         return {
@@ -226,17 +413,33 @@ class WebService:
 
         source = Path(session.model_id)
         out = Path(self.policy.require(out_dir))
+        if out.exists():
+            raise RuntimeError(
+                "output already exists: %s (choose another path or remove it)" % out
+            )
         checkpoint = Checkpoint(source)
         changes = session.changes()
-        # A single 27B edit is one shard; avoid rewriting every shard when the
-        # session contains exactly one applied tensor.
-        if len(changes) == 1:
-            name = next(iter(changes))
-            report = checkpoint.write_tensor(
-                name, session.runtime.read(name), out
-            )
-        else:
-            report = checkpoint.write_with(changes, out)
+        stored = getattr(session.runtime, "stored_values", None)
+        try:
+            # A single 27B edit is one shard; avoid rewriting every shard when
+            # the session contains exactly one applied tensor.
+            if len(changes) == 1:
+                name = next(iter(changes))
+                values = session.runtime.read(name)
+                if callable(stored):
+                    values = stored(name, values)
+                report = checkpoint.write_tensor(
+                    name, values, out
+                )
+            else:
+                if callable(stored):
+                    changes = {
+                        name: stored(name, delta) for name, delta in changes.items()
+                    }
+                report = checkpoint.write_with(changes, out)
+        except Exception:
+            shutil.rmtree(out, ignore_errors=True)
+            raise
         return {
             "output": str(out),
             "edited": edited,
@@ -295,6 +498,52 @@ class WebService:
             except OSError:
                 continue
         return {"roots": [str(root) for root in self.policy.roots], "models": found}
+
+    @staticmethod
+    def capabilities() -> Dict[str, bool]:
+        """Report whether the optional real-model runtimes are importable."""
+        import importlib.util
+
+        found = {}
+        for name in ("torch", "transformers", "safetensors"):
+            try:
+                found[name] = importlib.util.find_spec(name) is not None
+            except (ImportError, ValueError):
+                found[name] = False
+        return found
+
+    def fetch_model(
+        self,
+        starter: str,
+        dest: str,
+        endpoint: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Download one recommended starter checkpoint below an allowed root.
+
+        The browser can request only the fixed starter catalogue, never an
+        arbitrary repository, so this endpoint cannot be repointed at an
+        unrelated host or model.
+        """
+        recommended = getattr(self.fetch, "RECOMMENDED", {})
+        item = recommended.get(starter)
+        if item is None:
+            raise ValueError(
+                "unknown starter %r; choose one of %s"
+                % (starter, ", ".join(sorted(recommended)))
+            )
+        path = Path(self.policy.require(dest))
+        if path.exists() and not path.is_dir():
+            raise RuntimeError(
+                "download destination is a file, not a directory: %s" % path
+            )
+        # Existing files are reused so an interrupted large download can be
+        # resumed by pressing the same button again.
+        report = self.fetch.fetch_model(
+            item["repo"], path, endpoint=endpoint, require_new=False
+        )
+        report["starter"] = starter
+        report["name"] = item.get("name", starter)
+        return report
 
     @staticmethod
     def _looks_like_checkpoint(path: Path, markers: Sequence[str]) -> bool:

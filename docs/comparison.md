@@ -34,7 +34,7 @@ their artefacts can enter the same audit:
 4. **A verdict.** Eight fail-closed gates, with missing metrics counted as
    failures.
 5. **A portable record.** OpenWSP v1, byte-identical, hash-checked on import.
-6. **An agent surface.** Twelve MCP tools, file-level and model-level.
+6. **An agent surface.** Twenty-two MCP tools, file-level and model-level.
 
 ## Choosing in one line
 

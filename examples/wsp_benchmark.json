@@ -1,0 +1,93 @@
+{
+  "format": "machaon.wsp.benchmark",
+  "format_version": 1,
+  "cases": [
+    {
+      "case_id": "obstruction-loop-repair",
+      "failure_type": "obstruction",
+      "expected_repairable": true,
+      "source_kind": "synthetic",
+      "base": {
+        "rewrite_acc": 0.20
+      },
+      "candidate": {
+        "rewrite_acc": 0.96,
+        "paraphrase_acc": 0.80,
+        "unrelated_acc": 1.00,
+        "kl_p95": 0.01,
+        "kl_max": 0.10,
+        "mmlu_delta": 0.00,
+        "ppl_ratio": 1.00,
+        "longform_contradictions": 0
+      },
+      "controls": {
+        "random_same_support": {
+          "rewrite_acc": 0.20
+        }
+      },
+      "headroom": {
+        "name": "thinking_off",
+        "rewrite_acc": 0.94
+      },
+      "mechanism": {
+        "base": {
+          "loop_rate": 0.90,
+          "truncation_rate": 0.90
+        },
+        "candidate": {
+          "loop_rate": 0.30,
+          "truncation_rate": 0.33
+        },
+        "controls": {
+          "random_same_support": {
+            "loop_rate": 0.85,
+            "truncation_rate": 0.86
+          }
+        }
+      },
+      "metadata": {
+        "note": "Synthetic fixture; not a model measurement."
+      }
+    },
+    {
+      "case_id": "capability-gap-no-repair",
+      "failure_type": "capability_gap",
+      "expected_repairable": false,
+      "source_kind": "synthetic",
+      "base": {
+        "rewrite_acc": 0.20
+      },
+      "candidate": {
+        "rewrite_acc": 0.24
+      },
+      "controls": {
+        "random_same_support": {
+          "rewrite_acc": 0.20
+        }
+      },
+      "headroom": {
+        "name": "thinking_off",
+        "rewrite_acc": 0.20
+      },
+      "mechanism": {
+        "base": {
+          "loop_rate": 0.20,
+          "truncation_rate": 0.20
+        },
+        "candidate": {
+          "loop_rate": 0.20,
+          "truncation_rate": 0.20
+        },
+        "controls": {
+          "random_same_support": {
+            "loop_rate": 0.20,
+            "truncation_rate": 0.20
+          }
+        }
+      },
+      "metadata": {
+        "note": "Synthetic fixture; not a model measurement."
+      }
+    }
+  ]
+}

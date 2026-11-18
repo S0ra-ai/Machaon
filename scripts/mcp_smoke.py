@@ -16,8 +16,12 @@ from mcp.client.stdio import stdio_client
 
 EXPECTED = {
     "describe_checkpoint", "list_tensors", "audit_edit", "apply_delta", "gate",
+    "wsp_audit", "wsp_save", "verify_binding", "plan_surgery",
+    "diagnose_failure", "parse_intent",
     "open_model", "model_status", "capture_baseline", "propose_edit",
-    "apply_edit", "evaluate", "rollback",
+    "propose_batch", "propose_action", "apply_edit", "evaluate",
+    "assess_wsp", "assess_generation_wsp", "search_rome_layers", "teach",
+    "rollback",
 }
 
 
@@ -54,9 +58,68 @@ async def main() -> int:
             if verdict["passed"]:
                 return 1
 
+            with open("examples/wsp_report.json", encoding="utf-8") as handle:
+                report = json.load(handle)
+            classified = await session.call_tool("wsp_audit", {"report": report})
+            verdict = json.loads(classified.content[0].text)
+            print("wsp_audit label:", verdict["label"])
+            if not verdict["accepted"] or verdict["label"] != "repair":
+                return 1
+
+            planned = await session.call_tool("plan_surgery", {
+                "failure_type": "obstruction",
+                "layer_scores": {"12": 0.1, "14": 0.3},
+            })
+            plan = json.loads(planned.content[0].text)
+            print("plan_surgery route/layer:", plan["route"], plan["layer"])
+            if plan["route"] != "edit" or plan["layer"] != 14:
+                return 1
+
+            diagnosis = await session.call_tool("diagnose_failure", {
+                "base": {"accuracy": 0.2},
+                "headroom": {"accuracy": 0.9},
+                "mechanism": {
+                    "base": {"loop_rate": 0.9},
+                    "headroom": {"loop_rate": 0.3},
+                },
+            })
+            result = json.loads(diagnosis.content[0].text)
+            print("diagnose_failure:", result["failure_type"])
+            if result["failure_type"] != "obstruction":
+                return 1
+
             status = await session.call_tool("model_status", {})
             text = status.content[0].text
             print("model_status without a model:", text[:60])
+            if "no model is open" not in text:
+                return 1
+
+            action = await session.call_tool("propose_action", {
+                "source": "def edit(W):\n    return 0.001 * W\n",
+                "intent": "smoke-test action",
+                "layer": 0,
+            })
+            text = action.content[0].text
+            print("propose_action without a model:", text[:60])
+            if "no model is open" not in text:
+                return 1
+
+            generation_wsp = await session.call_tool("assess_generation_wsp", {
+                "prompts": ["p"],
+                "expected": ["a"],
+            })
+            text = generation_wsp.content[0].text
+            print("assess_generation_wsp without a model:", text[:60])
+            if "no model is open" not in text:
+                return 1
+
+            search = await session.call_tool("search_rome_layers", {
+                "prompt": "p",
+                "target": "a",
+                "layers": [0, 1],
+            })
+            text = search.content[0].text
+            print("search_rome_layers without a model:", text[:60])
             if "no model is open" not in text:
                 return 1
 

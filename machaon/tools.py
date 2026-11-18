@@ -13,10 +13,16 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
+from .binding import verify_binding
+from .evidence import write_evidence
 from .hygieia.gates import evaluate
+from .intent import parse_intent as _parse_intent
 from .interop import openwsp
+from .planning import diagnose_failure as _diagnose_failure
+from .planning import plan_surgery as _plan_surgery
 from .refusals import check_tensor
 from .verify import audit_edit
+from .wsp import assess_report
 
 
 def _checkpoint(path: str):
@@ -32,6 +38,12 @@ __all__ = [
     "audit_checkpoint_edit",
     "apply_delta",
     "gate_metrics",
+    "wsp_audit",
+    "save_wsp_evidence",
+    "verify_wsp_binding",
+    "plan_surgery",
+    "diagnose_failure",
+    "parse_intent",
 ]
 
 
@@ -79,6 +91,7 @@ def audit_checkpoint_edit(base_path: str, edit_dir: str,
     return {
         "passed": bool(within),
         "edit_sha256": verified.get("edit_sha256"),
+        "machaon": verified.get("machaon"),
         "changed_tensors": int(verified.get("changed_tensors", len(deltas))),
         "worst_relative_change": worst,
         "max_rel_norm": max_rel_norm,
@@ -119,3 +132,80 @@ def gate_metrics(metrics: Dict[str, float]) -> Dict[str, Any]:
         "n_gates": verdict.n_gates,
         "summary": verdict.summary(),
     }
+
+
+def wsp_audit(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Classify an edit as repair, acquisition, non-specific, or no-effect."""
+    return assess_report(payload)
+
+
+def save_wsp_evidence(
+    out_dir: str,
+    report: Dict[str, Any],
+    metadata: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Write a content-addressed WSP evidence bundle and return its address."""
+    document = write_evidence(out_dir, report, metadata)
+    return {
+        "path": str(Path(out_dir)),
+        "format": document["format"],
+        "format_version": document["format_version"],
+        "evidence_sha256": document["evidence_sha256"],
+        "label": document["report"].get("label"),
+        "accepted": document["report"].get("accepted"),
+    }
+
+
+def verify_wsp_binding(edit_dir: str, evidence_dir: str) -> Dict[str, Any]:
+    """Verify an OpenWSP edit and WSP evidence bundle are bound together."""
+    return verify_binding(edit_dir, evidence_dir).to_dict()
+
+
+def plan_surgery(
+    failure_type: str,
+    layer_scores: Any = None,
+    patch_report: Optional[Dict[str, Any]] = None,
+    module_suffix: str = "mlp.down_proj",
+    max_rel_norm: float = 0.02,
+    min_score: float = 0.0,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Turn failure and site evidence into an explicit edit/diagnose route."""
+    return _plan_surgery(
+        failure_type,
+        layer_scores=layer_scores,
+        patch_report=patch_report,
+        module_suffix=module_suffix,
+        max_rel_norm=max_rel_norm,
+        min_score=min_score,
+        metadata=metadata,
+    ).to_dict()
+
+
+def diagnose_failure(
+    base: Dict[str, Any],
+    headroom: Optional[Dict[str, Any]] = None,
+    mechanism: Optional[Dict[str, Any]] = None,
+    target_metric: str = "accuracy",
+    min_target_gap: float = 0.05,
+    min_mechanism_gap: float = 0.05,
+) -> Dict[str, Any]:
+    """Classify obstruction vs capability gap from target and mechanism evidence."""
+    from .planning import DiagnosisProtocol
+
+    protocol = DiagnosisProtocol(
+        target_metric=target_metric,
+        min_target_gap=min_target_gap,
+        min_mechanism_gap=min_mechanism_gap,
+    )
+    return _diagnose_failure(
+        base, headroom=headroom, mechanism=mechanism, protocol=protocol
+    ).to_dict()
+
+
+def parse_intent(text: str) -> Dict[str, Any]:
+    """Compile a plain-language teaching request into an exact contract."""
+    intent = _parse_intent(text)
+    payload = intent.to_dict()
+    payload["command"] = intent.to_command()
+    return payload

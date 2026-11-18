@@ -21,6 +21,8 @@ machaon-web --allowed-root /models --port 8765
 
 启动后会打印带一次性 token 的本地 URL。服务默认只绑定 `127.0.0.1`；
 可以用 `--allowed-root` 或 `MACHAON_WEB_ALLOWED_ROOTS` 指定 checkpoint 根目录。
+如果缺少 `torch`、`transformers` 或 `safetensors`，页面会显示 banner 和准确的
+`pip install "machaon[hf]"` 命令，而不是让第一次打开会话静默失败。
 
 ## 界面语言
 
@@ -40,12 +42,28 @@ Hero 下方的四步提示条会一直保留，作为轻量提醒。
 
 1. **Checkpoint**：读取 safetensors 文件或分片目录的 header，显示 tensor 数、
    参数数、dtype 和分片数。浏览器只看到名称、形状和类型，不接收权重值。
+   没有检查点时，选择一个 starter 并点 **Download starter**：它会从允许根目录
+   下载并尝试镜像，填好路径，不会上传任何内容。勾选 **下载后自动打开** 会直接
+   开启会话，下一步就是 **ONE SENTENCE** 输入框。
 2. **编辑合同**：打开模型会话、采集 baseline、选择层数并求解 proposal。
    preserve prompts 会进入零空间约束；量化模型做 gradient solve 前勾选
    **Densify from edit layer**。proposal 在写入前报告相对变化和目标概率。
 3. **证据**：应用待处理 proposal，使用 baseline 评估，并查看 fail-closed
    验收门。时间线记录状态、结果和错误；rollback 恢复原始 tensor 字节。
    需要持久化时，把 Applied session 的 delta 写到新 checkpoint 目录，源目录不变。
+
+### 一句话教学
+
+编辑栏顶部的 **ONE SENTENCE**（一句话）区域是最短路径。它接受与
+`machaon intent` 相同的句式，并运行与 `machaon teach` 相同的教学配方：
+
+1. **预览解析** 会编译句子，并填入 prompt/answer 字段。
+2. **自动教学** 会搜索一段深度窗口，把编辑投影到 preserve prompts 的零空间，
+   应用最佳候选；只有目标、预算、面板和 KL 检查都通过才保留。被拒绝的候选会
+   自动回滚。
+
+可选的 **同时写出编辑后的检查点** 字段会把通过的编辑保存到允许根目录下的新
+目录。留空则编辑只保留在 session 中，之后仍可用 **Save** 保存。
 
 模型加载、求解和评估在单 worker 中运行，并通过 SSE 推送进度。一个进程同一时间
 持有一个模型会话。所有模型级 POST 返回 job id，事件流包含 `status`、`result`

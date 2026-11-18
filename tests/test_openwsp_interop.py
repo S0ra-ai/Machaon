@@ -139,6 +139,55 @@ class TestEmptyEdit(unittest.TestCase):
             _, rebuilt = wsp.read_edit(tmp, base)
             self.assertEqual(rebuilt, {})
 
+    def test_machaon_metadata_roundtrip(self):
+        rng = np.random.default_rng(5)
+        base = {"w": rng.normal(size=(4, 3)).astype(np.float32)}
+        edited = {"w": base["w"] + 0.001}
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = wsp.export_edit(
+                base, edited, tmp,
+                machaon_metadata={
+                    "evidence_sha256": "abc123",
+                    "evidence_format": "machaon.wsp.evidence",
+                },
+            )
+            self.assertEqual(manifest["machaon"]["evidence_sha256"], "abc123")
+            self.assertEqual(manifest["edit_sha256"], wsp.edit_sha256(manifest))
+            loaded, rebuilt = wsp.read_edit(tmp, base)
+            self.assertEqual(loaded["machaon"], manifest["machaon"])
+            np.testing.assert_allclose(rebuilt["w"], edited["w"], atol=1e-2)
+
+    def test_lowrank_writer_reconstructs_the_edited_bits(self):
+        rng = np.random.default_rng(9)
+        base = {"w": rng.normal(size=(8, 6)).astype(np.float32)}
+        left = rng.normal(size=(8, 2)).astype(np.float32)
+        right = rng.normal(size=(2, 6)).astype(np.float32)
+        edited = {"w": base["w"] + left @ right}
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = wsp.export_edit(
+                base, edited, tmp, form="lowrank", rank=2
+            )
+            self.assertEqual(manifest["tensors"][0]["form"], "lowrank")
+            self.assertEqual(manifest["tensors"][0]["rank"], 2)
+            self.assertIn("sparse_corrections", manifest["tensors"][0])
+            loaded, rebuilt = wsp.read_edit(tmp, base)
+            self.assertEqual(loaded["tensors"][0]["form"], "lowrank")
+            np.testing.assert_array_equal(
+                wsp.bf16_bits(rebuilt["w"]), wsp.bf16_bits(edited["w"])
+            )
+
+    def test_lowrank_requires_a_positive_rank(self):
+        rng = np.random.default_rng(10)
+        base = {"w": rng.normal(size=(4, 3)).astype(np.float32)}
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(wsp.EditError):
+                wsp.export_edit(base, base, tmp, form="lowrank")
+            with self.assertRaises(wsp.EditError):
+                wsp.export_edit(
+                    base, {"w": base["w"] + 0.1}, tmp,
+                    form="lowrank", rank=4,
+                )
+
 
 class TestBf16(unittest.TestCase):
     def test_rounding_matches_torch(self):

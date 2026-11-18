@@ -64,10 +64,18 @@ whole loop.
 
 Both are load-bearing for the gate design in `machaon.hygieia`.
 
-## The gap
+## The gap Machaon targets
 
 1. No agent-operable edit action space — existing work is a Python API or a script.
 2. No transaction layer — nothing snapshots, verifies, and rolls back.
 3. Evaluation is not a first-class citizen.
 4. No system lets the LLM *plan the surgery*: diagnose → choose site → declare
    constraints → hand off to a closed-form solver.
+
+`machaon.action` supplies the constrained L1 action,
+`Session.propose_action` places it on the existing transaction, budget and
+rollback path, and `machaon.planning` turns failure/site evidence into an
+explicit edit, diagnose or do-not-edit route. `Session.search_layers` adds live
+apply/evaluate/rollback search, and `diagnose_failure` turns headroom evidence
+into a conservative failure class. The remaining gap is larger measured
+benchmark coverage and independent reproduction.

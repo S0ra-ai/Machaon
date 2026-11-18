@@ -19,6 +19,11 @@
     connectionKey: "conn.checking",
     lastMetrics: null,
     lastGate: null,
+    evidence: null,
+    lastTeach: null,
+    allowedRoots: [],
+    capabilities: {},
+    pendingAfterBusy: null,
   };
 
   const el = {
@@ -42,6 +47,7 @@
     sessionBadge: $("#sessionBadge"),
     proposalCard: $("#proposalCard"),
     gateCard: $("#gateCard"),
+    teachCard: $("#teachCard"),
     stateCard: $("#stateCard"),
     timeline: $("#timeline"),
     eventCount: $("#eventCount"),
@@ -74,6 +80,20 @@
     return String(table[key] || fallback).replace(/\{(\w+)\}/g, (_match, name) =>
       Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : "{" + name + "}"
     );
+  }
+
+  function wspLabel(value) {
+    if (!value) return "—";
+    const key = "wsp.label." + value;
+    const translated = t(key);
+    return translated === key ? String(value) : translated;
+  }
+
+  function mechanismLabel(value) {
+    if (!value) return "—";
+    const key = "wsp.mechanism." + value;
+    const translated = t(key);
+    return translated === key ? String(value) : translated;
   }
 
   function applyStaticLocale() {
@@ -114,6 +134,10 @@
     renderCheckpoint(state.lastCheckpointSummary || null);
     if (state.lastMetrics) renderMetrics(state.lastMetrics, state.lastGate);
     else renderGate(state.lastGate);
+    if (state.lastTeach) {
+      if (state.lastTeach.result) renderTeachResult(state.lastTeach);
+      else renderTeachPreview(state.lastTeach);
+    }
     updateEventCount();
     if (state.lastJob) {
       el.jobTitle.textContent = t("job.default");
@@ -220,6 +244,23 @@
       escapeHtml(fmt(v)) + "</span></div>";
   }
 
+  function renderCapabilities() {
+    const banner = $("#capabilityBanner");
+    if (!banner) return;
+    const missing = ["torch", "transformers", "safetensors"].filter(
+      (name) => state.capabilities[name] === false
+    );
+    if (!missing.length) {
+      banner.classList.add("hidden");
+      banner.innerHTML = "";
+      return;
+    }
+    banner.classList.remove("hidden");
+    banner.innerHTML = escapeHtml(t("capabilities.missing", {
+      list: missing.join(", "),
+    })) + ' <code>pip install "machaon[hf]"</code>';
+  }
+
   function showBusy(label, detail) {
     state.busy = true;
     el.jobBanner.classList.remove("hidden");
@@ -236,6 +277,9 @@
     el.jobPill.textContent = t("status." + (status || "idle"));
     el.jobPill.className = "badge " + (status === "done" ? "live" : status === "error" ? "quiet" : "quiet");
     setActionState();
+    const pending = state.pendingAfterBusy;
+    state.pendingAfterBusy = null;
+    if (pending) setTimeout(pending, 0);
   }
 
   function setActionState() {
@@ -260,7 +304,10 @@
     try {
       const health = await api("/api/health");
       el.version.textContent = "v" + health.version;
-      el.allowedRoots.textContent = (health.allowed_roots || []).join(" · ");
+      state.allowedRoots = health.allowed_roots || [];
+      state.capabilities = health.capabilities || {};
+      el.allowedRoots.textContent = state.allowedRoots.join(" · ");
+      renderCapabilities();
       const session = await api("/api/session/state");
       state.session = session && session.ready ? session : null;
       setConnection("live", t("conn.live"), "conn.live");
@@ -347,16 +394,111 @@
       return;
     }
     state.proposal = p;
+    const isBatch = Object.prototype.hasOwnProperty.call(p, "exact") ||
+      Array.isArray(p.per_key_error);
+    const perKey = isBatch && Array.isArray(p.per_key_error) ? p.per_key_error : [];
     el.proposalCard.className = "evidence-card";
     el.proposalCard.innerHTML = '<div class="verdict pass"><strong>' + escapeHtml(t("proposal.solved")) + '</strong><span class="tiny">' +
-      escapeHtml(p.solver || "") + "</span></div><dl class=\"kv\">" +
+      escapeHtml(isBatch ? t("proposal.batch") : (p.solver || "")) + "</span></div><dl class=\"kv\">" +
       "<dt>" + escapeHtml(t("proposal.module")) + "</dt><dd>" + escapeHtml(p.module) + "</dd>" +
       "<dt>" + escapeHtml(t("proposal.layer")) + "</dt><dd>" + escapeHtml(p.layer) + "</dd>" +
       "<dt>" + escapeHtml(t("proposal.relativeDelta")) + "</dt><dd>" + escapeHtml(fmt(p.relative_delta)) + "</dd>" +
-      "<dt>" + escapeHtml(t("proposal.targetProbability")) + "</dt><dd>" + escapeHtml(fmt(p.target_probability)) + "</dd>" +
-      "<dt>" + escapeHtml(t("proposal.steps")) + "</dt><dd>" + escapeHtml(fmt(p.steps)) + "</dd>" +
-      "<dt>" + escapeHtml(t("proposal.budgetAfter")) + "</dt><dd>" + escapeHtml(fmt(p.budget_after)) + "</dd></dl>";
+      (isBatch
+        ? "<dt>" + escapeHtml(t("proposal.exact")) + "</dt><dd>" + escapeHtml(p.exact ? t("common.yes") : t("common.no")) + "</dd>" +
+          "<dt>" + escapeHtml(t("proposal.clamped")) + "</dt><dd>" + escapeHtml(p.clamped ? t("common.yes") : t("common.no")) + "</dd>" +
+          "<dt>" + escapeHtml(t("proposal.targetError")) + "</dt><dd>" + escapeHtml(fmt(p.target_error)) + "</dd>" +
+          "<dt>" + escapeHtml(t("proposal.rank")) + "</dt><dd>" + escapeHtml(fmt(p.rank)) + "</dd>"
+        : "<dt>" + escapeHtml(t("proposal.targetProbability")) + "</dt><dd>" + escapeHtml(fmt(p.target_probability)) + "</dd>" +
+          "<dt>" + escapeHtml(t("proposal.steps")) + "</dt><dd>" + escapeHtml(fmt(p.steps)) + "</dd>") +
+      "<dt>" + escapeHtml(t("proposal.budgetAfter")) + "</dt><dd>" + escapeHtml(fmt(p.budget_after)) + "</dd></dl>" +
+      (perKey.length
+        ? '<details class="per-key"><summary>' + escapeHtml(t("proposal.perKey")) +
+          " (" + perKey.length + ')</summary><div class="per-key-scroll"><table><thead><tr><th>' +
+          escapeHtml(t("proposal.key")) + "</th><th>" + escapeHtml(t("proposal.error")) +
+          "</th></tr></thead><tbody>" +
+          perKey.map((value, index) => "<tr><td>" + (index + 1) + "</td><td>" +
+            escapeHtml(fmt(value)) + "</td></tr>").join("") +
+          "</tbody></table></div></details>"
+        : "");
     setActionState();
+  }
+
+  function renderTeachPreview(payload) {
+    const card = el.teachCard;
+    if (!card) return;
+    if (!payload) {
+      card.className = "evidence-card empty-state";
+      card.textContent = t("teach.empty");
+      return;
+    }
+    card.className = "evidence-card teach-result";
+    const notes = (payload.notes || [])
+      .map((note) => "<li>" + escapeHtml(note) + "</li>")
+      .join("");
+    const command = payload.command
+      ? '<p class="mono tiny">' + escapeHtml(payload.command) + "</p>"
+      : "";
+    card.innerHTML =
+      '<div class="teach-status"><strong>' + escapeHtml(t("teach.previewTitle")) +
+      '</strong><span class="badge quiet">' + escapeHtml(payload.confidence || "high") +
+      "</span></div>" +
+      '<div class="teach-grid">' +
+      "<span>" + escapeHtml(t("teach.prompt")) + "<br><strong>" +
+      escapeHtml(payload.prompt) + "</strong></span>" +
+      "<span>" + escapeHtml(t("teach.answer")) + "<br><strong>" +
+      escapeHtml(payload.answer) + "</strong></span>" +
+      "</div>" +
+      (notes ? '<ul class="teach-notes">' + notes + "</ul>" : "") +
+      command;
+  }
+
+  function teachLabel(status) {
+    const key = "teach.status." + status;
+    const value = t(key);
+    return value === key ? String(status || "") : value;
+  }
+
+  function renderTeachResult(payload) {
+    const card = el.teachCard;
+    if (!card) return;
+    if (!payload || !payload.result) {
+      renderTeachPreview(null);
+      return;
+    }
+    const result = payload.result;
+    const accepted = !!result.accepted;
+    const checks = (result.checks || [])
+      .map((check) => '<span class="check-chip ' + (check.passed ? "ok" : "bad") +
+        '" title="' + escapeHtml(check.requirement || "") + '">' +
+        escapeHtml(check.name) + "</span>")
+      .join("");
+    const warnings = (result.warnings || [])
+      .map((warning) => '<p class="teach-warning">' + escapeHtml(warning) + "</p>")
+      .join("");
+    const location = result.tensor
+      ? escapeHtml(result.tensor) +
+        (result.best_layer === null ? "" : " · layer " + result.best_layer)
+      : escapeHtml(t("teach.noEdit"));
+    card.className = "evidence-card teach-result";
+    card.innerHTML =
+      '<div class="teach-status"><strong>' + escapeHtml(teachLabel(result.status)) +
+      '</strong><span class="badge ' + (accepted ? "live" : "quiet") + '">' +
+      escapeHtml(result.status || "") + "</span></div>" +
+      '<p class="teach-summary">' + escapeHtml(result.summary || "") + "</p>" +
+      '<div class="teach-grid">' +
+      "<span>" + escapeHtml(t("teach.location")) + "<br><strong>" + location +
+      "</strong></span>" +
+      "<span>" + escapeHtml(t("teach.delta")) + "<br><strong>" +
+      (result.relative_delta === null || result.relative_delta === undefined
+        ? "—" : (100 * result.relative_delta).toFixed(2) + "%") +
+      "</strong></span>" +
+      (result.base_prediction_text
+        ? "<span>" + escapeHtml(t("teach.baseline")) + "<br><strong>" +
+          escapeHtml(result.base_prediction_text) + "</strong></span>"
+        : "") +
+      "</div>" +
+      (checks ? '<div class="check-list">' + checks + "</div>" : "") +
+      warnings;
   }
 
   function renderGate(gate) {
@@ -377,6 +519,75 @@
       (failures.length ? '<div class="failures">' +
         failures.map((failure) => escapeHtml(localizedFailure(failure))).join(" · ") +
         "</div>" : "");
+  }
+
+  function renderWsp(report) {
+    const card = $("#wspCard");
+    if (!report) {
+      card.className = "evidence-card empty-state";
+      card.textContent = t("wsp.empty");
+      return;
+    }
+    const accepted = !!report.accepted;
+    const classification = report.classification || {};
+    const mechanism = report.mechanism || null;
+    card.className = "evidence-card";
+    card.innerHTML = '<div class="verdict ' + (accepted ? "pass" : "fail") +
+      '"><strong>' + escapeHtml(wspLabel(report.label)) + "</strong><span class=\"tiny\">" +
+      escapeHtml(accepted ? t("wsp.accepted") : t("wsp.rejected")) + "</span></div>" +
+      '<dl class="kv"><dt>' + escapeHtml(t("wsp.reason")) + "</dt><dd>" +
+      escapeHtml(report.reason || "—") + "</dd>" +
+      "<dt>" + escapeHtml(t("wsp.controlGap")) + "</dt><dd>" +
+      escapeHtml(fmt(classification.control_gap)) + "</dd>" +
+      "<dt>" + escapeHtml(t("wsp.headroomGap")) + "</dt><dd>" +
+      escapeHtml(fmt(classification.headroom_gap)) + "</dd>" +
+      (mechanism ? "<dt>" + escapeHtml(t("wsp.mechanism")) + "</dt><dd>" +
+        escapeHtml((mechanism.passed ? t("wsp.mechanismPass") : t("wsp.mechanismFail")) +
+          " · " + mechanismLabel(mechanism.label)) + "</dd>" : "") +
+      "</dl>";
+  }
+
+  function renderWspEvidence(result) {
+    const node = $("#wspEvidence");
+    if (!result) {
+      state.evidence = null;
+      node.textContent = "";
+      return;
+    }
+    state.evidence = result;
+    node.textContent = "SHA-256 " + (result.evidence_sha256 || "—") +
+      " · " + (result.path || "");
+  }
+
+  function renderOpenwspBinding(result) {
+    const node = $("#openwspBinding");
+    if (!result) {
+      node.textContent = "";
+      return;
+    }
+    const manifest = result.manifest || {};
+    const linked = manifest.machaon && manifest.machaon.evidence_sha256;
+    node.textContent = "edit " + (manifest.edit_sha256 || "—") +
+      " · evidence " + (linked || "not bound") +
+      " · " + (result.output || "");
+  }
+
+  function renderBinding(result) {
+    const card = $("#bindingCard");
+    if (!result) {
+      card.className = "evidence-card empty-state";
+      card.textContent = t("wsp.bindingEmpty");
+      return;
+    }
+    const passed = !!result.passed;
+    card.className = "evidence-card";
+    card.innerHTML = '<div class="verdict ' + (passed ? "pass" : "fail") +
+      '"><strong>' + escapeHtml(passed ? t("wsp.bindingPassed") : t("wsp.bindingFailed")) +
+      '</strong><span class="tiny">' + escapeHtml(wspLabel(result.label)) + "</span></div>" +
+      '<dl class="kv"><dt>edit_sha256</dt><dd>' + escapeHtml(result.edit_sha256 || "—") + "</dd>" +
+      "<dt>evidence_sha256</dt><dd>" + escapeHtml(result.evidence_sha256 || "—") + "</dd>" +
+      "<dt>" + escapeHtml(t("wsp.bindingErrors")) + "</dt><dd>" +
+      escapeHtml((result.errors || []).join(" · ") || t("common.none")) + "</dd></dl>";
   }
 
   function renderMetrics(metrics, gate) {
@@ -453,17 +664,29 @@
   function handleJobResult(kind, result) {
     if (kind === "describe_checkpoint") renderCheckpoint(result);
     else if (kind === "list_tensors") renderTensors(result);
+    else if (kind === "fetch_model") {
+      const path = result && result.dest ? result.dest : "";
+      if (path) el.checkpointPath.value = path;
+      addTimelineEvent("fetch", t("timeline.fetch"),
+        path + " · " + ((result && result.parameters) || 0).toLocaleString() + " params", "ok");
+    }
     else if (kind === "open_session" || kind === "close_session") {
       state.session = result && result.ready ? result : null;
       state.proposal = null;
+      state.lastTeach = null;
       renderProposal(null);
+      renderTeachPreview(null);
       renderSessionState();
+      if (state.session && result && result.ready) {
+        const teach = $("#teachSentence");
+        if (teach && !teach.value) teach.focus();
+      }
     } else if (kind === "baseline") {
       if (result && result.state) state.session = result.state;
       renderSessionState();
       addTimelineEvent("baseline", t("timeline.baseline"),
         JSON.stringify(result.baseline || {}), "ok");
-    } else if (kind === "propose_edit") {
+    } else if (kind === "propose_edit" || kind === "propose_batch") {
       if (result && result.state) state.session = result.state;
       renderSessionState();
       renderProposal(result && result.proposal);
@@ -474,6 +697,8 @@
     } else if (kind === "apply_edit") {
       if (result && result.state) state.session = result.state;
       state.proposal = null;
+      state.lastTeach = null;
+      renderTeachPreview(null);
       renderSessionState();
       renderProposal(null);
       addTimelineEvent("apply", t("timeline.apply"), t("timeline.charged"), "ok");
@@ -481,14 +706,48 @@
       if (result && result.state) state.session = result.state;
       renderSessionState();
       renderMetrics(result.metrics, result.gate);
+    } else if (kind === "teach") {
+      if (result && result.state) state.session = result.state;
+      state.proposal = null;
+      renderSessionState();
+      renderProposal(null);
+      state.lastTeach = result;
+      renderTeachResult(result);
+      if (result && result.saved && result.saved.output) {
+        $("#savePath").value = result.saved.output;
+      }
+      addTimelineEvent("teach", t("timeline.teach"),
+        (result && result.result && result.result.status) || "", "ok");
     } else if (kind === "rollback") {
       state.session = result && result.state ? result.state : null;
       state.proposal = null;
+      state.lastTeach = null;
+      renderTeachPreview(null);
       renderSessionState();
       renderProposal(null);
       addTimelineEvent("rollback", t("timeline.rollback"), t("timeline.restored"), "ok");
     } else if (kind === "save_checkpoint") {
       addTimelineEvent("save", t("timeline.save"), (result && result.output) || "", "ok");
+    } else if (kind === "wsp_audit") {
+      renderWsp(result);
+      addTimelineEvent("wsp", t("timeline.wsp"), (result && result.label) || "", "ok");
+    } else if (kind === "wsp_session") {
+      renderWsp(result);
+      addTimelineEvent("wsp", t("timeline.wsp"), (result && result.label) || "", "ok");
+    } else if (kind === "wsp_session_evidence") {
+      renderWsp(result && result.report);
+      renderWspEvidence(result && result.evidence);
+      addTimelineEvent("wsp", t("wsp.saved"), (result && result.evidence && result.evidence.evidence_sha256) || "", "ok");
+    } else if (kind === "save_wsp_evidence") {
+      renderWspEvidence(result);
+      addTimelineEvent("wsp", t("wsp.saved"), (result && result.evidence_sha256) || "", "ok");
+    } else if (kind === "export_openwsp") {
+      renderOpenwspBinding(result);
+      addTimelineEvent("openwsp", t("wsp.exported"),
+        (result && result.manifest && result.manifest.edit_sha256) || "", "ok");
+    } else if (kind === "verify_binding") {
+      renderBinding(result);
+      addTimelineEvent("binding", t("wsp.bindingChecked"), (result && result.passed) ? "PASS" : "FAIL", result && result.passed ? "ok" : "err");
     } else if (kind === "audit_checkpoint_edit" || kind === "apply_delta") {
       addTimelineEvent(kind, t("timeline.checkpoint"), JSON.stringify(result), "ok");
     }
@@ -569,6 +828,48 @@
     };
   }
 
+  function batchRequest() {
+    const prompts = $("#batchPrompts").value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    if (!prompts.length) throw new Error(t("batch.invalidPrompts"));
+    let values;
+    try {
+      values = JSON.parse($("#batchValues").value);
+    } catch (_) {
+      throw new Error(t("batch.invalidValues"));
+    }
+    if (!Array.isArray(values) || values.some((row) =>
+      !Array.isArray(row) || row.some((value) => !Number.isFinite(Number(value)))
+    )) {
+      throw new Error(t("batch.invalidValues"));
+    }
+    if (values.length !== prompts.length) {
+      throw new Error(t("batch.rowMismatch"));
+    }
+    const max = $("#batchMaxRelNorm").value.trim();
+    return {
+      prompts,
+      values,
+      layer: Number($("#batchLayer").value),
+      preserve_prompts: $("#batchPreserve").value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean),
+      max_rel_norm: max === "" ? null : Number(max),
+      clamp: $("#batchClamp").checked,
+      ridge: 0.0,
+      module_suffix: $("#moduleSuffix").value.trim() || "mlp.down_proj",
+    };
+  }
+
+  function sessionWspRequest() {
+    const batchPrompts = $("#batchPrompts").value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    const prompts = batchPrompts.length ? batchPrompts : [$("#prompt").value];
+    const headroom = $("#wspHeadroom").value.trim();
+    return {
+      prompts,
+      targets: prompts.map(() => $("#target").value),
+      headroom: headroom === "" ? null : { accuracy: Number(headroom) },
+      target_metric: "accuracy",
+    };
+  }
+
   async function findModels() {
     try {
       const result = await api("/api/models");
@@ -608,6 +909,49 @@
   $("#tokenSave").addEventListener("click", saveToken);
   $("#tokenCancel").addEventListener("click", () => el.dialog.close());
   $("#modelsButton").addEventListener("click", findModels);
+  $("#fetchButton").addEventListener("click", () => {
+    const option = $("#starterModel").selectedOptions[0];
+    if (!option || !state.allowedRoots.length) {
+      return addTimelineEvent("error", t("checkpoint.fetchNoRoot"), "", "err");
+    }
+    const name = option.dataset.name || option.value;
+    const root = String(state.allowedRoots[0]).replace(/\/+$/, "");
+    startJob("/api/models/fetch", {
+      starter: option.value,
+      dest: root + "/" + name,
+    }, "fetch_model");
+  });
+  $("#teachPreviewButton").addEventListener("click", async () => {
+    const sentence = $("#teachSentence").value.trim();
+    if (!sentence) return addTimelineEvent("error", t("teach.sentenceRequired"), "", "err");
+    try {
+      const payload = await api("/api/teach/preview", {
+        method: "POST",
+        body: JSON.stringify({ sentence }),
+      });
+      state.lastTeach = payload;
+      renderTeachPreview(payload);
+      $("#prompt").value = payload.prompt;
+      $("#target").value = payload.answer;
+      addTimelineEvent("teach", t("timeline.teachPreview"),
+        payload.source || "", "ok");
+    } catch (err) {
+      addTimelineEvent("error", err.message, t("teach.invalid"), "err");
+    }
+  });
+  $("#teachButton").addEventListener("click", () => {
+    if (!state.session) return addTimelineEvent("error", t("errors.sessionFirst"), "", "err");
+    const sentence = $("#teachSentence").value.trim();
+    if (!sentence) return addTimelineEvent("error", t("teach.sentenceRequired"), "", "err");
+    const out = $("#teachOut").value.trim();
+    startJob("/api/teach", {
+      sentence,
+      out_dir: out || null,
+      solver: "direction",
+      max_rel_norm: $("#maxRelNorm").value.trim() === ""
+        ? 0.02 : Number($("#maxRelNorm").value),
+    }, "teach");
+  });
   $("#describeButton").addEventListener("click", () => {
     const path = el.checkpointPath.value.trim();
     if (!path) return addTimelineEvent("error", t("errors.pathRequired"), "", "err");
@@ -636,6 +980,63 @@
   $("#proposeButton").addEventListener("click", () => {
     if (!state.session) return addTimelineEvent("error", t("errors.sessionFirst"), "", "err");
     startJob("/api/edit/propose", proposalRequest(), "propose_edit");
+  });
+  $("#batchProposeButton").addEventListener("click", () => {
+    if (!state.session) return addTimelineEvent("error", t("errors.sessionFirst"), "", "err");
+    let body;
+    try {
+      body = batchRequest();
+    } catch (err) {
+      return addTimelineEvent("error", err.message, "", "err");
+    }
+    startJob("/api/edit/propose_batch", body, "propose_batch");
+  });
+  $("#wspAuditButton").addEventListener("click", () => {
+    let report;
+    try {
+      report = JSON.parse($("#wspReport").value);
+    } catch (_) {
+      return addTimelineEvent("error", t("wsp.invalid"), "", "err");
+    }
+    startJob("/api/wsp/audit", { report }, "wsp_audit");
+  });
+  $("#wspSessionButton").addEventListener("click", () => {
+    if (!state.session) return addTimelineEvent("error", t("errors.sessionFirst"), "", "err");
+    startJob("/api/wsp/session", sessionWspRequest(), "wsp_session");
+  });
+  $("#wspSessionSaveButton").addEventListener("click", () => {
+    if (!state.session) return addTimelineEvent("error", t("errors.sessionFirst"), "", "err");
+    const out = $("#wspSavePath").value.trim();
+    if (!out) return addTimelineEvent("error", t("wsp.pathRequired"), "", "err");
+    startJob("/api/wsp/session_evidence",
+      Object.assign(sessionWspRequest(), { out_dir: out }),
+      "wsp_session_evidence");
+  });
+  $("#wspSaveButton").addEventListener("click", () => {
+    let report;
+    try {
+      report = JSON.parse($("#wspReport").value);
+    } catch (_) {
+      return addTimelineEvent("error", t("wsp.invalid"), "", "err");
+    }
+    const out = $("#wspSavePath").value.trim();
+    if (!out) return addTimelineEvent("error", t("wsp.pathRequired"), "", "err");
+    startJob("/api/wsp/save", { report, out_dir: out }, "save_wsp_evidence");
+  });
+  $("#openwspExportButton").addEventListener("click", () => {
+    if (!state.session) return addTimelineEvent("error", t("errors.sessionFirst"), "", "err");
+    const out = $("#openwspOut").value.trim();
+    if (!out) return addTimelineEvent("error", t("wsp.openwspPathRequired"), "", "err");
+    startJob("/api/session/export_openwsp", {
+      out_dir: out,
+      evidence_sha256: state.evidence ? state.evidence.evidence_sha256 : null,
+    }, "export_openwsp");
+  });
+  $("#bindingVerifyButton").addEventListener("click", () => {
+    const edit = $("#bindingEdit").value.trim();
+    const evidence = $("#bindingEvidence").value.trim();
+    if (!edit || !evidence) return addTimelineEvent("error", t("wsp.bindingPathRequired"), "", "err");
+    startJob("/api/binding/verify", { edit_dir: edit, evidence_dir: evidence }, "verify_binding");
   });
   $("#applyButton").addEventListener("click", () => {
     if (!state.session) return;

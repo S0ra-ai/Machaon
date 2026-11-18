@@ -11,6 +11,13 @@ from .mmlu import accuracy as mmlu_accuracy
 from .mmlu import load as load_mmlu
 from .provenance import Provenance, file_sha256, read_provenance, write_provenance
 from .wikitext import load_documents as load_wikitext
+from .wsp import (
+    FAILURE_TYPES,
+    WSPBenchmarkCase,
+    evaluate_case,
+    load_benchmark,
+    run_benchmark,
+)
 from .zsre import EditCase
 from .zsre import load as load_zsre
 
@@ -25,4 +32,9 @@ __all__ = [
     "load_mmlu",
     "mmlu_accuracy",
     "load_wikitext",
+    "FAILURE_TYPES",
+    "WSPBenchmarkCase",
+    "evaluate_case",
+    "run_benchmark",
+    "load_benchmark",
 ]

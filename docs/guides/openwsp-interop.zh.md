@@ -26,6 +26,33 @@ manifest = openwsp.export_edit(originals, edited, "out/edit",
 manifest["edit_sha256"]
 ```
 
+结构化导出使用低秩因子加稀疏 bf16 修正：
+
+```python
+manifest = openwsp.export_edit(
+    originals, edited, "out/edit",
+    form="lowrank", rank=4,
+)
+```
+
+读取端会重建精确的 bf16 编辑位，并校验 payload 地址与每个 tensor 地址。
+
+OpenWSP 编辑可以携带 WSP evidence 地址，而不改变 payload。可选的 `machaon`
+对象会进入 manifest，因此也被 `edit_sha256` 覆盖：
+
+```python
+from machaon.evidence import write_evidence
+
+evidence = write_evidence("evidence/", wsp_report)
+manifest = openwsp.export_edit(
+    originals, edited, "out/edit",
+    machaon_metadata={
+        "evidence_sha256": evidence["evidence_sha256"],
+        "evidence_format": evidence["format"],
+    },
+)
+```
+
 ## 为什么重要
 
 兼容性不是重点。重点是**一次编辑可以在不信任生产工具的情况下被审计**：

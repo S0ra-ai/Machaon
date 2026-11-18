@@ -60,6 +60,32 @@ class FakeTools:
             "summary": "PASS" if not missing else "FAIL",
         }
 
+    def wsp_audit(self, report):
+        return {
+            "accepted": True,
+            "label": "repair",
+            "reason": "test repair",
+            "classification": {"control_gap": 0.76, "headroom_gap": 0.02},
+        }
+
+    def save_wsp_evidence(self, out_dir, report, metadata=None):
+        return {
+            "path": out_dir,
+            "format": "machaon.wsp.evidence",
+            "format_version": 1,
+            "evidence_sha256": "abc123",
+            "label": report.get("label", "repair"),
+            "accepted": True,
+        }
+
+    def verify_wsp_binding(self, edit_dir, evidence_dir):
+        return {
+            "passed": True,
+            "edit_sha256": "edit123",
+            "evidence_sha256": "evidence123",
+            "label": "repair",
+            "errors": [],
+        }
 
 class FakeSession:
     def __init__(self):
@@ -104,6 +130,20 @@ class FakeSession:
         }
         return self._proposal
 
+    def propose_batch(self, **kwargs):
+        self._pending = True
+        return {
+            "module": "model.layers.1.mlp.down_proj.weight",
+            "layer": kwargs["layer"],
+            "relative_delta": 0.003,
+            "target_error": 1e-12,
+            "per_key_error": [0.0] * len(kwargs["prompts"]),
+            "exact": True,
+            "clamped": False,
+            "rank": 2,
+            "budget_after": 0.013,
+        }
+
     def apply(self):
         self._pending = False
         self._edited.append("model.layers.1.mlp.down_proj.weight")
@@ -114,6 +154,24 @@ class FakeSession:
         return {"accuracy": 1.0, "rewrite_acc": 1.0, "ppl_ratio": 1.001,
                 "n": len(prompts)}
 
+    def assess_wsp(self, prompts, targets, headroom=None, seed=0,
+                   target_metric="accuracy", mechanism=None):
+        result = {
+            "accepted": True,
+            "label": "repair",
+            "reason": "session repair",
+            "classification": {"control_gap": 0.7, "headroom_gap": 0.03},
+            "protocol": {"target_metric": target_metric},
+            "candidate_gate": {"passed": False},
+            "control_gates": {},
+        }
+        if mechanism is not None:
+            result["mechanism"] = {
+                "passed": True,
+                "label": "obstruction_relieved",
+            }
+        return result
+
     def rollback(self):
         self._edited = []
         return {"restored": ["model.layers.1.mlp.down_proj.weight"]}
@@ -121,15 +179,68 @@ class FakeSession:
     def changes(self):
         return {"model.layers.1.mlp.down_proj.weight": [0.1, 0.2]}
 
+    def export_openwsp(self, path, base_model=None, revision=None, metadata=None):
+        return {
+            "format": "openwsp.edit",
+            "format_version": 1,
+            "edit_sha256": "edit123",
+            "base_model": base_model,
+            "machaon": metadata or {},
+        }
+
+
+class FakeFetch:
+    RECOMMENDED = {
+        "smol135m": {"repo": "fake/small", "name": "Smol"},
+        "qwen05b": {"repo": "fake/qwen", "name": "Qwen"},
+    }
+
+    def fetch_model(self, repo, dest, endpoint=None, require_new=False):
+        path = Path(dest)
+        path.mkdir(parents=True, exist_ok=True)
+        (path / "config.json").write_text("{}")
+        return {
+            "repo": repo,
+            "dest": str(path),
+            "endpoint": endpoint or "huggingface",
+            "files": ["config.json", "model.safetensors"],
+            "downloaded": ["config.json", "model.safetensors"],
+            "cached": [],
+            "tensors": 1,
+            "parameters": 10,
+            "shards": 1,
+        }
+
 
 def _factories(tmp):
     def session_factory(**kwargs):
         return FakeSession()
 
+    def recipe(session, prompt, answer, **kwargs):
+        session.apply()
+        return SimpleNamespace(
+            status="applied",
+            to_dict=lambda: {
+                "status": "applied",
+                "accepted": True,
+                "prompt": prompt,
+                "answer": answer,
+                "answer_text": answer,
+                "best_layer": 1,
+                "tensor": "model.layers.1.mlp.down_proj.weight",
+                "relative_delta": 0.004,
+                "checks": [{"name": "target", "passed": True}],
+                "warnings": [],
+                "summary": "test edit applied",
+            },
+        )
+
     return WebService(
         PathPolicy([tmp]),
         tools_module=FakeTools(),
         session_factory=session_factory,
+        recipe=recipe,
+        fetch_module=FakeFetch(),
     )
 
 
@@ -170,9 +281,18 @@ class TestWebApp(unittest.TestCase):
         health = self.client.get("/api/health")
         self.assertEqual(health.status_code, 200)
         self.assertEqual(health.json()["auth"], "required")
+        self.assertIn("torch", health.json()["capabilities"])
+        self.assertIn("transformers", health.json()["capabilities"])
         self.assertEqual(self.client.get("/api/models").status_code, 401)
         self.assertEqual(
             self.client.get("/api/models", headers=self.headers).status_code, 200
+        )
+
+    def test_capability_probe_reports_missing_runtimes(self):
+        with mock.patch("importlib.util.find_spec", return_value=None):
+            caps = WebService.capabilities()
+        self.assertEqual(
+            caps, {"torch": False, "transformers": False, "safetensors": False}
         )
 
     def test_path_policy_rejects_outside_paths(self):
@@ -261,6 +381,243 @@ class TestWebApp(unittest.TestCase):
         )
         self.assertTrue(evaluation["result"]["gate"]["passed"])
 
+    def test_fetch_starter_downloads_below_an_allowed_root(self):
+        dest = self.root / "Smol"
+        response = self.client.post(
+            "/api/models/fetch",
+            headers=self.headers,
+            json={"starter": "smol135m", "dest": str(dest)},
+        )
+        self.assertEqual(response.status_code, 200)
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertEqual(job["result"]["starter"], "smol135m")
+        self.assertEqual(job["result"]["dest"], str(dest.resolve()))
+        self.assertTrue((dest / "config.json").exists())
+
+    def test_fetch_unknown_starter_is_a_job_error(self):
+        response = self.client.post(
+            "/api/models/fetch",
+            headers=self.headers,
+            json={"starter": "nope", "dest": str(self.root / "x")},
+        )
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "error")
+        self.assertIn("unknown starter", job["error"])
+
+    def test_fetch_resumes_an_existing_directory(self):
+        dest = self.root / "already"
+        dest.mkdir()
+        (dest / "model.safetensors.part").write_bytes(b"partial")
+        response = self.client.post(
+            "/api/models/fetch",
+            headers=self.headers,
+            json={"starter": "smol135m", "dest": str(dest)},
+        )
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertEqual(job["result"]["starter"], "smol135m")
+
+    def test_fetch_path_outside_the_roots_is_refused(self):
+        response = self.client.post(
+            "/api/models/fetch",
+            headers=self.headers,
+            json={"starter": "smol135m", "dest": "/etc/machaon-model"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_teach_preview_compiles_a_sentence_without_a_session(self):
+        response = self.client.post(
+            "/api/teach/preview",
+            headers=self.headers,
+            json={"sentence": "The Eiffel Tower is in the city of -> Rome"},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["prompt"], "The Eiffel Tower is in the city of")
+        self.assertEqual(payload["answer"], "Rome")
+        self.assertIn("command", payload)
+
+    def test_teach_preview_rejects_unstructured_text(self):
+        response = self.client.post(
+            "/api/teach/preview",
+            headers=self.headers,
+            json={"sentence": "please make it better"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Try one of", response.json()["detail"])
+
+    def test_teach_requires_an_open_session(self):
+        response = self.client.post(
+            "/api/teach",
+            headers=self.headers,
+            json={"sentence": "The capital is -> Paris"},
+        )
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "error")
+        self.assertIn("no model is open", job["error"])
+
+    def test_teach_runs_the_recipe_on_the_open_session(self):
+        opened = self.client.post(
+            "/api/session/open",
+            headers=self.headers,
+            json={"path": str(self.root), "dtype": "auto"},
+        )
+        _wait_for_job(self.client, opened.json()["job"], self.headers)
+        response = self.client.post(
+            "/api/teach",
+            headers=self.headers,
+            json={"sentence": "The capital is -> Paris"},
+        )
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        result = job["result"]
+        self.assertEqual(result["result"]["status"], "applied")
+        self.assertEqual(result["intent"]["prompt"], "The capital is")
+        self.assertTrue(result["state"]["edited"])
+
+
+    def test_batch_propose_endpoint(self):
+        opened = self.client.post(
+            "/api/session/open",
+            headers=self.headers,
+            json={"path": str(self.root), "dtype": "auto"},
+        )
+        _wait_for_job(self.client, opened.json()["job"], self.headers)
+
+        response = self.client.post(
+            "/api/edit/propose_batch",
+            headers=self.headers,
+            json={
+                "prompts": ["a", "b"],
+                "values": [[0.0, 0.0], [0.0, 0.0]],
+                "layer": 1,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertTrue(job["result"]["proposal"]["exact"])
+        self.assertEqual(job["result"]["proposal"]["rank"], 2)
+
+    def test_wsp_audit_endpoint(self):
+        response = self.client.post(
+            "/api/wsp/audit",
+            headers=self.headers,
+            json={"report": {"base": {}, "candidate": {}}},
+        )
+        self.assertEqual(response.status_code, 200)
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertEqual(job["result"]["label"], "repair")
+        self.assertTrue(job["result"]["accepted"])
+
+    def test_wsp_save_endpoint(self):
+        response = self.client.post(
+            "/api/wsp/save",
+            headers=self.headers,
+            json={
+                "report": {"label": "repair", "accepted": True},
+                "out_dir": str(self.root / "evidence"),
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertEqual(job["result"]["evidence_sha256"], "abc123")
+
+    def test_wsp_session_endpoint(self):
+        opened = self.client.post(
+            "/api/session/open",
+            headers=self.headers,
+            json={"path": str(self.root), "dtype": "auto"},
+        )
+        _wait_for_job(self.client, opened.json()["job"], self.headers)
+        response = self.client.post(
+            "/api/wsp/session",
+            headers=self.headers,
+            json={
+                "prompts": ["a"],
+                "targets": ["b"],
+                "headroom": {"accuracy": 0.9},
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertEqual(job["result"]["label"], "repair")
+
+    def test_wsp_session_evidence_endpoint(self):
+        opened = self.client.post(
+            "/api/session/open",
+            headers=self.headers,
+            json={"path": str(self.root), "dtype": "auto"},
+        )
+        _wait_for_job(self.client, opened.json()["job"], self.headers)
+        response = self.client.post(
+            "/api/wsp/session_evidence",
+            headers=self.headers,
+            json={
+                "prompts": ["a"],
+                "targets": ["b"],
+                "headroom": {"accuracy": 0.9},
+                "out_dir": str(self.root / "evidence"),
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertEqual(job["result"]["report"]["label"], "repair")
+        self.assertEqual(job["result"]["evidence"]["evidence_sha256"], "abc123")
+
+    def test_wsp_session_mechanism_is_forwarded(self):
+        opened = self.client.post(
+            "/api/session/open",
+            headers=self.headers,
+            json={"path": str(self.root), "dtype": "auto"},
+        )
+        _wait_for_job(self.client, opened.json()["job"], self.headers)
+        response = self.client.post(
+            "/api/wsp/session",
+            headers=self.headers,
+            json={
+                "prompts": ["a"],
+                "targets": ["b"],
+                "mechanism": {
+                    "base": {"loop_rate": 0.9},
+                    "candidate": {"loop_rate": 0.3},
+                    "controls": {"random": {"loop_rate": 0.85}},
+                    "protocol": {
+                        "metrics": ["loop_rate"],
+                        "directions": {"loop_rate": "lower"},
+                    },
+                },
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertEqual(
+            job["result"]["mechanism"]["label"], "obstruction_relieved"
+        )
+
+    def test_binding_verify_endpoint(self):
+        (self.root / "edit").mkdir()
+        (self.root / "evidence").mkdir()
+        response = self.client.post(
+            "/api/binding/verify",
+            headers=self.headers,
+            json={
+                "edit_dir": str(self.root / "edit"),
+                "evidence_dir": str(self.root / "evidence"),
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertTrue(job["result"]["passed"])
+        self.assertEqual(job["result"]["evidence_sha256"], "evidence123")
+
     def test_model_discovery_lists_marker_directory(self):
         response = self.client.get("/api/models", headers=self.headers)
         self.assertEqual(response.status_code, 200)
@@ -290,6 +647,13 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="languageSelect"', page.text)
         self.assertIn('id="guideButton"', page.text)
         self.assertIn('id="guideDialog"', page.text)
+        self.assertIn('id="batchProposeButton"', page.text)
+        self.assertIn('id="wspAuditButton"', page.text)
+        self.assertIn('id="wspSaveButton"', page.text)
+        self.assertIn('id="wspSessionButton"', page.text)
+        self.assertIn('id="wspSessionSaveButton"', page.text)
+        self.assertIn('id="openwspExportButton"', page.text)
+        self.assertIn('id="bindingVerifyButton"', page.text)
         self.assertIn('data-i18n="onboarding.title"', page.text)
         self.assertIn('src="/static/locales.js"', page.text)
         locales = self.client.get("/static/locales.js")
@@ -333,6 +697,86 @@ class TestWebApp(unittest.TestCase):
         )
         self.assertEqual(result["result"]["edited"],
                          ["model.layers.1.mlp.down_proj.weight"])
+
+    def test_save_refuses_an_existing_output(self):
+        opened = self.client.post(
+            "/api/session/open",
+            headers=self.headers,
+            json={"path": str(self.root), "dtype": "auto"},
+        )
+        _wait_for_job(self.client, opened.json()["job"], self.headers)
+        applied = self.client.post("/api/edit/apply", headers=self.headers, json={})
+        _wait_for_job(self.client, applied.json()["job"], self.headers)
+        out = self.root / "already-there"
+        out.mkdir()
+        response = self.client.post(
+            "/api/session/save",
+            headers=self.headers,
+            json={"out_dir": str(out)},
+        )
+        result = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(result["status"], "error")
+        self.assertIn("already exists", result["error"])
+
+    def test_failed_save_removes_the_partial_output(self):
+        opened = self.client.post(
+            "/api/session/open",
+            headers=self.headers,
+            json={"path": str(self.root), "dtype": "auto"},
+        )
+        _wait_for_job(self.client, opened.json()["job"], self.headers)
+        applied = self.client.post("/api/edit/apply", headers=self.headers, json={})
+        _wait_for_job(self.client, applied.json()["job"], self.headers)
+
+        class FailingCheckpoint:
+            def __init__(self, path):
+                self.path = path
+
+            def write_tensor(self, name, values, out_dir):
+                Path(out_dir).mkdir(parents=True)
+                (Path(out_dir) / "partial.safetensors").write_text("x")
+                raise OSError("disk full")
+
+        fake_adapters = ModuleType("machaon.adapters")
+        fake_adapters.Checkpoint = FailingCheckpoint
+        out = self.root / "failed-save"
+        with mock.patch.dict(sys.modules, {"machaon.adapters": fake_adapters}):
+            response = self.client.post(
+                "/api/session/save",
+                headers=self.headers,
+                json={"out_dir": str(out)},
+            )
+            result = _wait_for_job(
+                self.client, response.json()["job"], self.headers
+            )
+        self.assertEqual(result["status"], "error")
+        self.assertIn("disk full", result["error"])
+        self.assertFalse(out.exists())
+
+    def test_export_openwsp_binds_evidence(self):
+        opened = self.client.post(
+            "/api/session/open",
+            headers=self.headers,
+            json={"path": str(self.root), "dtype": "auto"},
+        )
+        _wait_for_job(self.client, opened.json()["job"], self.headers)
+        applied = self.client.post("/api/edit/apply", headers=self.headers, json={})
+        _wait_for_job(self.client, applied.json()["job"], self.headers)
+        response = self.client.post(
+            "/api/session/export_openwsp",
+            headers=self.headers,
+            json={
+                "out_dir": str(self.root / "edit"),
+                "evidence_sha256": "evidence123",
+            },
+        )
+        result = _wait_for_job(
+            self.client, response.json()["job"], self.headers
+        )
+        self.assertEqual(result["status"], "done")
+        manifest = result["result"]["manifest"]
+        self.assertEqual(manifest["edit_sha256"], "edit123")
+        self.assertEqual(manifest["machaon"]["evidence_sha256"], "evidence123")
 
 
 if __name__ == "__main__":

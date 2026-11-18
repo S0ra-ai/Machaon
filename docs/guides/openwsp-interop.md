@@ -28,6 +28,35 @@ manifest = openwsp.export_edit(originals, edited, "out/edit",
 manifest["edit_sha256"]
 ```
 
+Structured export uses low-rank factors plus sparse bf16 corrections:
+
+```python
+manifest = openwsp.export_edit(
+    originals, edited, "out/edit",
+    form="lowrank", rank=4,
+)
+```
+
+The reader reconstructs the exact edited bf16 bits and verifies both the
+payload address and every per-tensor address.
+
+An OpenWSP edit can carry the WSP evidence address without changing the
+payload. The optional `machaon` object is part of the manifest address, so it
+is covered by `edit_sha256`:
+
+```python
+from machaon.evidence import write_evidence
+
+evidence = write_evidence("evidence/", wsp_report)
+manifest = openwsp.export_edit(
+    originals, edited, "out/edit",
+    machaon_metadata={
+        "evidence_sha256": evidence["evidence_sha256"],
+        "evidence_format": evidence["format"],
+    },
+)
+```
+
 ## Why it matters
 
 Compatibility is not the point. The point is that **an edit can be audited

@@ -21,6 +21,16 @@ Machaon은 서로를 거의 모르는 세 계층입니다.
 └───────────────┘     └───────────────────┘   └───────────────────┘
 ```
 
+## 사람을 위한 계층
+
+`machaon.intent`는 작고 명시적인 언어를 정확한 `(prompt, answer)`로
+컴파일합니다. `machaon.recipes.teach_fact`는 프리미티브 위의 루프입니다:
+무관한 기준선 panel을 캡처하고, `Session.search_rome_layers`로 후보 layer를
+검색하고, 각 trial을 panel의 영공간으로 투영하고, 최선의 후보를 적용하고,
+목표·panel·KL을 확인하고, 실패 시 롤백합니다. CLI, MCP `teach` 도구, Web의
+**ONE SENTENCE** 상자는 모두 이 하나의 함수를 호출하며 계약을 다시 구현하지
+않습니다.
+
 ## 두 계약
 
 **Runtime.** `next_logits(items) -> (n, vocab)`와 `nll(items) -> (n,)`. 이것이 모델 대상 표면의 전부입니다. `HFModel`이 Hugging Face causal LM 위에 구현하고, 테스트 백엔드는 네 줄로 구현할 수 있습니다.

@@ -61,9 +61,15 @@
 
 这两篇是 `machaon.hygieia` 验收门设计的承重墙。
 
-## 空白
+## Machaon 针对的空白
 
 1. 现有工作多是 Python API 或脚本，缺少 agent 可操作的动作空间。
 2. 缺少事务层——没有东西负责快照、验证和回滚。
 3. 评估不是一等公民。
 4. 缺少让 LLM **规划手术**的系统：诊断 → 选位点 → 声明约束 → 交给闭式求解器。
+
+`machaon.action` 提供受约束的 L1 动作，`Session.propose_action` 把它接入现有
+事务、预算与回滚路径，`machaon.planning` 把失败/位点证据转成明确的
+edit / diagnose / do-not-edit 路线，`Session.search_layers` 提供实时
+apply / evaluate / rollback 选层，`diagnose_failure` 把 headroom 证据转成保守
+失败分类。剩余空白是更大的真实 benchmark 覆盖与独立复现。

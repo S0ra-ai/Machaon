@@ -43,6 +43,12 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `audit_edit(base_path, edit_dir, max_rel_norm)` | 对照 base 校验 OpenWSP v1 编辑并重算漂移 |
 | `apply_delta(base_path, tensor, delta_path, out_dir)` | 把一个 `.npy` delta 应用到一个 tensor，写出新检查点 |
 | `gate(metrics)` | 应用验收门；缺失指标视为失败 |
+| `wsp_audit(report)` | 将 WSP 报告分类为 repair、acquisition、non-specific 或 no-effect |
+| `wsp_save(report, out_dir, metadata)` | 写出内容寻址的 WSP evidence bundle |
+| `verify_binding(edit_dir, evidence_dir)` | 校验 OpenWSP edit 与 evidence bundle 的绑定 |
+| `plan_surgery(failure_type, layer_scores, patch_report, module_suffix, max_rel_norm, min_score)` | 根据失败与位点证据选择 edit / diagnose / do-not-edit |
+| `diagnose_failure(base, headroom, mechanism, target_metric, min_target_gap, min_mechanism_gap)` | 不编辑权重，分类 obstruction 与 capability gap |
+| `parse_intent(sentence)` | 把一句自然语言教学请求编译成精确合同 |
 
 每个工具都委托给 `machaon.tools` 中的普通函数，测试直接覆盖这些函数。传输层不增加行为。
 
@@ -56,8 +62,14 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `model_status()` | 参数、层数、已编辑 tensor、预算使用 |
 | `capture_baseline(neutral_prompts, corpus_texts)` | **编辑前**记录参考分布 |
 | `propose_edit(prompt, target, layer, solver, steps, max_rel_norm)` | 求解编辑并报告代价，不写入 |
+| `propose_batch(prompts, values, layer, preserve_prompts, max_rel_norm, clamp, ridge)` | 将多行求解为一个待定批量 delta |
+| `propose_action(source, intent, layer, keys, values, preserve, max_rel_norm, timeout_seconds)` | 把受约束的 `def edit(W): ...` 编译为一个待定 delta |
 | `apply_edit()` | 写入待定提案，原子扣预算 |
 | `evaluate(prompts, targets)` | 准确率、KL、相对 baseline 的困惑度 |
+| `assess_wsp(prompts, targets, headroom, mechanism, seed)` | 评估当前编辑与匹配对照；可选障碍门；给出 WSP 分类 |
+| `assess_generation_wsp(prompts, expected, max_new_tokens, headroom_max_new_tokens, match, seed)` | 生成 candidate/base/control/headroom 并附加机制门 |
+| `search_rome_layers(prompt, target, layers, solver, max_rel_norm, metric, max_evaluations)` | 在每层尝试 ROME，评估后回滚 |
+| `teach(sentence, prompt, answer, layers, solver, max_rel_norm, dry_run)` | 运行完整教学配方：搜索、应用、验证或回滚 |
 | `rollback()` | 还原每个已编辑 tensor |
 
 预期循环正是 `machaon.session` 中的那一个：
@@ -69,6 +81,10 @@ open_model -> capture_baseline -> propose_edit -> apply_edit -> evaluate
 ```
 
 `propose_edit` 在写入前返回相对 delta，这正是重点。agent 可以先判断编辑是否太贵，再决定不应用。
+
+`propose_action` 接收声明式的小型 Python 函数，而不是任意代码。AST 白名单会在
+有资源上限的 worker 运行前拒绝导入、循环、私有属性和任意调用。返回的 delta
+仍需通过形状、预算和受保护 key 检查，且在 `apply_edit` 前不会写入。
 
 ## 错误形状
 

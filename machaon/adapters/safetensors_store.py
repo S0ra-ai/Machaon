@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Tuple
@@ -158,6 +159,68 @@ class Checkpoint:
             out.append(name)
         return out
 
+    def resolve(self, name: str) -> str:
+        """Map a runtime tensor name to the checkpoint's stored name.
+
+        Some checkpoints drop or add a module prefix (``transformer.h.0...``
+        versus ``h.0...``).  An exact match always wins.  Otherwise a unique
+        suffix match on a dot boundary is accepted; ambiguous matches raise, so
+        a save can never silently write the wrong tensor.
+        """
+        names = self.names()
+        if name in names:
+            return name
+        candidates = [
+            candidate for candidate in names
+            if name.endswith("." + candidate) or candidate.endswith("." + name)
+        ]
+        if not candidates:
+            raise KeyError(
+                "unknown tensor: %s (checkpoint stores %d tensors%s)"
+                % (
+                    name,
+                    len(names),
+                    "" if len(names) > 20 else ": " + ", ".join(names),
+                )
+            )
+        if len(candidates) > 1:
+            preview = ", ".join(sorted(candidates)[:5])
+            raise KeyError(
+                "ambiguous tensor %s; candidates: %s" % (name, preview)
+            )
+        return candidates[0]
+
+    def copy_auxiliary(self, out_dir: str | Path) -> List[str]:
+        """Copy config and tokenizer files so the output stays loadable.
+
+        Only small, non-weight files are copied.  A stale ``pytorch_model.bin``
+        would be worse than a missing one, so weight containers are excluded.
+        Existing files in the destination are never overwritten.
+        """
+        source = self.path if self.path.is_dir() else self.path.parent
+        out = Path(out_dir)
+        copied: List[str] = []
+        weight_suffixes = {
+            ".safetensors", ".bin", ".pt", ".pth", ".ckpt", ".h5",
+            ".msgpack", ".onnx", ".gguf",
+        }
+        for item in sorted(source.iterdir(), key=lambda path: path.name):
+            if not item.is_file() or item.name.startswith("."):
+                continue
+            if item.name.endswith(".index.json"):
+                continue
+            if item.suffix.lower() in weight_suffixes:
+                continue
+            destination = out / item.name
+            if destination.exists():
+                continue
+            try:
+                shutil.copy2(item, destination)
+            except OSError:
+                continue
+            copied.append(item.name)
+        return copied
+
     # -- writes ---------------------------------------------------------
 
     def _check_output(self, out_dir: str | Path) -> Path:
@@ -181,8 +244,8 @@ class Checkpoint:
 
         import torch
 
-        if name not in self.names():
-            raise KeyError("unknown tensor: %s" % name)
+        requested = name
+        name = self.resolve(name)
 
         target = self._shard_for(name)
         out = self._check_output(out_dir)
@@ -235,10 +298,12 @@ class Checkpoint:
 
         return {
             "tensor": name,
+            "requested": requested,
             "shard": target.name,
             "rewritten": destination.name,
             "linked": linked,
             "copied": copied,
+            "auxiliary": self.copy_auxiliary(out),
         }
 
     def write_with(self, deltas: Mapping[str, np.ndarray], out_dir: str | Path) -> Dict[str, Any]:
@@ -251,12 +316,22 @@ class Checkpoint:
 
         out = self._check_output(out_dir)
         out.mkdir(parents=True, exist_ok=True)
-        known = set(self.names())
-        unknown = [n for n in deltas if n not in known]
-        if unknown:
-            raise KeyError("deltas name unknown tensors: %s" % ", ".join(sorted(unknown)))
+        resolved: Dict[str, np.ndarray] = {}
+        renamed: Dict[str, str] = {}
+        for original_name, delta in deltas.items():
+            stored_name = self.resolve(original_name)
+            if stored_name in resolved:
+                raise KeyError(
+                    "two deltas resolve to the same checkpoint tensor: %s"
+                    % stored_name
+                )
+            resolved[stored_name] = delta
+            renamed[original_name] = stored_name
+        deltas = resolved
 
         report: Dict[str, Any] = {"tensors": {}, "files": []}
+        if any(original != stored for original, stored in renamed.items()):
+            report["resolved"] = dict(sorted(renamed.items()))
         for shard in self.shards:
             if self._weight_map is not None:
                 names = sorted(n for n, s in self._weight_map.items() if self.path / s == shard)
@@ -301,4 +376,5 @@ class Checkpoint:
             index.write_text(json.dumps({"weight_map": self._weight_map}, indent=2) + "\n")
             report["files"].append(str(index))
 
+        report["auxiliary"] = self.copy_auxiliary(out)
         return report

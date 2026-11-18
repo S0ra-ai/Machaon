@@ -29,7 +29,9 @@ The same launcher is available as `python -m machaon.web`.
 
 The command prints a URL with a per-launch token. Open that URL, or paste the
 token into the console's token dialog. The server binds to `127.0.0.1` by
-default. Use `MACHAON_WEB_ALLOWED_ROOTS` to set the roots from the environment,
+default. If `torch`, `transformers` or `safetensors` is missing, the page shows
+a banner with the exact `pip install "machaon[hf]"` command instead of letting
+the first session fail silently. Use `MACHAON_WEB_ALLOWED_ROOTS` to set the roots from the environment,
 or repeat `--allowed-root` for more than one checkpoint directory. The
 allowlist applies to checkpoint paths, edit directories, delta files and output
 directories.
@@ -55,16 +57,39 @@ four-step onboarding strip remains under the hero as a compact reminder.
 1. **Checkpoint.** Inspect a safetensors file or a sharded checkpoint directory.
    The header summary reports tensor count, parameter count, dtype mix and shard
    count without materialising the weights. The tensor surface shows names,
-   shapes and dtypes only.
+   shapes and dtypes only. If you have no checkpoint, choose a starter and press
+   **Download starter**: it downloads into the first allowed root with mirror
+   fallback and fills the path, without uploading anything. **Open after
+   download** opens the session automatically so the next step is the
+   **ONE SENTENCE** box.
 2. **Edit contract.** Open a model session, capture neutral baseline prompts,
    choose an edit layer and solve a proposal. The preserve prompts become the
    null-space constraint. For quantized checkpoints, enable **Densify from
    edit layer** before a gradient solve. The proposal reports its relative
-   delta and target probability before anything is written.
+   delta and target probability before anything is written. The advanced
+   **Batch edit** expander accepts multiple prompts and a JSON matrix of target
+   activation rows; the resulting proposal reports exact/clamped state, target
+   error, rank and a per-key error table.
 3. **Evidence.** Apply the pending proposal, evaluate it against the baseline,
    and inspect the fail-closed gate verdict. The transaction timeline records
    status changes, results and errors. Rollback restores the original tensor
    bytes.
+
+### One-sentence teaching
+
+The **ONE SENTENCE** box at the top of the edit column is the shortest path. It
+accepts the same grammar as `machaon intent` and produces the same teaching
+recipe as `machaon teach`:
+
+1. **Preview parse** compiles the sentence and fills the prompt/answer fields.
+2. **Teach automatically** searches a depth window, projects the edit away from
+   the preserve prompts, applies the best candidate, and keeps it only when the
+   target, budget, panel and KL checks pass. A rejected candidate is rolled back
+   automatically.
+
+The optional **Also write the edited checkpoint** field saves the accepted edit
+to a new directory below the allowed roots. Leave it blank to keep the edit in
+the session and use the existing **Save** control later.
 
 Long operations run in one worker thread and are streamed as server-sent
 events. The UI stays responsive while a checkpoint loads, a gradient solve runs
@@ -85,6 +110,7 @@ because the browser's `EventSource` cannot set headers.
 |---|---|---|
 | GET | `/api/health` | version, roots and session status |
 | GET | `/api/models` | checkpoint-looking entries below the roots |
+| POST | `/api/models/fetch` | download one recommended starter below the roots |
 | POST | `/api/checkpoints/describe` | header-only checkpoint summary |
 | POST | `/api/checkpoints/tensors` | bounded tensor listing |
 | POST | `/api/checkpoints/audit` | audit an OpenWSP v1 edit |
@@ -92,9 +118,18 @@ because the browser's `EventSource` cannot set headers.
 | POST | `/api/session/open` | load a model session |
 | POST | `/api/session/baseline` | capture reference distributions |
 | POST | `/api/edit/propose` | solve a proposal without writing |
+| POST | `/api/teach/preview` | compile a sentence into a prompt/answer contract |
+| POST | `/api/teach` | run the teaching recipe on the open session |
+| POST | `/api/edit/propose_batch` | solve many prompt/value rows into one pending delta |
 | POST | `/api/edit/apply` | write the pending proposal |
 | POST | `/api/edit/evaluate` | score the applied edit |
 | POST | `/api/edit/rollback` | restore original bytes |
+| POST | `/api/wsp/audit` | classify a WSP report as repair/acquisition/non-specific |
+| POST | `/api/wsp/save` | write a content-addressed WSP evidence bundle |
+| POST | `/api/wsp/session` | assess the current session against matched controls, optional headroom and mechanism evidence |
+| POST | `/api/wsp/session_evidence` | assess the session and save the resulting evidence bundle |
+| POST | `/api/session/export_openwsp` | export the applied edit and optionally bind an evidence hash |
+| POST | `/api/binding/verify` | verify an OpenWSP edit and WSP evidence bundle are bound |
 | POST | `/api/session/save` | write applied deltas to a new checkpoint |
 | GET | `/api/jobs/{id}` | poll a job |
 | GET | `/api/jobs/{id}/events` | stream job events |

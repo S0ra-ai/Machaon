@@ -25,6 +25,27 @@ low_rank_scale(delta, rank, scale=1.0) -> delta_r
 
 ヘルパー：`nullspace_basis(preserve)`、`project_complement(k, Q)`、`nullspace_projector(preserve)`、`relative_norm(delta, W)`、`clamp_rel_norm(delta, W, max_rel_norm)`。
 
+## 制約付きアクション · `machaon.action`
+
+```python
+from machaon import ActionSpec, Target, execute_action
+
+source = """def edit(W):
+    updated, delta = rank1_constrained(
+        W, keys, values, preserve=preserve, max_rel_norm=max_rel_norm)
+    return delta
+"""
+spec = ActionSpec(source, Target("model.layers.14.mlp.down_proj.weight", 14),
+                  intent="選択方向を除去", max_rel_norm=0.02).validate()
+result = execute_action(spec, W, keys=k, values=v, preserve=protected)
+```
+
+`W`、任意の `keys` / `values` / `preserve`、`max_rel_norm`、純粋な配列関数、
+ローカル代入、配列演算だけを使えます。import、ループ、クラス、lambda、内包表記、
+私有属性、任意呼び出しは実行前に拒否されます。worker は期限とリソース上限を
+持つ別プロセスで動き、形状、有限性、予算、保護 key のドリフトを親が検証します。
+`Session.propose_action(...)` は同じ pending / apply / rollback に接続します。
+
 ## 契約合成 · `machaon.contract`
 
 ```python
@@ -206,6 +227,22 @@ session.token_id(text) -> int
 
 `propose` は重みに触れません：agent はコミット前にコスト（`relative_delta`）と求解確率を確認できます。`apply` は予算を原子的に課金し、超過時に拒否します。`rollback` は編集済み tensor を復元し、予算をリセットします。
 
+## 意図と教学 · `machaon.intent`、`machaon.recipes`
+
+```python
+parse_intent(text) -> TeachIntent
+teach(session, sentence_or_prompt, answer=None, ...) -> TeachResult
+teach_fact(session, prompt, answer, ..., dry_run=False) -> TeachResult
+candidate_layers(n_layers, count=7, low=0.55, high=0.95) -> list[int]
+TeachPolicy(...) -> policy
+```
+
+`parse_intent` は決定的で依存のない教学文法コンパイラです。モデルに接続せず、
+層も推測しません。`teach_fact` は 1 回の呼び出しで、既知判定、無関係な
+ベースライン panel の取得、深さ方向の層検索、適用、目標/panel/KL チェック、
+失敗時のロールバックまでを行います。`TeachResult.to_dict()` は全 trial、
+ランキング、チェック、警告、未測定指標を JSON 安全な形で保持します。
+
 ## ツール · `machaon.tools`
 
 MCP サーバー背後の関数。モデルをロードしません。
@@ -244,7 +281,8 @@ check_tensor(name, value, original, frozen=(), refuse_rescale=True)
 
 ```python
 read_edit(path, originals) -> (manifest, tensors)
-export_edit(originals, edited, path, base_model=None, revision=None) -> manifest
+export_edit(originals, edited, path, base_model=None, revision=None,
+            machaon_metadata=None) -> manifest
 delta_from_edit(manifest, rebuilt, originals) -> dict
 payload_sha256(arrays); edit_sha256(manifest); tensor_sha256(tensor)
 bf16_bits(values); bits_float32(bits); is_openwsp_edit(path)

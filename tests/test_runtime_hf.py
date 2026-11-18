@@ -47,6 +47,16 @@ class TestRuntime(unittest.TestCase):
         self.assertEqual(self.rt.weight_shape(name), tuple(reversed(stored)))
         self.assertEqual(self.rt.read(name).shape, tuple(reversed(stored)))
 
+    def test_stored_values_restore_the_checkpoint_layout(self):
+        name = "transformer.h.1.mlp.c_proj.weight"
+        canonical = self.rt.read(name)
+        stored = self.rt.stored_values(name, canonical)
+        self.assertEqual(
+            stored.shape,
+            tuple(self.model.transformer.h[1].mlp.c_proj.weight.shape),
+        )
+        np.testing.assert_array_equal(stored, canonical.T)
+
     def test_read_write_roundtrip(self):
         name = "transformer.h.1.mlp.c_proj.weight"
         original = self.rt.read(name)
@@ -228,6 +238,45 @@ class TestPadding(unittest.TestCase):
         batched = rt.nll(["a b c", "a b"])
         alone = rt.nll_ids([[1, 2]])
         np.testing.assert_allclose(batched[1], alone[0], rtol=1e-5, atol=1e-5)
+
+    def test_generate_records_reports_stop_trace(self):
+        class Tokenizer:
+            pad_token_id = 0
+            eos_token_id = 2
+
+            def decode(self, tokens, skip_special_tokens=True):
+                return "tokens:" + ",".join(str(int(x)) for x in tokens.tolist())
+
+        class Model:
+            def __init__(self, generated):
+                self.generated = generated
+
+            def generate(self, **kwargs):
+                return self.generated
+
+        class Runtime:
+            pass
+
+        runtime = Runtime()
+        runtime.tokenizer = Tokenizer()
+        runtime.encode = lambda prompts: (
+            torch.tensor([[1, 9]]),
+            torch.tensor([[1, 1]]),
+        )
+        runtime.model = Model(torch.tensor([[1, 9, 4, 5, 6]]))
+        record = HFModel.generate_records(
+            runtime, ["prompt"], max_new_tokens=3
+        )[0]
+        self.assertEqual(record["generated_tokens"], 3)
+        self.assertTrue(record["hit_token_limit"])
+        self.assertFalse(record["stopped_on_eos"])
+
+        runtime.model = Model(torch.tensor([[1, 9, 2]]))
+        record = HFModel.generate_records(
+            runtime, ["prompt"], max_new_tokens=3
+        )[0]
+        self.assertFalse(record["hit_token_limit"])
+        self.assertTrue(record["stopped_on_eos"])
 
 
 @requires_hf

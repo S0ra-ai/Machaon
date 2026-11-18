@@ -67,6 +67,126 @@ python examples/gpt2_bench.py --edits 8
 - 代价是真的：困惑度上升 8%。
 - GPT-2 上的 MMLU 是粗信号；1.5B+ 面板能分辨更细的差异。报告它，但不要过度解读。
 
+## 修复，还是获得能力？
+
+目标指标上升可能来自三种完全不同的原因：移除了一个障碍、增加了原本不存在的能力，
+或者任何同尺寸扰动都会带来类似变化。Machaon 的 WSP 协议把这三者区分开：
+
+```python
+from machaon.wsp import assess_wsp
+
+report = assess_wsp(
+    base={"rewrite_acc": 0.20},
+    candidate={"rewrite_acc": 0.96, ...},          # 完整 gate 指标
+    controls={"random_same_support": {"rewrite_acc": 0.20, ...}},
+    headroom={"name": "thinking_off", "rewrite_acc": 0.94, ...},
+)
+assert report["label"] == "repair"
+```
+
+`random_controls(deltas)` 会生成与候选编辑同形状、同非零支撑、同 Frobenius 范数的
+确定性随机对照。**headroom** 是“未编辑但配置更强”的基线，例如关闭 thinking 的
+原始模型。没有 headroom 时，即使提升真实且对照无效，也只会标为 `unclassified`，
+不会冒充 `acquisition`。
+
+完整 JSON 协议也可以直接作为 CLI 步骤：
+
+```bash
+python -m machaon.cli wsp examples/wsp_report.json
+```
+
+| 标签 | 含义 | 是否接受 |
+|---|---|---|
+| `repair` | 候选达到已有 headroom | gate 通过则接受 |
+| `acquisition` | 候选同时超过对照与 headroom | gate 通过则接受 |
+| `non_specific` | 同尺寸对照也达到候选 | 不接受 |
+| `no_effect` | 增益低于阈值 | 不接受 |
+| `regression` | 候选比 base 更差 | 不接受 |
+| `unclassified` | 有特异性提升，但没有 headroom | 不接受 |
+| `inconclusive` | 缺少对照或必要数据 | 不接受 |
+
+这比“指标涨了”严格得多。报告时应同时给出标签、control gap、headroom gap 与
+gate verdict。
+
+### 机制证据
+
+准确率上升时，原始失败机制可能仍然存在。附加 mechanism 报告后，循环率、
+token 截顶率和空输出率会进入验收决策：
+
+```python
+from machaon import generation_mechanism
+
+evidence = generation_mechanism(
+    base_records, candidate_records,
+    controls={"random": control_records},
+)
+report = assess_wsp(
+    base=base, candidate=candidate, controls=controls, headroom=headroom,
+    mechanism=evidence,
+)
+```
+
+`generation_metrics` 从文本计算 `loop_rate` 与 `empty_rate`；
+`HFModel.generate_records` 进一步提供精确的 `truncation_rate` 和生成 token 数。
+`assess_mechanism` 要求候选对每个配置指标都优于 base，并超过最佳匹配对照。
+一旦提供 mechanism 证据，机制门失败时 WSP 验收会失败关闭。
+
+要比较障碍修复与能力缺口样本，使用带标签的 benchmark harness：
+
+```bash
+python -m machaon.cli wsp-bench examples/wsp_benchmark.json
+python -m machaon.cli wsp-bench measured.json --require-measured
+```
+
+示例是合成的契约 fixture；在声称模型结论前必须替换为真实测量报告。
+measured case 必须提供 checkpoint/dataset 哈希、时间戳、seed 与评测脚本。
+
+### 在 Session 中运行 headroom 基线
+
+当 headroom 需要不同解码路径时，把回调传给 `Session.assess_wsp`。
+Machaon 会先恢复未编辑权重，在 base runtime 上调用你的 evaluator，
+再在 `finally` 中恢复候选状态：
+
+```python
+def evaluate_base(runtime):
+    # 示例：关闭 thinking 跑你的 benchmark/tokenizer。
+    return {"accuracy": run_benchmark(runtime, thinking=False)}
+
+report = session.assess_wsp(
+    prompts, targets, headroom_runner=evaluate_base
+)
+```
+
+也可以直接使用 `Session.run_headroom(fn)`。这样 headroom 的解码/评测逻辑
+留在调用方，而 session 保证权重状态被恢复。
+
+常见场景可以直接用工厂，不必手写回调：
+
+```python
+from machaon.headroom import DecodingConfig, make_generation_headroom
+
+headroom = make_generation_headroom(
+    prompts, expected_answers,
+    DecodingConfig(max_new_tokens=512, do_sample=True,
+                   temperature=0.7, top_p=0.9, seed=0),
+    match="contains",
+    name="sampled_512",
+)
+report = session.assess_wsp(prompts, targets, headroom_runner=headroom)
+```
+
+### 保存判定
+
+WSP 判定可以保存为规范化的 evidence bundle：
+
+```bash
+python -m machaon.cli wsp examples/wsp_report.json --save evidence/
+python -m machaon.cli wsp-verify evidence/
+```
+
+bundle 包含 report、可选 metadata、格式/版本，以及对规范文档计算的 SHA-256
+地址。`wsp-verify` 会重算地址；标签或指标被改动会直接拒绝，不会静默接受。
+
 ## 长文本连贯性
 
 短答案指标会漏掉最常见的失败：模型仍然答对，但生成文本崩了。

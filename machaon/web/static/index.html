@@ -37,6 +37,8 @@
     </div>
   </header>
 
+  <div id="capabilityBanner" class="capability-banner hidden" role="status"></div>
+
   <main>
     <section class="hero">
       <div>
@@ -93,6 +95,19 @@
           <button id="modelsButton" class="ghost small" type="button" data-i18n="checkpoint.find">Find local checkpoints</button>
           <span id="allowedRoots" class="mono tiny"></span>
         </div>
+        <div class="quick-row">
+          <select id="starterModel" aria-label="Starter model">
+            <option value="smol135m" data-name="SmolLM2-135M">SmolLM2-135M · ~270 MB</option>
+            <option value="qwen05b" data-name="Qwen2.5-0.5B" selected>Qwen2.5-0.5B · ~1 GB</option>
+            <option value="gpt2" data-name="gpt2">GPT-2 124M · ~500 MB</option>
+          </select>
+          <button id="fetchButton" class="ghost small" type="button" data-i18n="checkpoint.fetch">Download starter</button>
+        </div>
+        <label class="check-row compact">
+          <input id="fetchOpen" type="checkbox" checked>
+          <span data-i18n="checkpoint.fetchOpen">Open after download</span>
+        </label>
+        <p class="hint" data-i18n="checkpoint.fetchHint">Downloads from Hugging Face with mirror fallback. Nothing is uploaded.</p>
         <div id="modelsList" class="models-list hidden"></div>
 
         <div id="checkpointSummary" class="summary-grid empty-state" data-i18n="checkpoint.emptySummary">
@@ -153,6 +168,27 @@
           <span id="sessionBadge" class="badge" data-i18n="badge.notOpen">not open</span>
         </div>
 
+        <div class="teach-box">
+          <div class="teach-head">
+            <div>
+              <p class="eyebrow" data-i18n="teach.eyebrow">ONE SENTENCE</p>
+              <h3 data-i18n="teach.title">Say what the model should learn</h3>
+            </div>
+            <span class="mono tiny" data-i18n="teach.meta">intent → contract</span>
+          </div>
+          <label class="field full"><span data-i18n="teach.label">Teaching request</span>
+            <textarea id="teachSentence" rows="2" data-i18n-placeholder="teach.placeholder" placeholder="The Eiffel Tower is in the city of -> Rome"></textarea>
+          </label>
+          <label class="field full"><span data-i18n="teach.outLabel">Also write the edited checkpoint (optional)</span>
+            <input id="teachOut" autocomplete="off" spellcheck="false" data-i18n-placeholder="teach.outPlaceholder" placeholder="./models/checkpoint-machaon">
+          </label>
+          <div class="button-grid">
+            <button id="teachPreviewButton" class="ghost" type="button" data-i18n="teach.preview">Preview parse</button>
+            <button id="teachButton" class="primary" type="button" data-i18n="teach.run">Teach automatically</button>
+          </div>
+          <div id="teachCard" class="evidence-card empty-state" data-i18n="teach.empty">Preview the sentence to see the exact prompt and answer. Teach runs the search, apply and verification loop.</div>
+        </div>
+
         <div class="contract-note">
           <span class="contract-icon">∅</span>
           <p data-i18n-html="contract.note"><strong>Preserve set</strong> is enforced by null-space projection. <strong>Budget</strong> is checked before writing. <strong>Evaluation</strong> is fail-closed when a gate metric is missing.</p>
@@ -193,6 +229,31 @@ Two plus two equals</textarea>
           </label>
         </div>
 
+        <details id="batchPanel" class="batch-panel">
+          <summary data-i18n="batch.summary">Batch edit (advanced)</summary>
+          <div class="form-grid">
+            <label class="field full"><span data-i18n="batch.prompts">Batch prompts (one per line)</span>
+              <textarea id="batchPrompts" rows="3" data-i18n-placeholder="batch.promptsPlaceholder" placeholder="The Eiffel Tower is located in the city of&#10;The capital of France is"></textarea>
+            </label>
+            <label class="field full"><span data-i18n="batch.values">Values JSON (one row per prompt)</span>
+              <textarea id="batchValues" rows="3" spellcheck="false" data-i18n-placeholder="batch.valuesPlaceholder" placeholder='[[0.0, 0.0], [0.0, 0.0]]'></textarea>
+            </label>
+            <div class="form-grid two">
+              <label class="field"><span data-i18n="batch.layer">batch layer</span><input id="batchLayer" type="number" min="0" value="8"></label>
+              <label class="field"><span data-i18n="batch.maxNorm">batch relative budget</span><input id="batchMaxRelNorm" type="number" min="0.000001" step="0.001" placeholder="blank = no cap"></label>
+            </div>
+            <label class="field full"><span data-i18n="batch.preserve">Batch preserve prompts (one per line)</span>
+              <textarea id="batchPreserve" rows="2" data-i18n-placeholder="contract.preservePlaceholder" placeholder="The capital of Germany is&#10;Two plus two equals"></textarea>
+            </label>
+            <label class="check-row">
+              <input id="batchClamp" type="checkbox" checked>
+              <span data-i18n="batch.clamp">Clamp to budget and report an inexact solve</span>
+            </label>
+          </div>
+          <button id="batchProposeButton" class="secondary wide" type="button" data-i18n="batch.propose">Propose batch ΔW</button>
+          <p class="hint" data-i18n="batch.hint">Use one activation row per prompt. Leave the budget blank to solve without clamping, or set a cap to exercise the explicit inexact path.</p>
+        </details>
+
         <div class="button-grid">
           <button id="proposeButton" class="primary" type="button" data-i18n="contract.propose">Propose ΔW</button>
           <button id="applyButton" class="secondary" type="button" disabled data-i18n="contract.apply">Apply edit</button>
@@ -231,6 +292,36 @@ Two plus two equals</textarea>
           <span class="mono tiny" data-i18n="evidence.missing">a missing metric fails</span>
         </div>
         <div id="gateCard" class="evidence-card empty-state" data-i18n="evidence.gateEmpty">Capture a baseline and evaluate an applied edit to produce evidence.</div>
+
+        <details id="wspPanel" class="wsp-panel">
+          <summary data-i18n="wsp.title">WSP acceptance</summary>
+          <label class="field full"><span data-i18n="wsp.report">WSP report JSON</span>
+            <textarea id="wspReport" rows="5" spellcheck="false" data-i18n-placeholder="wsp.reportPlaceholder" placeholder='{"base":{}, "candidate":{}, "controls":{}, "headroom":{}}'></textarea>
+          </label>
+          <button id="wspAuditButton" class="secondary wide" type="button" data-i18n="wsp.audit">Audit WSP</button>
+          <div class="input-row">
+            <input id="wspHeadroom" type="number" step="0.001" data-i18n-placeholder="wsp.headroomPlaceholder" placeholder="headroom accuracy (optional)">
+            <button id="wspSessionButton" class="ghost" type="button" data-i18n="wsp.session">Assess session</button>
+          </div>
+          <button id="wspSessionSaveButton" class="ghost wide" type="button" data-i18n="wsp.sessionSave">Assess session &amp; save evidence</button>
+          <div class="input-row">
+            <input id="wspSavePath" data-i18n-placeholder="wsp.savePathPlaceholder" placeholder="./wsp-evidence" spellcheck="false">
+            <button id="wspSaveButton" class="ghost" type="button" data-i18n="wsp.save">Save evidence</button>
+          </div>
+          <div id="wspEvidence" class="tiny mono"></div>
+          <div class="input-row">
+            <input id="openwspOut" data-i18n-placeholder="wsp.openwspPlaceholder" placeholder="./openwsp-edit" spellcheck="false">
+            <button id="openwspExportButton" class="ghost" type="button" data-i18n="wsp.exportOpenwsp">Export OpenWSP</button>
+          </div>
+          <div id="openwspBinding" class="tiny mono"></div>
+          <div class="input-row binding-row">
+            <input id="bindingEdit" data-i18n-placeholder="wsp.bindingEditPlaceholder" placeholder="./openwsp-edit" spellcheck="false">
+            <input id="bindingEvidence" data-i18n-placeholder="wsp.bindingEvidencePlaceholder" placeholder="./wsp-evidence" spellcheck="false">
+            <button id="bindingVerifyButton" class="ghost" type="button" data-i18n="wsp.bindingVerify">Verify binding</button>
+          </div>
+          <div id="bindingCard" class="evidence-card empty-state" data-i18n="wsp.bindingEmpty">Verify an OpenWSP edit against its WSP evidence bundle.</div>
+          <div id="wspCard" class="evidence-card empty-state" data-i18n="wsp.empty">Paste a WSP report and run the control/headroom audit.</div>
+        </details>
 
         <div class="subhead">
           <h3 data-i18n="evidence.session">Session state</h3>
@@ -286,7 +377,7 @@ Two plus two equals</textarea>
       <button id="guideCloseX" class="guide-close" type="button" aria-label="Close guide" data-i18n-aria-label="guide.closeLabel">×</button>
       <p class="eyebrow" data-i18n="guide.eyebrow">MACHAON IN 60 SECONDS</p>
       <h2 id="guideTitle" data-i18n="guide.title">What this workbench does</h2>
-      <p class="guide-intro" data-i18n="guide.intro">Machaon edits a small part of a model checkpoint directly.</p>
+      <p class="guide-intro" data-i18n-html="guide.intro">Machaon edits a small part of a model checkpoint directly.</p>
       <div class="guide-flow">
         <h3 data-i18n="guide.flowTitle">The loop</h3>
         <p class="mono" data-i18n="guide.flow">Inspect → Open session → Baseline → Propose → Apply → Evaluate → Save / Rollback</p>

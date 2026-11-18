@@ -75,8 +75,12 @@ class TestRegistration(unittest.TestCase):
             server = build_server()
         expected = {
             "describe_checkpoint", "list_tensors", "audit_edit", "apply_delta",
-            "gate", "open_model", "model_status", "capture_baseline",
-            "propose_edit", "apply_edit", "evaluate", "rollback",
+            "gate", "wsp_audit", "wsp_save", "verify_binding", "plan_surgery",
+            "diagnose_failure", "parse_intent",
+            "open_model", "model_status", "capture_baseline",
+            "propose_edit", "propose_batch", "propose_action", "apply_edit",
+            "evaluate", "assess_wsp", "assess_generation_wsp",
+            "search_rome_layers", "teach", "rollback",
         }
         self.assertEqual(set(server.tools), expected)
 
@@ -91,6 +95,26 @@ class TestRegistration(unittest.TestCase):
             server = build_server()
         for name in ("model_status", "apply_edit", "rollback"):
             self.assertIn("no model is open", server.tools[name]()["error"], msg=name)
+        refusal = server.tools["propose_action"](
+            "def edit(W):\n    return 0.001 * W\n", "test", 0
+        )
+        self.assertIn("no model is open", refusal["error"])
+        refusal = server.tools["assess_generation_wsp"](["p"], ["a"])
+        self.assertIn("no model is open", refusal["error"])
+        refusal = server.tools["search_rome_layers"]("p", "a", [0, 1])
+        self.assertIn("no model is open", refusal["error"])
+        refusal = server.tools["teach"]("The capital is -> Paris")
+        self.assertIn("no model is open", refusal["error"])
+
+    def test_parse_intent_delegates(self):
+        with FakeMCPModules():
+            server = build_server()
+        payload = server.tools["parse_intent"](
+            "教会模型：北京的首都是 → 北京"
+        )
+        self.assertEqual(payload["kind"], "teach")
+        self.assertEqual(payload["prompt"], "北京的首都是")
+        self.assertEqual(payload["answer"], "北京")
 
 
 @requires_torch
@@ -125,6 +149,28 @@ class TestDelegation(unittest.TestCase):
         with FakeMCPModules():
             server = build_server()
         self.assertFalse(server.tools["gate"]({})["passed"])
+
+    def test_plan_delegates(self):
+        with FakeMCPModules():
+            server = build_server()
+        plan = server.tools["plan_surgery"](
+            "obstruction", layer_scores={2: 0.4}
+        )
+        self.assertEqual(plan["route"], "edit")
+        self.assertEqual(plan["layer"], 2)
+
+    def test_diagnose_delegates(self):
+        with FakeMCPModules():
+            server = build_server()
+        diagnosis = server.tools["diagnose_failure"](
+            {"accuracy": 0.2},
+            headroom={"accuracy": 0.9},
+            mechanism={
+                "base": {"loop_rate": 0.9},
+                "headroom": {"loop_rate": 0.3},
+            },
+        )
+        self.assertEqual(diagnosis["failure_type"], "obstruction")
 
 
 if __name__ == "__main__":

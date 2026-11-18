@@ -1,6 +1,68 @@
 # Quickstart
 
-Five minutes, no download. Every command here runs offline.
+Five minutes. The first two steps run offline; the teaching step uses a local
+checkpoint.
+
+## 0 · Teach in one sentence
+
+The shortest path from a checkpoint to a verified edit is one command:
+
+Get the 0.5B checkpoint once (about 1 GB, with mirror fallback):
+
+```bash
+machaon fetch --starter qwen05b --dest ./models/Qwen2.5-0.5B
+machaon fetch --list          # smol135m / qwen05b / gpt2
+```
+
+The downloader uses the standard library only, validates every safetensors
+header, and resumes existing files.
+
+```bash
+machaon start
+machaon intent "The Eiffel Tower is in the city of -> Rome"
+
+machaon teach --model ./models/Qwen2.5-0.5B \
+  --say "The Eiffel Tower is in the city of -> Rome"
+```
+
+`intent` compiles the sentence into the exact `prompt` and `answer` without
+loading a model. `teach` then:
+
+1. checks whether the model already returns the answer;
+2. captures an unrelated baseline panel and projects the edit away from it;
+3. tries a depth window of layers, applying and rolling back each candidate;
+4. re-solves the best layer and applies it inside the budget;
+5. measures the target token, top-1 preservation and KL; and
+6. keeps the edit only when every required check passes. A failed check
+   restores the original bytes.
+
+The default output is a sibling directory named `<checkpoint>-machaon`, so the
+source checkpoint stays untouched. Use `--dry-run` to search without writing,
+`--no-save` to keep the edit in memory, and `--layers 8,10,12` when you already
+know the site.
+
+Supported sentence forms include:
+
+```text
+The Eiffel Tower is in the city of -> Rome
+prompt: The Eiffel Tower is in the city of
+answer:  Rome
+when asked "The Eiffel Tower is in the city of", answer " Rome"
+教会模型：北京的首都是 → 北京
+当问到「北京的首都是」时，回答「北京」
+```
+
+The arrow and labelled forms are exact. Plain sentences are also accepted and
+are marked medium confidence because the split point is an assumption. The
+local checks speak about the target and the declared panel; a benchmark-level
+claim still needs the full gate report.
+
+Teaching pins the **first token** of the answer. A multi-token answer is
+reported as a warning; the rest of the continuation is a benchmark question,
+not a guarantee of this local check.
+
+Use the manual steps below when you want to choose the matrix, the key and the
+protected set yourself.
 
 ## 1 · Run the demo
 

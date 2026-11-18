@@ -6,10 +6,12 @@ ship. Every completed item has a test or a measured run behind it.
 ## Shipped
 
 - [x] Linear-algebra primitives with derivable invariants
+- [x] Executable edit DSL: validated specs dispatch to the same pure primitives
 - [x] Transactional apply with bit-exact rollback
 - [x] Content-addressed delta store with verified reads
 - [x] Fail-closed gates, KL quantiles, bootstrap intervals
 - [x] OpenWSP v1 edit format, byte-identical, conformance-tested
+- [x] Low-rank OpenWSP export with sparse bf16 correction entries
 - [x] safetensors adapter: single file, directory, sharded index
 - [x] HF runtime: architecture-independent layer discovery, orientation
       normalisation, padding-correct scoring
@@ -21,8 +23,35 @@ ship. Every completed item has a test or a measured run behind it.
 - [x] Llama-3.1-8B at both int8 and int4
 - [x] Memory-efficient gradient solver (`densify_from`)
 - [x] Six architecture families tested from configs
-- [x] MCP server: five file-level tools and seven model-level tools, tested
+- [x] MCP server: six file-level tools and eleven model-level tools, tested
       over real stdio in CI
+- [x] WSP acceptance protocol: matched random controls, repair-vs-acquisition
+      classification, CLI and MCP audit
+- [x] Reusable headroom evaluators for generation and first-token metrics
+- [x] Mechanism evidence: loop, empty-output and token-limit gates with exact
+      generation stop traces and matched controls
+- [x] Session and MCP generation assessment that runs candidate/base/control
+      generation together and enforces the mechanism gate
+- [x] Labelled obstruction-vs-capability benchmark harness with explicit
+      synthetic fixtures and a confusion-matrix summary
+- [x] Evidence-driven planning: edit / diagnose / do-not-edit routes, layer
+      ranking from causal-patching scores, and no guessed edit site
+- [x] Live layer-selection search: apply, evaluate and roll back each candidate
+      through the session contract, keeping per-trial evidence
+- [x] One-sentence intent compiler and one-call teaching recipe: automatic
+      baseline, depth-window search, target/panel/KL checks and bit-exact
+      rollback
+- [x] Agent-callable ROME layer search over MCP with automatic rollback
+- [x] Conservative automatic diagnosis: target headroom plus mechanism relief
+      for obstruction; low headroom without relief for capability gap
+- [x] Measured/synthetic provenance gate for WSP benchmark cases
+- [x] Unit symmetry alignment for permutation and positive-scaling changes
+- [x] Permutation-aware linear MLP merge after alignment
+- [x] Probe-based functional verification of aligned MLP units
+- [x] Task-vector extraction and signed, budgeted combinations
+- [x] Deterministic weight fingerprints and sparse edit-diff reports
+- [x] Measured threshold-classifier reference case for provenance-gate smoke
+- [x] Content-addressed WSP evidence bundles with tamper verification
 - [x] Local browser console over FastAPI/SSE: token auth, path allowlist,
       checkpoint inspection, session editing, evidence and rollback
 - [x] Documentation site in English, Chinese, Japanese and Korean, deployed to
@@ -31,10 +60,12 @@ ship. Every completed item has a test or a measured run behind it.
 
 ## Now
 
-- [ ] **MEMIT-style batch solving.** Many facts, one constraint system, one
-      budget. The single-edit path is the building block.
-- [ ] **L1 action space: sandboxed Python edit functions.** A declared function
-      over tensors, executed with the same transaction and gate contract.
+- [x] **MEMIT-style batch solving.** Many facts, one constraint system, one
+      budget; exact, protected and clamped outcomes are reported explicitly.
+- [x] **L1 action space: constrained Python edit functions.** A declared
+      `def edit(W): ...` over one selected tensor runs in a resource-capped
+      worker under an AST allowlist, then passes the same budget and
+      protected-key contract before session apply / rollback.
 - [ ] **More measured rungs.** A 13B/14B checkpoint path and a reproducible
       memory/throughput table.
 - [ ] **Deeper long-form suite.** Multi-turn prompts, entity consistency and
@@ -42,8 +73,7 @@ ship. Every completed item has a test or a measured run behind it.
 
 ## Next
 
-- [ ] Layer-selection search driven by the evaluation harness
-- [ ] Sparse and structured edit forms in the OpenWSP writer
+- [ ] Larger measured benchmark coverage for the obstruction-vs-capability harness
 - [ ] A public leaderboard of reproducible edit runs
 - [ ] Native Apple Silicon and CUDA benchmark matrix
 

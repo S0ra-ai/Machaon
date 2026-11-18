@@ -21,6 +21,15 @@ Machaon は互いをほとんど知らない 3 層です。
 └───────────────┘     └───────────────────┘   └───────────────────┘
 ```
 
+## 人間向けの層
+
+`machaon.intent` は小さく明示的な言語を正確な `(prompt, answer)` に
+コンパイルします。`machaon.recipes.teach_fact` はプリミティブの上のループです：
+無関係なベースライン panel を取得し、`Session.search_rome_layers` で候補層を
+検索し、各 trial を panel の零空間へ投影し、最良の候補を適用し、目標・panel・KL
+を確認し、失敗時にロールバックします。CLI、MCP の `teach` ツール、Web の
+**ONE SENTENCE** 欄はすべてこの 1 関数を呼び、契約を再実装しません。
+
 ## 2 つの契約
 
 **Runtime。** `next_logits(items) -> (n, vocab)` と `nll(items) -> (n,)`。これがモデル向け表面のすべてです。`HFModel` が Hugging Face causal LM 上に実装し、テストバックエンドは 4 行で実装できます。

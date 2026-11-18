@@ -61,9 +61,16 @@
 
 둘 다 `machaon.hygieia` 게이트 설계의 내력벽입니다.
 
-## 빈틈
+## Machaon이 메우는 빈틈
 
 1. agent가 조작할 수 있는 편집 행동 공간이 없고 기존은 Python API나 스크립트.
 2. 스냅샷·검증·롤백을 맡는 트랜잭션 계층이 없음.
 3. 평가가 일등 시민이 아님.
 4. LLM이 **수술을 계획**하는 시스템이 없음: 진단 → 부위 선택 → 제약 선언 → 폐형식 solver로 전달.
+
+`machaon.action`이 제약된 L1 액션을 제공하고,
+`Session.propose_action`이 기존 트랜잭션, 예산, 롤백 경로에 연결합니다.
+`machaon.planning`은 실패/부위 증거를 edit / diagnose / do-not-edit로 바꿉니다.
+`Session.search_layers`가 실시간 apply / evaluate / rollback 탐색을 추가합니다.
+`diagnose_failure`가 헤드룸 증거를 보수적 실패 분류로 바꿉니다.
+남은 빈틈은 더 큰 실측 benchmark 범위와 독립 재현입니다.

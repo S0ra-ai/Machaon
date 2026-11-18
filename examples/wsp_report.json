@@ -1,0 +1,59 @@
+{
+  "base": {
+    "rewrite_acc": 0.20
+  },
+  "candidate": {
+    "rewrite_acc": 0.96,
+    "paraphrase_acc": 0.80,
+    "unrelated_acc": 1.00,
+    "kl_p95": 0.01,
+    "kl_max": 0.10,
+    "mmlu_delta": 0.00,
+    "ppl_ratio": 1.00,
+    "longform_contradictions": 0
+  },
+  "controls": {
+    "random_same_support": {
+      "rewrite_acc": 0.20
+    }
+  },
+  "headroom": {
+    "name": "thinking_off",
+    "rewrite_acc": 0.94
+  },
+  "mechanism": {
+    "base": {
+      "loop_rate": 0.90,
+      "truncation_rate": 0.90
+    },
+    "candidate": {
+      "loop_rate": 0.30,
+      "truncation_rate": 0.33
+    },
+    "controls": {
+      "random_same_support": {
+        "loop_rate": 0.85,
+        "truncation_rate": 0.86
+      }
+    },
+    "headroom": {
+      "loop_rate": 0.30,
+      "truncation_rate": 0.33
+    },
+    "protocol": {
+      "metrics": ["loop_rate", "truncation_rate"],
+      "directions": {
+        "loop_rate": "lower",
+        "truncation_rate": "lower"
+      },
+      "min_improvement": 0.05,
+      "control_margin": 0.05
+    }
+  },
+  "protocol": {
+    "target_metric": "rewrite_acc",
+    "min_gain": 0.05,
+    "control_margin": 0.05,
+    "headroom_margin": 0.05
+  }
+}

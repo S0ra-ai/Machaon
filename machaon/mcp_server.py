@@ -80,6 +80,61 @@ def create_server():
         """Apply the acceptance gates. Missing metrics are failures."""
         return tools.gate_metrics(metrics)
 
+    @server.tool()
+    def wsp_audit(report: Dict[str, Any]) -> Dict[str, Any]:
+        """Classify a WSP report as repair, acquisition or non-specific."""
+        return tools.wsp_audit(report)
+
+    @server.tool()
+    def wsp_save(report: Dict[str, Any], out_dir: str,
+                 metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Write a content-addressed WSP evidence bundle."""
+        return tools.save_wsp_evidence(out_dir, report, metadata)
+
+    @server.tool()
+    def verify_binding(edit_dir: str, evidence_dir: str) -> Dict[str, Any]:
+        """Verify an OpenWSP edit and WSP evidence bundle are bound together."""
+        return tools.verify_wsp_binding(edit_dir, evidence_dir)
+
+    @server.tool()
+    def plan_surgery(failure_type: str,
+                     layer_scores: Optional[Dict[str, float]] = None,
+                     patch_report: Optional[Dict[str, Any]] = None,
+                     module_suffix: str = "mlp.down_proj",
+                     max_rel_norm: float = 0.02,
+                     min_score: float = 0.0) -> Dict[str, Any]:
+        """Choose edit, diagnose or do-not-edit from failure and site evidence."""
+        return tools.plan_surgery(
+            failure_type,
+            layer_scores=layer_scores,
+            patch_report=patch_report,
+            module_suffix=module_suffix,
+            max_rel_norm=max_rel_norm,
+            min_score=min_score,
+        )
+
+    @server.tool()
+    def diagnose_failure(base: Dict[str, Any],
+                         headroom: Optional[Dict[str, Any]] = None,
+                         mechanism: Optional[Dict[str, Any]] = None,
+                         target_metric: str = "accuracy",
+                         min_target_gap: float = 0.05,
+                         min_mechanism_gap: float = 0.05) -> Dict[str, Any]:
+        """Classify obstruction vs capability gap without editing weights."""
+        return tools.diagnose_failure(
+            base,
+            headroom=headroom,
+            mechanism=mechanism,
+            target_metric=target_metric,
+            min_target_gap=min_target_gap,
+            min_mechanism_gap=min_mechanism_gap,
+        )
+
+    @server.tool()
+    def parse_intent(sentence: str) -> Dict[str, Any]:
+        """Compile a plain-language teaching request into an exact contract."""
+        return tools.parse_intent(sentence)
+
     # -- model-level: one loaded session --------------------------------
 
     @server.tool()
@@ -120,6 +175,51 @@ def create_server():
         return current().propose(prompt, target, layer, **kwargs)
 
     @server.tool()
+    def propose_batch(prompts: List[str], values: List[List[float]],
+                      layer: int, preserve_prompts: List[str] = (),
+                      max_rel_norm: Optional[float] = None,
+                      clamp: bool = True, ridge: float = 0.0) -> Dict[str, Any]:
+        """Solve many prompt/activation rows into one batch proposal."""
+        if current() is None:
+            return NO_MODEL
+        return current().propose_batch(
+            prompts, values, layer,
+            preserve_prompts=preserve_prompts,
+            max_rel_norm=max_rel_norm,
+            clamp=clamp,
+            ridge=ridge,
+        )
+
+    @server.tool()
+    def propose_action(source: str, intent: str, layer: int,
+                       module_suffix: str = "mlp.down_proj",
+                       keys: Optional[List[List[float]]] = None,
+                       values: Optional[List[List[float]]] = None,
+                       preserve: Optional[List[List[float]]] = None,
+                       preserve_prompts: List[str] = (),
+                       max_rel_norm: Optional[float] = None,
+                       timeout_seconds: float = 10.0) -> Dict[str, Any]:
+        """Compile a constrained ``def edit(W): ...`` action into a pending delta.
+
+        The source may use W, keys, values, preserve, max_rel_norm and the
+        documented pure array helpers. Imports, filesystem access, loops,
+        dunder attributes and arbitrary calls are rejected before execution.
+        """
+        if current() is None:
+            return NO_MODEL
+        kwargs: Dict[str, Any] = {
+            "module_suffix": module_suffix,
+            "keys": keys,
+            "values": values,
+            "preserve": preserve,
+            "preserve_prompts": preserve_prompts,
+            "timeout_seconds": timeout_seconds,
+        }
+        if max_rel_norm is not None:
+            kwargs["max_rel_norm"] = max_rel_norm
+        return current().propose_action(source, intent, layer, **kwargs)
+
+    @server.tool()
     def apply_edit() -> Dict[str, Any]:
         """Write the pending proposal, charging the budget atomically."""
         if current() is None:
@@ -132,6 +232,95 @@ def create_server():
         if current() is None:
             return NO_MODEL
         return current().evaluate(prompts, targets)
+
+    @server.tool()
+    def assess_wsp(prompts: List[str], targets: List[str],
+                   headroom: Optional[Dict[str, float]] = None,
+                   mechanism: Optional[Dict[str, Any]] = None,
+                   seed: int = 0) -> Dict[str, Any]:
+        """Evaluate the current edit plus a matched control and classify it."""
+        if current() is None:
+            return NO_MODEL
+        return current().assess_wsp(
+            prompts, targets, headroom=headroom, mechanism=mechanism, seed=seed
+        )
+
+    @server.tool()
+    def assess_generation_wsp(prompts: List[str], expected: List[str],
+                              max_new_tokens: int = 128,
+                              headroom_max_new_tokens: Optional[int] = None,
+                              match: str = "exact",
+                              seed: int = 0) -> Dict[str, Any]:
+        """Evaluate generation WSP with target, mechanism and matched-control evidence."""
+        if current() is None:
+            return NO_MODEL
+        from .headroom import DecodingConfig
+
+        headroom = (
+            DecodingConfig(max_new_tokens=headroom_max_new_tokens)
+            if headroom_max_new_tokens is not None else None
+        )
+        return current().assess_generation_wsp(
+            prompts,
+            expected,
+            config=DecodingConfig(max_new_tokens=max_new_tokens),
+            headroom_config=headroom,
+            match=match,
+            seed=seed,
+        )
+
+    @server.tool()
+    def search_rome_layers(prompt: str, target: str, layers: List[int],
+                           solver: str = "direction", max_rel_norm: Optional[float] = None,
+                           metric: str = "accuracy",
+                           max_evaluations: Optional[int] = None) -> Dict[str, Any]:
+        """Try ROME proposals at each layer, then evaluate and roll back."""
+        if current() is None:
+            return NO_MODEL
+        return current().search_rome_layers(
+            prompt,
+            target,
+            layers,
+            solver=solver,
+            max_rel_norm=max_rel_norm,
+            metric=metric,
+            max_evaluations=max_evaluations,
+        )
+
+    @server.tool()
+    def teach(sentence: Optional[str] = None,
+              prompt: Optional[str] = None,
+              answer: Optional[str] = None,
+              layers: Optional[List[int]] = None,
+              solver: str = "direction",
+              max_rel_norm: float = 0.02,
+              dry_run: bool = False) -> Dict[str, Any]:
+        """Run the full teaching recipe: search, apply, verify, or roll back.
+
+        The recipe chooses a depth window when ``layers`` is omitted, applies
+        at most one tensor edit, and keeps it only when the target, budget,
+        panel and KL checks pass.  Use ``rollback`` to undo an applied edit.
+        """
+        if current() is None:
+            return NO_MODEL
+        from .intent import parse_intent as compile_intent
+        from .recipes import TeachPolicy, teach_fact
+
+        if sentence:
+            intent = compile_intent(sentence)
+            prompt, answer = intent.prompt, intent.answer
+        if not prompt or answer is None or answer == "":
+            return {"error": "teach needs a sentence, or both prompt and answer"}
+        result = teach_fact(
+            current(),
+            prompt,
+            answer,
+            layers=layers,
+            policy=TeachPolicy(max_rel_norm=max_rel_norm),
+            solver=solver,
+            dry_run=dry_run,
+        )
+        return result.to_dict()
 
     @server.tool()
     def rollback() -> Dict[str, Any]:

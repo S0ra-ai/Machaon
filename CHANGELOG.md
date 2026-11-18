@@ -4,6 +4,119 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `machaon.intent`: a deterministic English/Chinese compiler from plain-language
+  teaching requests (`->`, labelled blocks, "when asked ...", and sentence
+  forms) into an exact, reviewable prompt/answer contract. Unstructured text is
+  refused with examples instead of guessed.
+- `machaon.recipes.teach_fact`: the one-call teaching loop. It checks whether
+  the model already answers, captures an unrelated baseline panel, searches a
+  depth window of edit sites, projects each candidate away from the panel,
+  applies the best one, and keeps it only when target, budget, panel and KL
+  checks pass. Rejected edits are rolled back before return.
+- `machaon teach`: one command from a checkpoint and a sentence to a verified
+  edited checkpoint, with `--dry-run`, explicit layers, WSP evidence export,
+  OpenWSP export and a full JSON report.
+- `HFModel.stored_values` and `Checkpoint.resolve`: a saved checkpoint uses the
+  stored orientation and accepts a runtime tensor name whose module prefix
+  differs, so GPT-2-style `Conv1D` checkpoints round-trip through teaching.
+- Checkpoint writes now copy config and tokenizer files next to the weights and
+  remove a partial output when a write fails, so the edited directory loads and
+  a failed save leaves no half-checkpoint.
+- `machaon intent`: compile and inspect the contract without loading a model.
+- `machaon start`: the shortest path to a first edit, with installed-runtime
+  diagnostics.
+- MCP `parse_intent` and `teach` tools. The server now exposes 24 tools.
+- The Web console's **ONE SENTENCE** box, with `/api/teach/preview` and
+  `/api/teach`; it previews the parse and runs the same teaching recipe,
+  optionally writing the accepted checkpoint.
+- Four-language quickstart, CLI, API, MCP, Web and roadmap coverage for the
+  intent/teaching layer.
+- `machaon.executor`: one explicit dispatcher for the declarative edit DSL,
+  with operand validation, solver refusal, and declared-budget enforcement.
+- `machaon.wsp`: WSP acceptance protocol with deterministic same-support,
+  same-norm random controls, headroom comparison, and repair-vs-acquisition
+  classification.
+- `machaon.headroom`: reusable generation and first-token evaluators, including
+  a serialisable `DecodingConfig` for sampled / longer-budget baselines.
+- `machaon.evidence`: canonical WSP evidence bundles with SHA-256 verification,
+  plus `wsp --save` and `wsp-verify` CLI steps.
+- `machaon.batch`: least-squares batch edits for many key/value pairs with one
+  delta, optional protected-key projection and explicit clamp reporting.
+- `machaon.action`: the L1 constrained Python action space. A declared
+  `def edit(W): ...` is AST-checked, run in a resource-capped worker process,
+  then rejected or admitted by the same shape, budget and protected-key checks.
+- `Session.propose_action` and MCP `propose_action` put a validated action on
+  the existing pending / apply / rollback path without writing before approval.
+- `machaon.mechanism`: loop, empty-output and token-limit metrics, exact
+  generation stop traces from `HFModel.generate_records`, and a matched-control
+  obstruction gate.
+- WSP accepts an optional mechanism payload. When supplied, a target gain is
+  rejected unless the configured mechanism metrics improve over the base and
+  beat the matched control.
+- `Session.assess_generation_wsp` and MCP `assess_generation_wsp` evaluate
+  candidate, base, random control and optional headroom on a generation task,
+  then attach the resulting mechanism gate and restore the candidate state.
+- `machaon.cli wsp-bench` and `machaon.bench.wsp`: labelled
+  obstruction-vs-capability benchmark harness with per-case evidence and a
+  summary confusion matrix.
+- `machaon.planning` and `machaon plan`: evidence-driven edit planning with
+  explicit `edit`, `diagnose` and `do_not_edit` routes, plus causal-patching
+  site-score ingestion.
+- `search_layers` and `Session.search_layers`: live apply/evaluate/rollback
+  search over candidate layers, with per-trial evidence and fail-closed cleanup.
+- `Session.search_rome_layers` and MCP `search_rome_layers`: an agent-callable
+  ROME site search that solves, evaluates and rolls back each candidate layer.
+- `diagnose_failure` and `machaon diagnose`: conservative obstruction vs
+  capability-gap classification from target and mechanism headroom, plus an
+  optional combined diagnosis-and-plan result.
+- WSP benchmark cases now carry an explicit `source_kind`; measured cases
+  require checkpoint/dataset hashes, timestamp, seed and evaluation script.
+  `wsp-bench --require-measured` refuses synthetic fixtures.
+- OpenWSP export now supports `form="lowrank"` with float32 factors and sparse
+  bf16 correction entries, while preserving existing sparse byte identity.
+- `machaon.symmetry`: NumPy-only row/column permutation alignment, positive
+  scaling matching, and consistent hidden-unit alignment across an MLP pair.
+- `merge_mlp_aligned`: permutation-aware linear interpolation for the two
+  matrices around an MLP hidden layer.
+- `mlp_outputs` and `functional_alignment_check`: probe-based functional
+  verification of hidden-unit alignment.
+- `machaon.task_arithmetic`: task-vector extraction and signed coefficient
+  combination with explicit relative-norm budget and clamp reporting.
+- `machaon.fingerprint`: deterministic tensor/model fingerprints and sparse
+  before/after diff reports for audit logs and edit detection.
+- A measured threshold-classifier reference case generated by
+  `scripts/make_wsp_reference_case.py`, used to test the measured provenance
+  gate end to end without claiming LLM evidence.
+- The Web console now exposes the batch proposal path, including exact/clamped
+  state, target/rank evidence and a collapsible per-key error table.
+- The Web console now exposes the WSP audit path with label, reason, control
+  gap and headroom gap evidence.
+- `wsp_save` / `/api/wsp/save` and a Web **Save evidence** action persist the
+  audit report as a content-addressed bundle.
+- `/api/wsp/session` and the Web **Assess session** action build the WSP report
+  from the current session's candidate, base and random control.
+- `/api/wsp/session_evidence` and the Web **Assess session & save evidence**
+  action combine the session assessment and content-addressed evidence write.
+- `Session.export_openwsp` and `/api/session/export_openwsp` export applied
+  deltas in OpenWSP v1 and optionally bind `evidence_sha256` in the manifest.
+- `machaon.binding`, `machaon binding` and MCP `verify_binding` verify the edit
+  address, payload address and evidence binding as one fail-closed check.
+- `/api/binding/verify` and the Web **Verify binding** action expose the same
+  edit ↔ evidence check in the browser console.
+- `machaon wsp` CLI command and `wsp_audit` MCP tool, both fail-closed on
+  missing gates.
+- `examples/wsp_report.json`: a zero-download example of a gate-passing
+  `repair` decision.
+
+### Changed
+
+- Evaluation docs now distinguish `repair`, `acquisition`, `non_specific`,
+  `no_effect`, `regression`, `unclassified` and `inconclusive`.
+
 ## [0.4.3] - 2026-11-08
 
 ### Added

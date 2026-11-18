@@ -21,6 +21,14 @@ Machaon 是三层几乎互不认识的系统。
 └───────────────┘     └───────────────────┘   └───────────────────┘
 ```
 
+## 人的接口层
+
+`machaon.intent` 把一套小而明确的语言编译成精确的 `(prompt, answer)`。
+`machaon.recipes.teach_fact` 是原语之上的闭环：捕获无关基线面板，通过
+`Session.search_rome_layers` 搜索候选层，把每次试验投影到面板的零空间，应用
+最佳候选，检查目标、面板与 KL，失败时回滚。CLI、MCP `teach` 工具和 Web 的
+**ONE SENTENCE**（一句话）入口都调用同一个函数，不重复实现合同。
+
 ## 两个契约
 
 **Runtime。** `next_logits(items) -> (n, vocab)` 和 `nll(items) -> (n,)`。这就是整个面向模型的表面。`HFModel` 在 Hugging Face causal LM 上实现它；测试后端四行就能实现。

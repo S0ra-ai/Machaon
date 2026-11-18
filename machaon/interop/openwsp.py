@@ -106,12 +106,21 @@ def export_edit(
     *,
     base_model: str | None = None,
     revision: str | None = None,
+    machaon_metadata: Mapping[str, Any] | None = None,
+    form: str = "sparse",
+    rank: int | None = None,
 ) -> Dict[str, Any]:
-    """Write a sparse v1 diff against the bf16-rounded base.
+    """Write a sparse or low-rank v1 diff against the bf16-rounded base.
 
     Only tensors whose bf16 bits actually differ are recorded.  Entries that
-    round back to the base value are absent from the diff by construction.
+    round back to the base value are absent from the diff by construction.  A
+    low-rank tensor stores two float32 factors plus sparse bf16 correction
+    entries, so the reconstructed payload remains bit-identical to ``edited``.
     """
+    if form not in ("sparse", "lowrank"):
+        raise EditError("form must be 'sparse' or 'lowrank'")
+    if form == "lowrank" and (rank is None or int(rank) < 1):
+        raise EditError("lowrank export requires a positive rank")
     arrays: Dict[str, np.ndarray] = {}
     tensors = []
 
@@ -125,18 +134,41 @@ def export_edit(
         changed = bf16_bits(edited[name])
         if base.shape != changed.shape:
             raise EditError("shape mismatch: %s" % name)
-        indices = np.flatnonzero(base.reshape(-1) != changed.reshape(-1))
-        if not len(indices):
-            continue
         if base.size > np.iinfo(np.int32).max:
             raise EditError("tensor too large for int32 indices: %s" % name)
 
-        i = len(tensors)
-        arrays["t%d_idx" % i] = indices.astype("<i4")
-        arrays["t%d_val" % i] = changed.reshape(-1)[indices].astype("<u2")
-
         b = bits_float32(base).astype(np.float64)
         e = bits_float32(changed).astype(np.float64)
+        dense_indices = np.flatnonzero(base.reshape(-1) != changed.reshape(-1))
+        if not len(dense_indices):
+            continue
+        i = len(tensors)
+        if form == "sparse":
+            indices = dense_indices
+            entry_form = "sparse"
+        else:
+            if base.ndim != 2:
+                raise EditError("lowrank export needs 2-D tensors: %s" % name)
+            limit = min(base.shape)
+            chosen = int(rank)
+            if chosen > limit:
+                raise EditError(
+                    "rank %d exceeds matrix rank limit %d for %s"
+                    % (chosen, limit, name)
+                )
+            u, s, vt = np.linalg.svd(e - b, full_matrices=False)
+            a_factor = (u[:, :chosen] * s[:chosen]).astype(np.float32)
+            b_factor = vt[:chosen].astype(np.float32)
+            reconstructed = b + a_factor.astype(np.float64) @ b_factor.astype(np.float64)
+            rebuilt_bits = bf16_bits(reconstructed).reshape(-1)
+            indices = np.flatnonzero(rebuilt_bits != changed.reshape(-1))
+            arrays["t%d_a" % i] = a_factor
+            arrays["t%d_b" % i] = b_factor
+            entry_form = "lowrank"
+
+        arrays["t%d_idx" % i] = np.ascontiguousarray(indices, dtype="<i4")
+        arrays["t%d_val" % i] = changed.reshape(-1)[indices].astype("<u2")
+
         norm = float(np.linalg.norm(b))
         delta = float(np.linalg.norm(e - b))
 
@@ -144,15 +176,18 @@ def export_edit(
             "name": name,
             "shape": list(base.shape),
             "dtype": "bfloat16",
-            "form": "sparse",
-            "changed_entries": int(len(indices)),
+            "form": entry_form,
+            "changed_entries": int(len(dense_indices)),
             "base_sha256": hashlib.sha256(np.ascontiguousarray(base).tobytes()).hexdigest(),
             "edited_sha256": hashlib.sha256(np.ascontiguousarray(changed).tobytes()).hexdigest(),
             "submitted_file": name + ".npy",
             "relative_change": (delta / norm) if norm else None,
         }
+        if entry_form == "lowrank":
+            entry["rank"] = int(rank)
+            entry["sparse_corrections"] = int(len(indices))
         if base.ndim == 2:
-            rows, columns = np.unravel_index(indices, base.shape)
+            rows, columns = np.unravel_index(dense_indices, base.shape)
             entry["changed_rows"] = int(len(np.unique(rows)))
             entry["changed_columns"] = int(len(np.unique(columns)))
         tensors.append(entry)
@@ -169,6 +204,14 @@ def export_edit(
         manifest["base_model"] = base_model
     if revision is not None:
         manifest["base_revision"] = revision
+    if machaon_metadata is not None:
+        if not isinstance(machaon_metadata, Mapping):
+            raise EditError("machaon_metadata must be an object")
+        try:
+            _canonical(dict(machaon_metadata))
+        except (TypeError, ValueError) as exc:
+            raise EditError("machaon_metadata is not JSON-serialisable: %s" % exc) from exc
+        manifest["machaon"] = dict(machaon_metadata)
     manifest["edit_sha256"] = edit_sha256(manifest)
 
     target = Path(path)
@@ -301,6 +344,8 @@ def read_edit(
                 or not np.isfinite(b).all()
             ):
                 raise EditError("invalid low-rank factors: %s" % name)
+            if record.get("rank") != a.shape[1]:
+                raise EditError("low-rank rank mismatch: %s" % name)
             weights = bits_float32(base).astype(np.float64)
             for rank in range(a.shape[1]):
                 weights = weights + np.outer(a[:, rank], b[rank])

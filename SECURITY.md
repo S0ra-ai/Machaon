@@ -4,8 +4,8 @@
 
 | version | supported |
 |---|---|
-| `0.3.x` | yes |
-| older | upgrade to `0.3.x` |
+| `0.4.x` | yes |
+| older | upgrade to `0.4.x` |
 
 ## Reporting
 
@@ -22,6 +22,8 @@ we treat the following as security issues rather than bugs:
 - a checkpoint write that silently alters tensors outside the declared delta;
 - an OpenWSP edit that is accepted despite a hash mismatch;
 - a gate that passes when a required metric is missing.
+- an action that reaches outside its declared tensor, budget or protected-key
+  contract.
 
 ## Design commitments
 
@@ -36,6 +38,12 @@ we treat the following as security issues rather than bugs:
 model, and the MCP server reads and writes paths with its own process
 permissions. Run it with the same trust boundary as your shell: one user, one
 workspace, and no untrusted callers sharing that process.
+
+`machaon.action` reduces the action language to pure array operations, rejects
+imports and arbitrary calls, and runs the result in a resource-capped child
+process. That is a constrained computation boundary, not a defence against
+malicious native libraries or OS-level exploits. Do not treat it as a substitute
+for an OS sandbox when accepting code from a genuinely untrusted principal.
 
 For a shared deployment, put the MCP server behind an authenticated proxy,
 give it a dedicated working directory, and keep checkpoints on a read-only

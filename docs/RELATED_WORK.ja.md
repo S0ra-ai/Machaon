@@ -61,9 +61,16 @@
 
 どちらも `machaon.hygieia` のゲート設計の耐力壁です。
 
-## 空白
+## Machaon が埋める空白
 
 1. agent が操作できる編集行動空間がなく、既存は Python API かスクリプト。
 2. トランザクション層がなく、スナップショット・検証・ロールバックを担うものがない。
 3. 評価が一等市民ではない。
 4. LLM が**手術を計画**する系がない：診断 → 部位選択 → 制約宣言 → 閉形式ソルバーへ引き渡し。
+
+`machaon.action` が制約付き L1 アクションを提供し、
+`Session.propose_action` が既存のトランザクション、予算、ロールバックに接続します。
+`machaon.planning` が失敗・部位証拠を edit / diagnose / do-not-edit に変換します。
+`Session.search_layers` がライブ apply / evaluate / rollback 探索を追加します。
+`diagnose_failure` がヘッドルーム証拠を保守的な失敗分類に変換します。
+残る空白は実測 benchmark の範囲と独立再現です。

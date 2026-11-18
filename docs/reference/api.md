@@ -32,6 +32,124 @@ Helpers: `nullspace_basis(preserve)`, `project_complement(k, Q)`,
 from machaon import rank1_constrained, nullspace_basis, project_complement
 ```
 
+## Symmetry alignment · `machaon.symmetry`
+
+```python
+permute_rows(matrix, permutation) -> ndarray
+permute_columns(matrix, permutation) -> ndarray
+
+align_rows(reference, candidate, axis=0, min_similarity=0.0,
+           max_units=4096) -> UnitAlignment
+align_mlp_hidden(reference_in, reference_out,
+                 candidate_in, candidate_out, ...) -> MLPAlignment
+merge_mlp_aligned(reference_in, reference_out,
+                  candidate_in, candidate_out, alpha=0.5, ...) -> MergedMLP
+mlp_outputs(incoming, outgoing, inputs, activation="relu") -> ndarray
+functional_alignment_check(reference_in, reference_out,
+                           candidate_in, candidate_out, probes,
+                           activation="relu", atol=1e-9) -> dict
+```
+
+`align_rows` matches candidate units to reference units by cosine similarity
+and returns the permutation, aligned tensor, per-unit similarities and a
+`passed` flag. Matching is confidence-first greedy, not a Hungarian solve; the
+result records `optimal=False`. Positive scaling is removed by normalisation.
+`align_mlp_hidden` applies the same hidden-unit permutation to incoming rows and
+outgoing columns. Rotations, attention-head symmetries and cross-architecture
+alignment are outside this module.
+`merge_mlp_aligned` applies that permutation before linear interpolation;
+`alpha=0` returns the reference and `alpha=1` returns the aligned candidate.
+`functional_alignment_check` evaluates both MLPs on probe inputs and reports
+absolute/relative output error; the verdict fails closed above `atol`.
+
+## Task arithmetic · `machaon.task_arithmetic`
+
+```python
+TaskVector(delta, relative_norm, base_norm)
+task_vector(base, finetuned) -> TaskVector
+combine_task_vectors(vectors, coefficients=None, base=None,
+                     max_rel_norm=None, clamp=True)
+    -> TaskVectorCombination
+```
+
+`task_vector` computes the explicit difference and its relative magnitude.
+`combine_task_vectors` accepts positive or negative coefficients and either
+`TaskVector` objects or raw deltas. With `base`, the result reports its relative
+norm; exceeding `max_rel_norm` clamps with `clamped=True` or raises when
+`clamp=False`. This is arithmetic, not a merge recipe or an evaluation result.
+
+## Fingerprints · `machaon.fingerprint`
+
+```python
+TensorFingerprint(sha256, shape, size, norm, mean, std, zero_fraction)
+tensor_fingerprint(value) -> TensorFingerprint
+model_fingerprint(weights) -> dict
+diff_tensors(base, changed) -> dict
+```
+
+The SHA-256 address is over a canonical float64 shape header plus tensor bytes.
+`model_fingerprint` aggregates sorted tensor names/addresses, so mapping order
+does not matter. `diff_tensors` reports changed entries, support fraction,
+relative change, max absolute change, changed rows/columns and before/after
+addresses. This detects content changes; it does not establish authenticity.
+
+## Executable edit DSL · `machaon.executor`
+
+`EditSpec` is not just metadata. `execute_spec` dispatches a validated spec to
+the same pure NumPy primitives, then checks the declared relative-norm budget:
+
+```python
+from machaon import EditSpec, Target, Constraints, execute_spec
+
+spec = EditSpec(
+    op="rank1_constrained",
+    target=Target("model.layers.14.mlp.down_proj", 14),
+    intent="make France's capital Lyon",
+    constraints=Constraints(max_rel_norm=0.02),
+).validate()
+
+result = execute_spec(spec, W, k=k, v=v, preserve=keys)
+result.delta; result.relative_norm; result.target_error
+result.to_dict()          # JSON-safe summary; the array is omitted
+```
+
+`solver="search"` is refused; `closed_form` and `donor` are executable. The
+executor never writes a checkpoint and never trains.
+
+## Constrained actions · `machaon.action`
+
+`ActionSpec` accepts a declared edit function for one tensor:
+
+```python
+from machaon import ActionSpec, Target, execute_action
+
+source = """def edit(W):
+    updated, delta = rank1_constrained(
+        W, keys, values, preserve=preserve, max_rel_norm=max_rel_norm)
+    return delta
+"""
+
+spec = ActionSpec(
+    source,
+    Target("model.layers.14.mlp.down_proj.weight", 14),
+    intent="remove the selected direction",
+    max_rel_norm=0.02,
+).validate()
+
+result = execute_action(spec, W, keys=k, values=v, preserve=protected)
+result.delta; result.relative_norm; result.source_sha256
+result.protected; result.to_dict()
+```
+
+The function may use `W`, optional `keys`, `values` and `preserve`, the declared
+`max_rel_norm`, a small set of pure array functions, local assignments and
+array arithmetic. Imports, loops, classes, lambdas, comprehensions, private
+attributes and arbitrary calls are rejected before execution. The worker runs
+in a separate process with a wall-clock deadline and resource caps; the parent
+rejects wrong shapes, non-finite values, over-budget deltas and protected-key
+drift. `Session.propose_action(...)` puts the delta on the same pending /
+apply / rollback path as other edits.
+
 ## Contract synthesis · `machaon.contract`
 
 ```python
@@ -51,6 +169,30 @@ inside the budget. Every returned update satisfies the target exactly and is
 exactly invariant on every key in `selected`. Rejected keys are never silently
 described as protected. If even the unprotected update exceeds the budget,
 `BudgetExceeded` is raised.
+
+## Batch edits · `machaon.batch`
+
+```python
+from machaon import solve_batch
+
+solution = solve_batch(
+    W, keys, values,               # keys (n, d_in), values (n, d_out)
+    preserve=None,                 # optional protected keys
+    max_rel_norm=0.05,
+    clamp=True,                    # False: refuse an over-budget solve
+    ridge=0.0,
+)
+solution.delta
+solution.relative_norm; solution.target_error
+solution.per_key_error; solution.exact; solution.clamped; solution.rank
+```
+
+The minimum-Frobenius-norm least-squares delta satisfies all target rows when
+the key matrix is full row rank. A protected set projects the target keys into
+its null space, so `delta @ preserve.T == 0` exactly; if the target rows lose
+rank in that projection, `exact=False` and the per-key residual is reported
+rather than hidden. `clamp=True` converts an over-budget exact solve into an
+explicit inexact solve; `clamp=False` raises.
 
 ## Verification · `machaon.verify`
 
@@ -193,6 +335,165 @@ kl_divergence(p, q); kl_summary(p, q); perplexity_ratio(a, b)
 softmax(logits); bootstrap_ci(values)
 ```
 
+## WSP acceptance · `machaon.wsp`
+
+```python
+WSPProtocol(target_metric="rewrite_acc", min_gain=0.05,
+            control_margin=0.05, headroom_margin=0.05,
+            require_gates=True, require_controls=True)
+
+random_control(delta, seed=0, preserve_support=True) -> ndarray
+random_controls(deltas, seed=0, preserve_support=True) -> dict
+
+classify_effect(base, candidate, controls=None, headroom=None,
+                protocol=None) -> EffectVerdict
+assess_wsp(base, candidate, controls=None, headroom=None,
+           gates=None, protocol=None, mechanism=None) -> dict
+assess_report(payload) -> dict
+```
+
+`random_control` returns a deterministic random matrix with the same shape,
+nonzero support and Frobenius norm as the candidate delta. `classify_effect`
+labels the result `repair`, `acquisition`, `non_specific`, `no_effect`,
+`regression`, `unclassified` or `inconclusive`. `assess_wsp` adds the
+fail-closed gate verdict; `accepted` is true only for `repair`/`acquisition`
+with a passing candidate gate. `assess_report` parses the JSON shape used by
+the CLI and MCP tool. When `mechanism` is supplied, its obstruction gate is
+also required for acceptance.
+
+## WSP benchmark · `machaon.bench.wsp`
+
+```python
+WSPBenchmarkCase(case_id, failure_type, expected_repairable,
+                 base, candidate, controls={}, headroom=None,
+                 mechanism=None, gates=None, protocol=None,
+                 source_kind="synthetic", provenance={}, metadata={})
+
+evaluate_case(case) -> dict
+run_benchmark(cases) -> dict
+load_benchmark(path) -> list[WSPBenchmarkCase]
+```
+
+Cases are labelled `obstruction` or `capability_gap`. The runner reports each
+case's WSP decision, whether it matched `expected_repairable`, and a summary
+confusion matrix. The helper does not claim that a fixture is a scientific
+result; it makes the comparison reproducible. `source_kind="measured"` requires
+`model`, `checkpoint_sha256`, `dataset`, `dataset_sha256`, `evaluated_at`,
+`seed` and `evaluation_script`; both hashes must be lowercase SHA-256.
+`scripts/make_wsp_reference_case.py` generates a measured threshold-classifier
+reference for pipeline validation, not an LLM capability claim.
+
+## Planning · `machaon.planning`
+
+```python
+EditPlan(route, failure_type, reason, layer=None, module_suffix=None,
+         max_rel_norm=None, ranked_layers=(), next_probe="", metadata={})
+
+scores_from_patch_report(patch_report, key="recovery") -> dict
+plan_surgery(failure_type, layer_scores=None, patch_report=None,
+             module_suffix="mlp.down_proj", max_rel_norm=0.02,
+             min_score=0.0, metadata=None) -> EditPlan
+search_layers(layers, evaluate, metric="accuracy",
+              higher_is_better=True, max_evaluations=None,
+              cleanup=None) -> dict
+DiagnosisProtocol(target_metric="accuracy", min_target_gap=0.05,
+                  min_mechanism_gap=0.05,
+                  mechanism_metrics=("loop_rate", "truncation_rate"))
+diagnose_failure(base, headroom=None, mechanism=None,
+                 protocol=None) -> FailureDiagnosis
+diagnose_and_plan(base, headroom=None, mechanism=None,
+                  protocol=None, plan_kwargs=None) -> dict
+```
+
+Routes are `edit`, `diagnose` and `do_not_edit`. A `capability_gap` always takes
+`do_not_edit`; an `obstruction` without a positive site score takes `diagnose`;
+only an obstruction with site evidence produces a concrete layer and budget.
+`search_layers` ranks callback results and retains failed trials. `cleanup`
+runs after every trial; if it raises, the search aborts rather than continuing
+from a dirty state.
+
+`diagnose_failure` calls an obstruction only when target headroom and at least
+one mechanism metric improve together. A small target gap without mechanism
+relief is a capability gap; missing or contradictory evidence remains unknown.
+
+## Mechanism evidence · `machaon.mechanism`
+
+```python
+MechanismProtocol(metrics=("loop_rate", "truncation_rate"),
+                  directions=(("loop_rate", "lower"),
+                              ("truncation_rate", "lower")),
+                  min_improvement=0.05, control_margin=0.05,
+                  require_controls=True)
+
+generation_metrics(texts, hit_token_limit=None,
+                   generated_tokens=None, ngram=4) -> dict
+records_metrics(records, ngram=4) -> dict
+generation_mechanism(base_records, candidate_records,
+                     controls=None, headroom=None) -> dict
+assess_mechanism(base, candidate, controls=None,
+                 headroom=None, protocol=None) -> MechanismVerdict
+```
+
+`generation_metrics` reports repeated-loop rate and empty-output rate, plus
+truncation rate and token counts when trace metadata is available.
+`HFModel.generate_records` provides that metadata. `assess_mechanism` requires
+every configured metric to improve over the base and beat the best matched
+control; missing controls or metrics are `inconclusive`, not a pass.
+
+## Headroom baselines · `machaon.headroom`
+
+```python
+DecodingConfig(max_new_tokens=128, do_sample=False, temperature=1.0,
+               top_p=1.0, top_k=0, repetition_penalty=1.0, seed=None)
+
+generation_accuracy(runtime, prompts, expected, config=None,
+                    match="exact", include_samples=False,
+                    include_mechanism=False) -> dict
+next_token_accuracy(runtime, prompts, targets) -> dict
+
+make_generation_headroom(prompts, expected, config=None,
+                         match="exact", name="generation",
+                         include_mechanism=False)
+make_next_token_headroom(prompts, targets, name="next_token")
+```
+
+The factories return callables suitable for
+`Session.assess_wsp(..., headroom_runner=...)`. `generation_accuracy` uses
+`runtime.generate`; `next_token_accuracy` matches `Session.evaluate`'s
+first-token metric. `DecodingConfig` is serialisable, so a sampled / longer /
+repetition-penalised headroom can travel with the evidence report. With
+`include_mechanism=True`, the report also carries loop and truncation evidence.
+
+## Evidence bundles · `machaon.evidence`
+
+```python
+FORMAT; FORMAT_VERSION
+EvidenceError
+evidence_sha256(document) -> str
+write_evidence(path, report, metadata=None) -> dict   # file or directory
+read_evidence(path) -> dict                           # verifies the address
+is_wsp_evidence(path) -> bool
+```
+
+A directory target receives `evidence.json`; a `.json` target is written
+directly. The document is canonical JSON with `format`, `format_version`,
+`report`, `metadata` and `evidence_sha256`. `read_evidence` rejects a changed
+label, metric or metadata field, not just malformed JSON.
+
+## Binding verification · `machaon.binding`
+
+```python
+from machaon.binding import verify_binding
+
+report = verify_binding("out/edit", "evidence/")
+report.passed; report.edit_sha256; report.evidence_sha256; report.errors
+```
+
+`verify_binding` checks the OpenWSP edit address, payload address and the
+manifest's `machaon.evidence_sha256` against the evidence bundle's own address.
+It does not load the base checkpoint; use `openwsp.read_edit` for the stronger
+tensor-level audit.
+
 ## Long-form · `machaon.hygieia.longform`
 
 ```python
@@ -230,8 +531,22 @@ session = Session.open(path, dtype="float32", budget=EditBudget(0.10),
 session.state() -> SessionState(model, parameters, layers, edited, budget_total, ...)
 session.baseline(neutral_prompts, corpus_texts=()) -> dict
 session.propose(prompt, target, layer, **solve_kwargs) -> dict   # solves, does not write
+session.propose_batch(prompts, values, layer, **batch_kwargs) -> dict
+session.propose_action(source, intent, layer, **action_kwargs) -> dict
 session.apply() -> dict                                          # writes, charges the budget
 session.evaluate(prompts, targets) -> dict                       # accuracy, KL, ppl ratio
+session.evaluate_wsp(prompts, targets, seed=0) -> dict           # base, candidate, random control
+session.run_headroom(evaluate_fn, name="headroom") -> dict
+session.assess_wsp(prompts, targets, headroom=None,
+                   headroom_runner=None, seed=0) -> dict
+session.assess_generation_wsp(prompts, expected, config=None,
+                              headroom_config=None, seed=0) -> dict
+session.search_layers(layers, proposal_factory, evaluation,
+                      metric="accuracy") -> dict
+session.search_rome_layers(prompt, target, layers, solver="direction",
+                           max_rel_norm=None, metric="accuracy") -> dict
+session.export_openwsp(path, base_model=None, revision=None,
+                       metadata=None, form="sparse", rank=None) -> manifest
 session.rollback() -> dict                                       # restores original bytes
 session.changes() -> dict                                        # current deltas by tensor
 session.token_id(text) -> int
@@ -241,8 +556,53 @@ session.token_id(text) -> int
 (`relative_delta`) and the solved probability before committing. `apply`
 charges the budget atomically and refuses when it would be exceeded.
 `rollback` restores every edited tensor and resets the budget.
+`assess_generation_wsp` generates candidate, base, random control and optional
+headroom in one pass, feeds their stop traces to the mechanism gate, and
+restores the candidate state in a `finally` block.
 `quantize` accepts `int4` or `int8` with `dtype="auto"`; it is the working
 point for a 27B checkpoint on a laptop-sized memory envelope.
+
+## Intent and teaching · `machaon.intent`, `machaon.recipes`
+
+```python
+parse_intent(text) -> TeachIntent
+teach(session, sentence_or_prompt, answer=None, ...) -> TeachResult
+teach_fact(session, prompt, answer, ..., dry_run=False) -> TeachResult
+candidate_layers(n_layers, count=7, low=0.55, high=0.95) -> list[int]
+TeachPolicy(...) -> policy
+```
+
+`parse_intent` is a deterministic, dependency-free compiler for the supported
+teaching grammar. It never contacts a model and never guesses a layer:
+
+```python
+from machaon import parse_intent
+
+intent = parse_intent("教会模型：北京的首都是 → 北京")
+intent.prompt, intent.answer       # ('北京的首都是', '北京')
+intent.confidence                  # 'high'
+intent.to_command("./models/qwen") # exact CLI invocation
+```
+
+`teach` is the sentence-level alias: pass one sentence, or a prompt plus an
+explicit answer. `teach_fact` is the one-call recipe. It requires a clean session, checks
+whether the model already answers, captures an unrelated baseline panel, tries
+a depth window of layers through `Session.search_rome_layers`, applies the best
+candidate, and keeps it only when every required local check passes:
+
+```python
+from machaon import teach_fact
+
+result = teach_fact(session, "The Eiffel Tower is in the city of", " Rome")
+if result.status != "applied":
+    print(result.summary, result.next_steps)
+```
+
+The policy defaults are `max_rel_norm=0.02`, `max_kl_p95=0.05`,
+`max_ppl_ratio=1.02` and `min_panel_agreement=0.875`. `TeachResult.to_dict()`
+retains every trial, ranking, check, warning and unmeasured metric. The result
+is JSON-safe and is the same object returned by the CLI, MCP and Web entry
+points.
 
 ## Tools · `machaon.tools`
 
@@ -254,6 +614,7 @@ list_tensors(path, contains=None, suffix=None, layer=None, limit=50) -> list
 audit_checkpoint_edit(base_path, edit_dir, max_rel_norm=None) -> dict
 apply_delta(base_path, tensor, delta_path, out_dir, refuse_rescale=True) -> dict
 gate_metrics(metrics) -> dict
+parse_intent(text) -> dict
 ```
 
 `audit_checkpoint_edit` verifies both content addresses of an OpenWSP v1 edit
@@ -284,11 +645,15 @@ bfloat16 overflow, or whole-tensor rescaling.
 
 ```python
 read_edit(path, originals) -> (manifest, tensors)
-export_edit(originals, edited, path, base_model=None, revision=None) -> manifest
+export_edit(originals, edited, path, base_model=None, revision=None,
+            machaon_metadata=None, form="sparse", rank=None) -> manifest
 delta_from_edit(manifest, rebuilt, originals) -> dict
 payload_sha256(arrays); edit_sha256(manifest); tensor_sha256(tensor)
 bf16_bits(values); bits_float32(bits); is_openwsp_edit(path)
 ```
+
+`form="lowrank"` writes float32 factors plus sparse bf16 correction entries.
+The reader reconstructs the exact edited bf16 bits, not an approximation.
 
 ## Benchmarks · `machaon.bench`
 

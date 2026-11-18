@@ -40,25 +40,23 @@ uv pip install -e ".[dev,docs]" # 测试、lint、覆盖率、文档站
 预期结尾：
 
 ```
-Ran 226 tests ...
+Ran 485 tests ...
 ALL CHECKS PASSED
 ```
 
 ## 下载模型
 
-如果 `huggingface.co` 不可达，把客户端指向镜像：
+`machaon fetch` 下载 safetensors 检查点但不加载权重。它依次尝试 Hugging Face、
+`hf-mirror`、ModelScope，校验每个 safetensors header，并复用已下载的文件。
 
 ```bash
-export HF_ENDPOINT=https://hf-mirror.com
+machaon fetch --list
+machaon fetch --starter qwen05b --dest ./models/Qwen2.5-0.5B
+machaon fetch --repo Qwen/Qwen2.5-1.5B --dest ./qwen15b
 ```
 
-通过可用端点下载模型：
-
-```bash
-python scripts/fetch_model.py --repo Qwen/Qwen2.5-1.5B --dest ./qwen15b
-```
-
-脚本依次尝试 Hugging Face、镜像、ModelScope，并在传输后校验 safetensors header。
+`HF_ENDPOINT` 仍然作用于 Transformers 加载器；内置下载器有自己的回退链。
+没有 `.safetensors` 权重的仓库会被直接拒绝，不会留下半下载目录。
 
 基准数据单独下载：
 

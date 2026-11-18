@@ -24,6 +24,8 @@
       session 편집, 증거, rollback
 - [x] 영어·중국어·일본어·한국어 4개 언어 문서, GitHub Pages 자동 배포
 - [x] 릴리스 흐름: sdist, wheel, GitHub release, 선택적 PyPI 배포
+- [x] 한 문장 의도 컴파일러와 한 번 호출 교수 레시피: 자동 기준선, 깊이 방향 검색,
+      목표/panel/KL 검사, 비트 단위 롤백
 
 ## 현재
 

@@ -32,6 +32,10 @@ class TestSingleFile(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self.tmp.name)
+        (self.dir / "config.json").write_text('{"model_type": "toy"}')
+        (self.dir / "tokenizer.json").write_text("{}")
+        (self.dir / ".gitattributes").write_text("*")
+        (self.dir / "pytorch_model.bin").write_bytes(b"stale")
         self.rng = np.random.default_rng(0)
         self.w = self.rng.normal(0, 0.02, size=(16, 12)).astype(np.float32)
         self.other = self.rng.normal(0, 0.02, size=(5, 3)).astype(np.float32)
@@ -69,6 +73,47 @@ class TestSingleFile(unittest.TestCase):
         self.assertEqual(len(ckpt.find(suffix="down_proj.weight")), 2)
         self.assertEqual(len(ckpt.find(contains="nothing")), 0)
 
+    def test_resolve_accepts_an_exact_or_unique_suffix_name(self):
+        ckpt = Checkpoint(self.path)
+        self.assertEqual(
+            ckpt.resolve("model.layers.0.mlp.down_proj.weight"),
+            "model.layers.0.mlp.down_proj.weight",
+        )
+        self.assertEqual(
+            ckpt.resolve("transformer.model.layers.0.mlp.down_proj.weight"),
+            "model.layers.0.mlp.down_proj.weight",
+        )
+        with self.assertRaises(KeyError):
+            ckpt.resolve("something.else")
+
+    def test_write_with_reports_a_resolved_name(self):
+        ckpt = Checkpoint(self.path)
+        out = self.dir / "renamed"
+        report = ckpt.write_with(
+            {"transformer.model.layers.0.mlp.down_proj.weight": np.zeros_like(self.w)},
+            out,
+        )
+        self.assertEqual(
+            report["resolved"]["transformer.model.layers.0.mlp.down_proj.weight"],
+            "model.layers.0.mlp.down_proj.weight",
+        )
+        edited = Checkpoint(out / "model.safetensors")
+        np.testing.assert_array_equal(
+            edited.read("model.layers.0.mlp.down_proj.weight"), self.w
+        )
+
+    def test_ambiguous_suffix_is_rejected(self):
+        path = self.dir / "ambiguous.safetensors"
+        _write(path, {
+            "a.weight": torch.zeros((2, 2)),
+            "b.a.weight": torch.zeros((2, 2)),
+            "x.b.a.weight": torch.zeros((2, 2)),
+        })
+        ckpt = Checkpoint(path)
+        self.assertEqual(ckpt.resolve("a.weight"), "a.weight")  # exact wins
+        with self.assertRaises(KeyError):
+            ckpt.resolve("z.b.a.weight")  # suffix matches several
+
     def test_write_preserves_untouched_tensors(self):
         ckpt = Checkpoint(self.path)
         delta = np.zeros_like(self.w)
@@ -82,6 +127,18 @@ class TestSingleFile(unittest.TestCase):
             edited.read("model.layers.0.mlp.down_proj.weight"), self.w + delta, atol=1e-7)
         np.testing.assert_array_equal(
             edited.read("model.layers.1.mlp.down_proj.weight"), self.other)
+
+    def test_write_copies_small_auxiliary_files_but_not_weights(self):
+        ckpt = Checkpoint(self.path)
+        out = self.dir / "with-config"
+        report = ckpt.write_tensor(
+            "model.layers.0.mlp.down_proj.weight", self.w, out
+        )
+        self.assertIn("config.json", report["auxiliary"])
+        self.assertTrue((out / "config.json").exists())
+        self.assertTrue((out / "tokenizer.json").exists())
+        self.assertFalse((out / ".gitattributes").exists())
+        self.assertFalse((out / "pytorch_model.bin").exists())
 
     def test_unknown_delta_rejected(self):
         ckpt = Checkpoint(self.path)

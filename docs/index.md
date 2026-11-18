@@ -6,6 +6,23 @@ Machaon changes a model's parameters directly, then proves the change did not
 break anything: what the edit was allowed to touch, what it actually moved, and
 how to put the model back if the answer is wrong.
 
+## One sentence to a verified edit
+
+```bash
+machaon teach --model ./models/Qwen2.5-0.5B \
+  --say "The Eiffel Tower is in the city of -> Rome"
+```
+
+The sentence becomes an exact prompt/answer contract. Machaon checks whether
+the model already knows the answer, searches a depth window of edit sites,
+projects each candidate away from an unrelated baseline panel, applies the
+best one inside the budget, and keeps it only when the target and locality
+checks pass. A rejected candidate is rolled back byte-for-byte. The default
+output is `<checkpoint>-machaon`; the source checkpoint is never modified.
+
+`machaon intent "..."` shows the parse without loading a model, and the local
+browser console has the same flow as a **ONE SENTENCE** box.
+
 ```
               edit spec (DSL)
                     │

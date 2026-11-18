@@ -43,6 +43,7 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `audit_edit(base_path, edit_dir, max_rel_norm)` | OpenWSP v1 編集を base と照合し、ドリフトを再計算 |
 | `apply_delta(base_path, tensor, delta_path, out_dir)` | 1 つの `.npy` delta を 1 tensor に適用し、新しいチェックポイントを書く |
 | `gate(metrics)` | ゲートを適用。欠損指標は失敗 |
+| `parse_intent(sentence)` | 自然言語の教学リクエストを正確な契約へコンパイル |
 
 各ツールは `machaon.tools` の普通の関数に委譲し、テストはその関数を直接検証します。トランスポートは振る舞いを追加しません。
 
@@ -56,8 +57,11 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `model_status()` | パラメータ、層数、編集済み tensor、予算使用 |
 | `capture_baseline(neutral_prompts, corpus_texts)` | **編集前**に参照分布を記録 |
 | `propose_edit(prompt, target, layer, solver, steps, max_rel_norm)` | 編集を解き、書き込まずにコストを報告 |
+| `propose_batch(prompts, values, layer, preserve_prompts, max_rel_norm, clamp, ridge)` | 複数行を 1 つの保留 batch delta に解く |
+| `propose_action(source, intent, layer, keys, values, preserve, max_rel_norm, timeout_seconds)` | 制約付き `def edit(W): ...` を保留 delta にコンパイル |
 | `apply_edit()` | 保留中の提案を書き込み、予算を原子的に課金 |
 | `evaluate(prompts, targets)` | 精度、KL、baseline 比のパープレキシティ |
+| `teach(sentence, prompt, answer, layers, solver, max_rel_norm, dry_run)` | 検索・適用・検証・ロールバックを一括実行 |
 | `rollback()` | 編集済み tensor をすべて復元 |
 
 想定ループは `machaon.session` と同じ：

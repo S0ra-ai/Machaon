@@ -61,6 +61,12 @@ class TensorListRequest(BaseModel):
     limit: int = Field(default=50, ge=1, le=5000)
 
 
+class FetchModelRequest(BaseModel):
+    starter: str
+    dest: str
+    endpoint: Optional[str] = None
+
+
 class BaselineRequest(BaseModel):
     neutral_prompts: List[str] = Field(default_factory=list)
     corpus_texts: List[str] = Field(default_factory=list)
@@ -80,6 +86,32 @@ class ProposeRequest(BaseModel):
     densify_from_layer: bool = False
 
 
+class BatchProposeRequest(BaseModel):
+    prompts: List[str] = Field(min_length=1)
+    values: List[List[float]] = Field(min_length=1)
+    layer: int = Field(ge=0)
+    preserve_prompts: List[str] = Field(default_factory=list)
+    max_rel_norm: Optional[float] = None
+    clamp: bool = True
+    ridge: float = 0.0
+    module_suffix: str = "mlp.down_proj"
+
+
+class TeachPreviewRequest(BaseModel):
+    sentence: str = Field(min_length=1, max_length=4000)
+
+
+class TeachRequest(BaseModel):
+    sentence: Optional[str] = Field(default=None, max_length=4000)
+    prompt: Optional[str] = None
+    answer: Optional[str] = None
+    layers: Optional[List[int]] = None
+    solver: str = "direction"
+    max_rel_norm: float = Field(default=0.02, gt=0, le=0.5)
+    dry_run: bool = False
+    out_dir: Optional[str] = None
+
+
 class EvaluateRequest(BaseModel):
     prompts: List[str] = Field(min_length=1)
     targets: List[Union[str, int]] = Field(min_length=1)
@@ -95,6 +127,40 @@ class SaveCheckpointRequest(BaseModel):
 
 class GateRequest(BaseModel):
     metrics: Dict[str, float]
+
+
+class WspAuditRequest(BaseModel):
+    report: Dict[str, Any]
+
+
+class WspSaveRequest(BaseModel):
+    report: Dict[str, Any]
+    out_dir: str
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class WspSessionRequest(BaseModel):
+    prompts: List[str] = Field(min_length=1)
+    targets: List[Union[str, int]] = Field(min_length=1)
+    headroom: Optional[Dict[str, float]] = None
+    mechanism: Optional[Dict[str, Any]] = None
+    seed: int = 0
+    target_metric: str = "accuracy"
+
+
+class WspSessionSaveRequest(WspSessionRequest):
+    out_dir: str
+
+
+class ExportEditRequest(BaseModel):
+    out_dir: str
+    evidence_sha256: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class BindingRequest(BaseModel):
+    edit_dir: str
+    evidence_dir: str
 
 
 class AuditRequest(BaseModel):
@@ -199,6 +265,7 @@ def create_app(
             "repository": "https://github.com/S0ra-ai/Machaon",
             "auth": "required",
             "session": web_service.state(),
+            "capabilities": web_service.capabilities(),
             "allowed_roots": [str(root) for root in policy.roots],
         }
 
@@ -215,6 +282,16 @@ def create_app(
     @app.get("/api/models")
     def models() -> Dict[str, Any]:
         return web_service.models()
+
+    @app.post("/api/models/fetch")
+    def fetch_model(body: FetchModelRequest) -> Dict[str, Any]:
+        dest = _path_or_http_error(policy, body.dest, must_exist=False)
+        return start_job(
+            "fetch_model",
+            lambda: web_service.fetch_model(
+                body.starter, dest, endpoint=body.endpoint
+            ),
+        )
 
     # -- checkpoint inspection -----------------------------------------
 
@@ -311,7 +388,52 @@ def create_app(
             lambda: web_service.save_checkpoint(out),
         )
 
+    @app.post("/api/session/export_openwsp")
+    def export_openwsp(body: ExportEditRequest) -> Dict[str, Any]:
+        out = _path_or_http_error(policy, body.out_dir, must_exist=False)
+        return start_job(
+            "export_openwsp",
+            lambda: web_service.export_session_edit(
+                out, evidence_sha256=body.evidence_sha256, metadata=body.metadata
+            ),
+        )
+
+    @app.post("/api/binding/verify")
+    def verify_binding(body: BindingRequest) -> Dict[str, Any]:
+        edit = _path_or_http_error(policy, body.edit_dir, must_exist=True)
+        evidence = _path_or_http_error(policy, body.evidence_dir, must_exist=True)
+        return start_job(
+            "verify_binding",
+            lambda: web_service.verify_binding(edit, evidence),
+        )
+
     # -- edit -----------------------------------------------------------
+
+    @app.post("/api/teach/preview")
+    def teach_preview(body: TeachPreviewRequest) -> Dict[str, Any]:
+        try:
+            return web_service.preview_teach(body.sentence)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/teach")
+    def teach(body: TeachRequest) -> Dict[str, Any]:
+        out = None
+        if body.out_dir:
+            out = _path_or_http_error(policy, body.out_dir, must_exist=False)
+        return start_job(
+            "teach",
+            lambda: web_service.teach(
+                sentence=body.sentence,
+                prompt=body.prompt,
+                answer=body.answer,
+                layers=body.layers,
+                solver=body.solver,
+                max_rel_norm=body.max_rel_norm,
+                dry_run=body.dry_run,
+                out_dir=out,
+            ),
+        )
 
     @app.post("/api/edit/propose")
     def propose(body: ProposeRequest) -> Dict[str, Any]:
@@ -329,6 +451,22 @@ def create_app(
                 module_suffix=body.module_suffix,
                 target_token_id=body.target_token_id,
                 densify_from_layer=body.densify_from_layer,
+            ),
+        )
+
+    @app.post("/api/edit/propose_batch")
+    def propose_batch(body: BatchProposeRequest) -> Dict[str, Any]:
+        return start_job(
+            "propose_batch",
+            lambda: web_service.propose_batch(
+                prompts=body.prompts,
+                values=body.values,
+                layer=body.layer,
+                preserve_prompts=body.preserve_prompts,
+                max_rel_norm=body.max_rel_norm,
+                clamp=body.clamp,
+                ridge=body.ridge,
+                module_suffix=body.module_suffix,
             ),
         )
 
@@ -352,6 +490,50 @@ def create_app(
     @app.post("/api/gates/check")
     def gate(body: GateRequest) -> Dict[str, Any]:
         return web_service.gate_metrics(body.metrics)
+
+    @app.post("/api/wsp/audit")
+    def wsp_audit(body: WspAuditRequest) -> Dict[str, Any]:
+        return start_job("wsp_audit", lambda: web_service.wsp_audit(body.report))
+
+    @app.post("/api/wsp/save")
+    def save_wsp(body: WspSaveRequest) -> Dict[str, Any]:
+        out_dir = _path_or_http_error(policy, body.out_dir, must_exist=False)
+        return start_job(
+            "save_wsp_evidence",
+            lambda: web_service.save_wsp_evidence(
+                out_dir, body.report, body.metadata
+            ),
+        )
+
+    @app.post("/api/wsp/session")
+    def wsp_session(body: WspSessionRequest) -> Dict[str, Any]:
+        return start_job(
+            "wsp_session",
+            lambda: web_service.assess_session_wsp(
+                body.prompts,
+                body.targets,
+                headroom=body.headroom,
+                seed=body.seed,
+                target_metric=body.target_metric,
+                mechanism=body.mechanism,
+            ),
+        )
+
+    @app.post("/api/wsp/session_evidence")
+    def wsp_session_evidence(body: WspSessionSaveRequest) -> Dict[str, Any]:
+        out_dir = _path_or_http_error(policy, body.out_dir, must_exist=False)
+        return start_job(
+            "wsp_session_evidence",
+            lambda: web_service.assess_session_evidence(
+                out_dir,
+                body.prompts,
+                body.targets,
+                headroom=body.headroom,
+                seed=body.seed,
+                target_metric=body.target_metric,
+                mechanism=body.mechanism,
+            ),
+        )
 
     # -- jobs -----------------------------------------------------------
 

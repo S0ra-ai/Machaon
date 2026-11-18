@@ -40,25 +40,25 @@ uv pip install -e ".[dev,docs]" # 테스트, lint, 커버리지, 문서
 예상되는 마지막 출력:
 
 ```
-Ran 226 tests ...
+Ran 485 tests ...
 ALL CHECKS PASSED
 ```
 
 ## 모델 다운로드
 
-`huggingface.co`에 접근할 수 없다면 클라이언트를 미러로 돌립니다:
+`machaon fetch`는 가중치를 읽지 않고 safetensors 체크포인트를 받습니다.
+Hugging Face, `hf-mirror`, ModelScope 순으로 시도하고 각 safetensors 헤더를
+검증하며 기존 파일을 재사용합니다.
 
 ```bash
-export HF_ENDPOINT=https://hf-mirror.com
+machaon fetch --list
+machaon fetch --starter qwen05b --dest ./models/Qwen2.5-0.5B
+machaon fetch --repo Qwen/Qwen2.5-1.5B --dest ./qwen15b
 ```
 
-접근 가능한 엔드포인트로 모델을 받습니다:
-
-```bash
-python scripts/fetch_model.py --repo Qwen/Qwen2.5-1.5B --dest ./qwen15b
-```
-
-Hugging Face, 미러, ModelScope 순으로 시도하고 전송 후 safetensors 헤더를 검증합니다.
+`HF_ENDPOINT`는 Transformers 로더에는 계속 적용되지만, 내장 다운로더는 자체
+폴백을 사용합니다. `.safetensors` 가중치가 없는 저장소는 반쯤 받은 디렉터리를
+남기지 않고 거부합니다.
 
 벤치마크 데이터는 따로 받습니다:
 

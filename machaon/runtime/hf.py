@@ -225,6 +225,18 @@ class HFModel:
         with self._torch.no_grad():
             param.copy_(self._torch.from_numpy(array).to(device=param.device, dtype=param.dtype))
 
+    def stored_values(self, name: str, values: np.ndarray) -> np.ndarray:
+        """Convert canonical ``(d_out, d_in)`` values to the checkpoint layout.
+
+        This is the bridge for checkpoint writers: ``read`` and ``write`` always
+        speak the canonical orientation, while a GPT-2 ``Conv1D`` stores
+        ``(d_in, d_out)``.  A saved tensor must use the stored orientation.
+        """
+        array = np.asarray(values)
+        if self._stores_weight_transposed(self._module_holding(name)):
+            array = array.T
+        return np.ascontiguousarray(array)
+
     def _module_holding(self, name: str) -> Any:
         parent, _, attr = name.rpartition(".")
         return _resolve(self.model, parent) if parent else self.model
@@ -365,11 +377,52 @@ class HFModel:
             return self.nll_ids(ids, mask)
         return self.nll_ids(self._to_ids(items))
 
-    def generate(self, prompts: Sequence[str], max_new_tokens: int = 128) -> list:
+    def generate(
+        self,
+        prompts: Sequence[str],
+        max_new_tokens: int = 128,
+        do_sample: bool = False,
+        temperature: float = 1.0,
+        top_p: float = 1.0,
+        top_k: int = 0,
+        repetition_penalty: float = 1.0,
+        seed: Optional[int] = None,
+    ) -> list:
         """Greedy, deterministic generation. One prompt at a time.
 
         Batched generation needs left padding, which several tokenizers do not
         configure; correctness beats throughput for an evaluation harness.
+        Sampling arguments are opt-in and are passed straight through to the
+        model, which makes them usable as a WSP headroom baseline.
+        """
+        records = self.generate_records(
+            prompts,
+            max_new_tokens=max_new_tokens,
+            do_sample=do_sample,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            repetition_penalty=repetition_penalty,
+            seed=seed,
+        )
+        return [record["text"] for record in records]
+
+    def generate_records(
+        self,
+        prompts: Sequence[str],
+        max_new_tokens: int = 128,
+        do_sample: bool = False,
+        temperature: float = 1.0,
+        top_p: float = 1.0,
+        top_k: int = 0,
+        repetition_penalty: float = 1.0,
+        seed: Optional[int] = None,
+    ) -> list:
+        """Generate text plus the stop trace used by mechanism metrics.
+
+        Each record includes ``generated_tokens``, ``hit_token_limit`` and
+        ``stopped_on_eos``. The last two are deliberately separate: a model can
+        emit EOS exactly at the budget boundary, which is not a truncation.
         """
         import torch
 
@@ -381,17 +434,43 @@ class HFModel:
         outputs = []
         for prompt in prompts:
             ids, mask = self.encode([prompt])
+            if seed is not None:
+                torch.manual_seed(int(seed))
+            gen_kwargs = {
+                "input_ids": ids,
+                "attention_mask": mask,
+                "max_new_tokens": int(max_new_tokens),
+                "do_sample": bool(do_sample),
+                "pad_token_id": pad_id,
+            }
+            if do_sample:
+                gen_kwargs.update({
+                    "temperature": float(temperature),
+                    "top_p": float(top_p),
+                    "top_k": int(top_k),
+                    "repetition_penalty": float(repetition_penalty),
+                })
             with torch.no_grad():
-                generated = self.model.generate(
-                    input_ids=ids,
-                    attention_mask=mask,
-                    max_new_tokens=int(max_new_tokens),
-                    do_sample=False,
-                    pad_token_id=pad_id,
-                )
+                generated = self.model.generate(**gen_kwargs)
             new_tokens = generated[0, ids.shape[1]:]
-            outputs.append(
-                self.tokenizer.decode(new_tokens, skip_special_tokens=True))
+            count = int(new_tokens.shape[0])
+            eos_ids = self.tokenizer.eos_token_id
+            if isinstance(eos_ids, (list, tuple)):
+                eos_ids = {int(value) for value in eos_ids}
+            elif eos_ids is None:
+                eos_ids = set()
+            else:
+                eos_ids = {int(eos_ids)}
+            stopped_on_eos = bool(
+                count > 0
+                and int(new_tokens[-1].item()) in eos_ids
+            )
+            outputs.append({
+                "text": self.tokenizer.decode(new_tokens, skip_special_tokens=True),
+                "generated_tokens": count,
+                "hit_token_limit": bool(count >= int(max_new_tokens) and not stopped_on_eos),
+                "stopped_on_eos": stopped_on_eos,
+            })
         return outputs
 
     def score_continuations(self, pairs: Sequence[tuple]) -> np.ndarray:

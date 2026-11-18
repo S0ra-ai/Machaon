@@ -41,26 +41,25 @@ lint. It needs no network and no GPU.
 Expected tail:
 
 ```
-Ran 226 tests ...
+Ran 485 tests ...
 ALL CHECKS PASSED
 ```
 
 ## Model downloads
 
-If `huggingface.co` is unreachable, point the client at a mirror:
+`machaon fetch` downloads a safetensors checkpoint without loading it. It tries
+Hugging Face, `hf-mirror`, then ModelScope, validates every safetensors header,
+and resumes existing files.
 
 ```bash
-export HF_ENDPOINT=https://hf-mirror.com
+machaon fetch --list
+machaon fetch --starter qwen05b --dest ./models/Qwen2.5-0.5B
+machaon fetch --repo Qwen/Qwen2.5-1.5B --dest ./qwen15b
 ```
 
-Download a model through whichever endpoint reaches you:
-
-```bash
-python scripts/fetch_model.py --repo Qwen/Qwen2.5-1.5B --dest ./qwen15b
-```
-
-It tries Hugging Face, the mirror, then ModelScope, and checks the safetensors
-headers afterwards.
+`HF_ENDPOINT` still applies to the Transformers loader; the built-in fetch has
+its own fallback. A repository with no `.safetensors` weights is refused rather
+than left as a half-downloaded directory.
 
 Benchmark files are fetched separately:
 

@@ -12,8 +12,8 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-226-2ea44f)
-![coverage](https://img.shields.io/badge/coverage-82%25-2ea44f)
+![tests](https://img.shields.io/badge/tests-485-2ea44f)
+![coverage](https://img.shields.io/badge/coverage-79%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
 [Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md) · [中文](https://s0ra-ai.github.io/Machaon/zh/) · [日本語](https://s0ra-ai.github.io/Machaon/ja/) · [한국어](https://s0ra-ai.github.io/Machaon/ko/)
@@ -31,6 +31,32 @@ content-addressed artefact that can be diffed, replayed and rolled back.
 > OpenWSP defines how an edit is **recorded**. Machaon defines whether it is
 > **accepted**: the constraint it must satisfy, the budget it must respect, and
 > the evidence that it is safe to keep.
+
+## One sentence to a verified edit
+
+```bash
+# one-time checkpoint download (about 1 GB, with mirror fallback)
+machaon fetch --starter qwen05b --dest ./models/Qwen2.5-0.5B
+
+machaon start
+machaon teach --model ./models/Qwen2.5-0.5B \
+  --say "The Eiffel Tower is in the city of -> Rome"
+```
+
+`machaon teach` parses the sentence into an exact prompt/answer contract,
+checks whether the model already knows the answer, searches a depth window of
+edit sites, projects each candidate away from an unrelated baseline panel,
+applies the best one inside the budget, and keeps it only when the target and
+locality checks pass. A rejected candidate is rolled back byte-for-byte. The
+default output is a sibling directory named `<checkpoint>-machaon`; the source
+checkpoint is never modified.
+
+`machaon intent "..."` shows the same parse without loading a model. The
+language is deliberately small: arrows and labelled blocks are exact, while
+plain sentences are marked medium confidence because the split point is an
+assumption. The same contract is available as
+`machaon.recipes.teach_fact`, the MCP `teach` tool, and the browser console's
+**ONE SENTENCE** box.
 
 ## Why Machaon
 
@@ -61,6 +87,70 @@ The null-space projection follows [AlphaEdit](https://arxiv.org/abs/2410.02355)
 and the earlier Adam-NSCL construction. Machaon's contribution is the
 transaction, the executable acceptance contract, and the reproducible system
 around that projection.
+
+## WSP acceptance: repair vs acquisition
+
+A target gain is not enough. Machaon classifies what the edit actually did:
+
+```bash
+python -m machaon.cli wsp examples/wsp_report.json
+```
+
+```json
+{
+  "accepted": true,
+  "label": "repair",
+  "reason": "candidate reaches a baseline that already had the capability (headroom gap 0.0200)"
+}
+```
+
+The protocol compares the candidate with a deterministic same-support,
+same-norm random control and an optional **headroom** baseline — for example,
+the base model with a different decoding mode. A positive result without a
+headroom baseline is reported as `unclassified`, not as a new capability.
+`repair`, `acquisition`, `non_specific`, `no_effect` and `regression` are
+distinct outcomes because they imply different deployment decisions.
+
+When a **mechanism** report is attached, it becomes part of the gate: loop rate,
+token-limit rate and other configured obstruction metrics must improve over the
+base and beat a matched control. A target gain that leaves the obstruction in
+place is rejected even when the accuracy label would otherwise say `repair`.
+
+Persist the decision as a content-addressed bundle and verify it later:
+
+```bash
+python -m machaon.cli wsp examples/wsp_report.json --save evidence/
+python -m machaon.cli wsp-verify evidence/
+```
+
+The labelled obstruction-vs-capability harness runs the same decision over
+paired cases and reports a confusion matrix:
+
+```bash
+python -m machaon.cli wsp-bench examples/wsp_benchmark.json
+```
+
+The shipped fixture is synthetic; real runs replace it with measured reports.
+Use `--require-measured` in release or CI checks to refuse synthetic cases.
+The repository also includes one **measured threshold-classifier reference**
+([`examples/wsp_measured_smoke.json`](examples/wsp_measured_smoke.json)) to
+exercise the measured-provenance path without claiming an LLM result.
+
+Evidence-driven planning sits above diagnosis and below execution:
+
+```bash
+python -m machaon.cli plan examples/plan_obstruction.json
+```
+
+It returns `edit`, `diagnose` or `do_not_edit`. A capability gap never becomes
+a weight edit by default, and an obstruction without a positive layer-site score
+still requires diagnosis.
+
+The diagnosis itself can be derived from target and mechanism headroom:
+
+```bash
+python -m machaon.cli diagnose examples/diagnose_obstruction.json
+```
 
 ## Install
 
@@ -97,6 +187,14 @@ back byte-for-byte. Long operations run in a single worker and stream through
 SSE, so the browser never blocks on a large checkpoint load. The one-time
 token and the checkpoint path allowlist keep the local control plane scoped to
 the roots you name.
+
+The **ONE SENTENCE** box runs the full teaching recipe: preview the parsed
+contract, then let the console choose the layer, apply the edit, verify the
+target and panel, and roll back automatically if a check fails.
+
+The Checkpoint column also has a **Download starter** control for SmolLM2-135M,
+Qwen2.5-0.5B or GPT-2, with Hugging Face / mirror / ModelScope fallback, so a
+first run does not require a pre-existing local checkpoint.
 
 The console ships in English, Chinese, Japanese and Korean. It follows the
 browser language on first load, remembers an explicit choice, and accepts
@@ -314,10 +412,50 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - **A transaction layer** — every edit is reversible, recorded and budgeted.
 - **Budget-aware contract synthesis** — admit the protected keys that fit and
   report the ones that do not, without giving up target exactness.
+- **An executable edit DSL** — every validated spec dispatches to the same pure
+  NumPy primitives and checks its declared budget.
+- **Reusable headroom baselines** — greedy/ sampled generation and first-token
+  evaluators plug directly into the WSP decision layer.
+- **Mechanism evidence** — loop, empty-output and token-limit rates can gate a
+  repair decision, with matched-control specificity and exact generation traces.
+- **Batch least-squares edits** — many key/value pairs, one delta, one budget,
+  with protected-key projection and explicit clamp reporting.
+- **Evidence-driven planning** — edit, diagnose or do-not-edit before a layer
+  is chosen; capability gaps do not silently become weight patches.
+- **Live layer search** — apply, evaluate and roll back each candidate layer,
+  keeping every trial and failure instead of only the winner.
+- **One-sentence intent compiler** — English and Chinese arrows, labels and
+  phrasings compile into a reviewable prompt/answer contract; unstructured text
+  is refused with examples instead of guessed.
+- **One-call teaching recipe** — automatic baseline, depth-window search,
+  null-space projection, apply, target/panel/KL checks and bit-exact rollback,
+  with every trial retained in the report.
+- **A starter downloader** — `machaon fetch` uses the standard library only,
+  falls back across Hugging Face / hf-mirror / ModelScope, validates safetensors
+  headers, and is also a button in the browser console.
+- **Unit symmetry alignment** — recover hidden-unit permutations and positive
+  scaling across an MLP pair before comparing or merging weights.
+- **Aligned MLP merge** — apply the recovered hidden-unit permutation before
+  linear interpolation, avoiding coordinate-wise merges of unrelated units.
+- **Function-level alignment check** — compare aligned MLP outputs on probes,
+  not just unit-vector similarity.
+- **Task-vector arithmetic** — signed coefficient combinations with an explicit
+  relative-norm budget and clamp reporting.
+- **Weight fingerprints** — deterministic tensor/model addresses and sparse
+  before/after diff reports for audit logs.
+- **A constrained action space** — a declared `def edit(W): ...` function runs
+  in an isolated worker under an AST allowlist, then passes the same budget and
+  protected-key checks before it can enter a session transaction.
 - **An evaluation harness** with fail-closed gates and provenance-tracked
   benchmarks.
 - **A format implementation** — byte-identical with the OpenWSP v1 edit format.
-- **An agent interface** — 12 MCP tools over stdio, file-level and model-level.
+- **Structured OpenWSP export** — low-rank factors plus sparse bf16 corrections,
+  reconstructed bit-identically.
+- **Edit ↔ evidence binding** — export the applied edit as OpenWSP and commit
+  the WSP evidence hash inside the manifest's `machaon` object.
+- **Binding verification** — confirm the OpenWSP edit address, evidence address
+  and manifest payload still agree before trusting either artefact.
+- **An agent interface** — 24 MCP tools over stdio, file-level and model-level.
 - **A local browser console** — inspect, propose, apply, evaluate and roll back
   through the same session contract, with SSE job progress and a token-scoped
   checkpoint allowlist.
@@ -351,7 +489,7 @@ Every user-visible claim in this repository has a check behind it.
 |---|---|
 | `lint` | ruff over the package, tests, examples and scripts |
 | `test` (3.9–3.13) | the suite, demo, CLI entry points and fail-closed gate |
-| `extras` | safetensors, HF runtime, evaluation and **82% branch coverage** |
+| `extras` | safetensors, HF runtime, evaluation and **79% branch coverage** |
 | `mcp` | a real stdio client calls the real server |
 | `web` | FastAPI job lifecycle, token refusal and SSE, on Python 3.12 |
 | `docs` | `mkdocs build --strict`, English / Chinese / Japanese / Korean |
@@ -391,7 +529,21 @@ Every example is runnable, and every measured number links to its command.
 ```
 machaon/
 ├─ linalg.py            rank-1, null-space, ablation, injection
+├─ executor.py          validated edit DSL → pure NumPy primitives
+├─ action.py            constrained Python actions → isolated delta
+├─ action_worker.py     resource-capped action execution process
+├─ planning.py          evidence → edit / diagnose / do-not-edit route
+│                       live apply/evaluate/rollback layer search
+├─ intent.py            plain-language request → exact prompt/answer contract
+├─ recipes.py           one-call teach: baseline, search, apply, verify, rollback
+├─ fetch.py             stdlib starter downloader with endpoint fallback
+├─ symmetry.py          hidden-unit permutation / positive-scaling alignment
+├─ task_arithmetic.py   signed task-vector combinations with budget checks
+├─ fingerprint.py       tensor/model content addresses and sparse diff reports
+├─ headroom.py          generation / first-token headroom evaluators
+├─ evidence.py          content-addressed WSP evidence bundles
 ├─ contract.py          budget-aware protected-set synthesis
+├─ batch.py             many keys, one delta, one budget
 ├─ schema.py            edit DSL, mandatory intent
 ├─ transaction.py       apply / commit / bit-exact rollback
 ├─ store.py             content-addressed deltas, verified reads
@@ -400,6 +552,7 @@ machaon/
 ├─ runtime/hf.py        architecture-independent model runtime
 ├─ adapters/            safetensors: single file, folder, sharded
 ├─ hygieia/             gates, metrics, evaluation runner
+├─ wsp.py               matched controls, repair-vs-acquisition
 ├─ interop/openwsp.py   versioned edit format, conformance-tested
 ├─ web/                 FastAPI console, SSE jobs, three-column browser UI
 ├─ procedures/rome.py   the ROME procedure as one function

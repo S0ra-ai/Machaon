@@ -1,0 +1,53 @@
+{
+  "cases": [
+    {
+      "base": {
+        "accuracy": 0.8225
+      },
+      "candidate": {
+        "accuracy": 1.0
+      },
+      "case_id": "reference-threshold-obstruction",
+      "controls": {
+        "opposite_sign_same_norm": {
+          "accuracy": 0.64
+        }
+      },
+      "expected_repairable": true,
+      "failure_type": "obstruction",
+      "gates": {
+        "accuracy": [
+          ">=",
+          0.9
+        ]
+      },
+      "headroom": {
+        "accuracy": 1.0,
+        "name": "oracle_threshold"
+      },
+      "metadata": {
+        "model_family": "threshold-classifier",
+        "scope": "pipeline reference"
+      },
+      "protocol": {
+        "control_margin": 0.05,
+        "headroom_margin": 0.05,
+        "min_gain": 0.05,
+        "target_metric": "accuracy"
+      },
+      "provenance": {
+        "checkpoint_sha256": "c648ca1ca7104523ed7700828908c1375db5e3e88b29b9bc28c5d1949896487a",
+        "dataset": "deterministic-threshold-reference-v1",
+        "dataset_sha256": "30b81e42b372889b671d8a8f9adf1d2569dd0512b0596d461d3612551e033a7a",
+        "evaluated_at": "2026-11-11T00:00:00Z",
+        "evaluation_script": "scripts/make_wsp_reference_case.py",
+        "model": "toy-threshold-classifier-v1",
+        "notes": "Pipeline reference only; not evidence about LLM WSP.",
+        "seed": 23
+      },
+      "source_kind": "measured"
+    }
+  ],
+  "format": "machaon.wsp.benchmark",
+  "format_version": 1
+}

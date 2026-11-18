@@ -11,7 +11,17 @@ model-level evidence.
 | `tiny_edit.py` | one edit, two budgets, and a fail-closed verdict | `python examples/tiny_edit.py` |
 | `budget_sweep.py` | cumulative-edit budget and measured damage curve | `python examples/budget_sweep.py` |
 | `contract_synthesis.py` | admit the protected subset that fits a budget | `python examples/contract_synthesis.py` |
+| `batch_edit.py` | solve many key/value pairs into one delta | `python examples/batch_edit.py` |
+| `symmetry_align.py` | align permuted hidden units across an MLP pair | `python examples/symmetry_align.py` |
+| `task_arithmetic.py` | extract and budget-combine task vectors | `python examples/task_arithmetic.py` |
+| `fingerprint_diff.py` | fingerprint tensors and report changed support | `python examples/fingerprint_diff.py` |
+| `action_edit.py` | run a protected Python action in an isolated worker | `python examples/action_edit.py` |
 | `longform_check.py` | reference-scored long-form coherence | `python examples/longform_check.py` |
+| `wsp_report.json` | repair-vs-acquisition decision with matched controls and mechanism evidence | `python -m machaon.cli wsp examples/wsp_report.json` |
+| `wsp_benchmark.json` | labelled obstruction-vs-capability harness (synthetic fixture) | `python -m machaon.cli wsp-bench examples/wsp_benchmark.json` |
+| `wsp_measured_smoke.json` | measured threshold-classifier reference case | `python -m machaon.cli wsp-bench examples/wsp_measured_smoke.json --require-measured` |
+| `plan_obstruction.json` | select an edit site from labelled layer scores | `python -m machaon.cli plan examples/plan_obstruction.json` |
+| `diagnose_obstruction.json` | classify failure evidence and produce a plan | `python -m machaon.cli diagnose examples/diagnose_obstruction.json` |
 
 ## Real checkpoints
 

@@ -23,6 +23,9 @@ machaon-web --allowed-root /models --port 8765
 起動時に一度だけ使う token を含む URL が表示されます。サーバーは既定で
 `127.0.0.1` にだけバインドされます。`--allowed-root` または
 `MACHAON_WEB_ALLOWED_ROOTS` で checkpoint のルートを指定してください。
+`torch`、`transformers`、`safetensors` のいずれかがない場合、最初の session が
+黙って失敗する代わりに、正確な `pip install "machaon[hf]"` コマンドを banner で
+表示します。
 
 ## 表示言語
 
@@ -43,6 +46,9 @@ machaon-web --allowed-root /models --port 8765
 
 1. **Checkpoint**: safetensors の header を読み、tensor 数、パラメータ数、
    dtype、shard 数を表示します。ブラウザーに重みの値は送りません。
+   チェックポイントがない場合は starter を選んで **Download starter** を押すと、
+   許可ルートへミラー経由も試してダウンロードし、パスを埋めます。
+   **ダウンロード後に開く** を有効にすると session まで自動で開きます。
 2. **編集契約**: session を開き、baseline を取得し、層を指定して proposal を
    解きます。preserve prompts は零空間制約になり、量子化モデルの gradient
    solve では **Densify from edit layer** を有効にします。proposal は書き込み
@@ -52,6 +58,20 @@ machaon-web --allowed-root /models --port 8765
    tensor バイトを復元します。
    永続化するときは Applied session の delta を新しい checkpoint ディレクトリへ
    書き出し、元のディレクトリは変更しません。
+
+### ひとつの文で教える
+
+編集列の上部にある **ONE SENTENCE** 欄が最短経路です。`machaon intent` と同じ
+文法を受け付け、`machaon teach` と同じ教学レシピを実行します。
+
+1. **Preview parse** は文をコンパイルし、prompt/answer 欄へ反映します。
+2. **Teach automatically** は深さウィンドウを検索し、編集を preserve prompts の
+   零空間へ投影し、最良の候補を適用します。目標、予算、panel、KL の全チェックが
+   通ったときだけ保持し、拒否された候補は自動でロールバックします。
+
+任意の **Also write the edited checkpoint** 欄に出力先を書くと、許可ルート内の
+新しいディレクトリへ保存します。空欄なら session 内に保持し、後から **Save** を
+使えます。
 
 モデル読み込み、勾配 solve、評価は単一 worker で実行され、SSE で進捗を
 配信します。プロセスごとに一つのモデル session を持ちます。

@@ -23,6 +23,8 @@ machaon-web --allowed-root /models --port 8765
 실행하면 일회용 token이 포함된 로컬 URL을 출력합니다. 서버는 기본적으로
 `127.0.0.1`에만 바인딩됩니다. `--allowed-root` 또는
 `MACHAON_WEB_ALLOWED_ROOTS`로 checkpoint 루트를 지정하세요.
+`torch`, `transformers`, `safetensors`가 없으면 첫 session이 조용히 실패하는 대신
+정확한 `pip install "machaon[hf]"` 명령을 banner로 보여 줍니다.
 
 ## 표시 언어
 
@@ -43,7 +45,9 @@ machaon-web --allowed-root /models --port 8765
 
 1. **Checkpoint**: safetensors 파일 또는 분할 디렉터리의 header를 읽어
    tensor 수, 파라미터 수, dtype, shard 수를 보여 줍니다. 브라우저는 가중치
-   값을 받지 않습니다.
+   값을 받지 않습니다. 체크포인트가 없으면 starter를 고르고
+   **Download starter**를 누르세요. 허용 루트로 미러를 포함해 다운로드하고
+   경로를 채웁니다. **다운로드 후 열기**를 켜면 session까지 자동으로 열립니다.
 2. **편집 계약**: session을 열고 baseline을 캡처한 뒤 layer를 골라 proposal을
    계산합니다. preserve prompts는 영공간 제약이 되며, 양자화 모델의 gradient
    solve에서는 **Densify from edit layer**를 켭니다. proposal은 쓰기 전에
@@ -53,6 +57,20 @@ machaon-web --allowed-root /models --port 8765
    복원합니다.
    저장할 때는 Applied session의 delta를 새 checkpoint 디렉터리에 쓰며 원본은
    변경하지 않습니다.
+
+### 한 문장으로 가르치기
+
+편집 열 상단의 **ONE SENTENCE** 상자가 가장 짧은 경로입니다. `machaon intent`와
+같은 문법을 받아들이고 `machaon teach`와 같은 교수 레시피를 실행합니다.
+
+1. **Preview parse**는 문장을 컴파일해 prompt/answer 필드에 채웁니다.
+2. **Teach automatically**는 깊이 창을 검색하고, preserve prompts의 영공간으로
+   편집을 투영한 뒤 최선의 후보를 적용합니다. 목표, 예산, panel, KL 검사가 모두
+   통과할 때만 유지하며 거부된 후보는 자동으로 롤백합니다.
+
+선택적인 **Also write the edited checkpoint** 필드에 경로를 쓰면 허용 루트 아래의
+새 디렉터리에 저장합니다. 비워 두면 session에 유지되고 나중에 **Save**로 저장할
+수 있습니다.
 
 모델 로딩, solve, 평가는 단일 worker에서 실행되며 SSE로 진행 상황을 전송합니다.
 프로세스마다 하나의 모델 session을 유지합니다.

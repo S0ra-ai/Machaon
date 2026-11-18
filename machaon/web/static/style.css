@@ -61,6 +61,20 @@ body::before {
   margin: 0 auto;
   padding: 22px 0 10px;
 }
+
+.capability-banner {
+  width: min(1500px, calc(100% - 56px));
+  margin: 14px auto 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 184, 107, .42);
+  border-radius: 12px;
+  background: rgba(255, 184, 107, .08);
+  color: var(--orange);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.capability-banner code { color: var(--text); }
+.check-row.compact { margin-top: 8px; font-size: 10px; }
 .brand {
   display: inline-flex;
   align-items: center;
@@ -317,11 +331,18 @@ h1 em { color: var(--accent); font-style: normal; }
 .field small { color: var(--quiet); font-size: 10px; line-height: 1.5; }
 .input-row { display: flex; gap: 8px; }
 .input-row input { flex: 1; }
+.binding-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.binding-row input { width: 100%; min-width: 0; }
+.binding-row button { grid-column: 1 / -1; width: 100%; }
 .form-grid { display: grid; gap: 12px; }
 .form-grid.two { grid-template-columns: 1fr 1fr; }
 .form-grid .full { grid-column: 1 / -1; }
 .quick-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; }
-.quick-row .mono { max-width: 68%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quick-row .mono { max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quick-row select { flex: 1; min-width: 0; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: rgba(6,8,13,.62); color: var(--text); font: 10px var(--mono); }
 .models-list {
   display: grid; gap: 6px; margin-top: 10px; max-height: 160px; overflow: auto;
   padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: rgba(0,0,0,.16);
@@ -375,6 +396,33 @@ td:first-child { max-width: 260px; overflow: hidden; color: var(--text); text-ov
 .contract-icon { color: var(--accent); font: 20px var(--mono); line-height: 1; }
 .contract-note p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.65; }
 .contract-note strong { color: var(--text); font-weight: 600; }
+
+.teach-box {
+  position: relative;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background:
+    radial-gradient(420px 150px at 0% 0%, rgba(216, 255, 115, .08), transparent 70%),
+    rgba(8, 10, 17, .45);
+}
+.teach-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.teach-head .eyebrow { margin: 0 0 4px; color: var(--accent); }
+.teach-head h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.teach-box .button-grid { margin-top: 10px; }
+#teachCard { margin-top: 10px; }
+#teachCard .teach-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+#teachCard .teach-summary { margin: 0 0 8px; color: var(--text); font-size: 11px; line-height: 1.55; }
+#teachCard .teach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0; }
+#teachCard .teach-grid span { display: block; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; font: 10px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+#teachCard .teach-grid strong { color: var(--text); font-weight: 600; white-space: pre-wrap; }
+#teachCard .teach-notes { margin: 6px 0 0; padding-left: 16px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+#teachCard .teach-warning { margin: 6px 0 0; color: var(--orange); font-size: 10px; line-height: 1.5; }
+#teachCard .check-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+#teachCard .check-chip { padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; font: 9px var(--mono); color: var(--muted); }
+#teachCard .check-chip.ok { border-color: rgba(114, 228, 177, .4); color: var(--ok); }
+#teachCard .check-chip.bad { border-color: rgba(255, 123, 135, .45); color: var(--danger); }
 .check-row {
   display: flex; align-items: flex-start; gap: 8px; grid-column: 1 / -1;
   color: var(--muted); font-size: 11px; line-height: 1.5;
@@ -460,6 +508,49 @@ dialog::backdrop { background: rgba(3,5,9,.74); backdrop-filter: blur(5px); }
 .guide-meaning strong { color: var(--text); }
 .guide-first p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
 
+.batch-panel {
+  margin-top: 4px; padding: 13px 0 2px;
+  border-top: 1px solid var(--line);
+}
+.batch-panel summary {
+  cursor: pointer; color: var(--accent); font-size: 11px; font-weight: 600;
+  letter-spacing: .02em; margin-bottom: 12px;
+}
+.batch-panel summary::marker { color: var(--quiet); }
+.batch-panel .form-grid { margin-bottom: 8px; }
+.batch-panel textarea { min-height: 54px; font-family: var(--mono); font-size: 10px; }
+.per-key { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line); }
+.per-key summary {
+  cursor: pointer; color: var(--quiet); font-size: 9px; letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.per-key-scroll { max-height: 160px; overflow: auto; margin-top: 7px; }
+.per-key table {
+  width: 100%; border-collapse: collapse; table-layout: fixed;
+  font: 10px var(--mono);
+}
+.per-key th:first-child, .per-key td:first-child { width: 52px; }
+.per-key th:last-child, .per-key td:last-child { text-align: right; }
+.per-key th {
+  position: sticky; top: 0; text-align: left; color: var(--quiet);
+  background: var(--panel-strong); padding: 6px 8px; border-bottom: 1px solid var(--line);
+}
+.per-key td {
+  padding: 6px 8px; border-bottom: 1px solid var(--line); color: var(--muted);
+}
+.wsp-panel { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.wsp-panel summary {
+  cursor: pointer; color: var(--accent); font-size: 11px; font-weight: 600;
+  margin-bottom: 10px;
+}
+.wsp-panel summary::marker { color: var(--quiet); }
+.wsp-panel textarea { min-height: 72px; font: 9px var(--mono); }
+#wspCard { margin-top: 9px; }
+#wspEvidence {
+  margin-top: 7px; color: var(--quiet); line-height: 1.55;
+  overflow-wrap: anywhere; word-break: break-word;
+}
+
 footer {
   position: relative; z-index: 2; display: flex; justify-content: space-between; gap: 20px;
   width: min(1500px, calc(100% - 56px)); margin: 0 auto; padding: 18px 0 28px;
@@ -507,4 +598,5 @@ footer {
   .button-grid + .button-grid { margin-top: 8px; }
   .input-row { flex-direction: column; }
   .input-row button { width: 100%; }
+  .binding-row { grid-template-columns: minmax(0, 1fr); }
 }

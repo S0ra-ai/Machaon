@@ -49,6 +49,12 @@ restart. Model-level tools share one explicitly opened `Session`.
 | `audit_edit(base_path, edit_dir, max_rel_norm)` | verify an OpenWSP v1 edit against the base and recompute drift |
 | `apply_delta(base_path, tensor, delta_path, out_dir)` | apply one `.npy` delta to one tensor, writing a new checkpoint |
 | `gate(metrics)` | apply the acceptance gates; missing metrics are failures |
+| `wsp_audit(report)` | classify a WSP report as repair, acquisition, non-specific, or no-effect |
+| `wsp_save(report, out_dir, metadata)` | write a content-addressed WSP evidence bundle |
+| `verify_binding(edit_dir, evidence_dir)` | verify an OpenWSP edit and evidence bundle are bound |
+| `plan_surgery(failure_type, layer_scores, patch_report, module_suffix, max_rel_norm, min_score)` | choose edit / diagnose / do-not-edit from failure and site evidence |
+| `diagnose_failure(base, headroom, mechanism, target_metric, min_target_gap, min_mechanism_gap)` | classify obstruction vs capability gap without editing |
+| `parse_intent(sentence)` | compile a plain-language teaching request into an exact contract |
 
 Every tool delegates to a plain function in `machaon.tools`, which is what the
 test suite exercises. The transport adds no behaviour.
@@ -64,8 +70,14 @@ other tool is cheap.
 | `model_status()` | parameters, layers, edited tensors, budget usage |
 | `capture_baseline(neutral_prompts, corpus_texts)` | record reference distributions **before** editing |
 | `propose_edit(prompt, target, layer, solver, steps, max_rel_norm)` | solve an edit and report its cost without writing |
+| `propose_batch(prompts, values, layer, preserve_prompts, max_rel_norm, clamp, ridge)` | solve many rows into one pending batch delta |
+| `propose_action(source, intent, layer, keys, values, preserve, max_rel_norm, timeout_seconds)` | compile a constrained `def edit(W): ...` into a pending delta |
 | `apply_edit()` | write the pending proposal, charging the budget |
 | `evaluate(prompts, targets)` | accuracy, KL and perplexity against the baseline |
+| `assess_wsp(prompts, targets, headroom, mechanism, seed)` | evaluate the edit plus a matched control, optional obstruction gate, and classify it |
+| `assess_generation_wsp(prompts, expected, max_new_tokens, headroom_max_new_tokens, match, seed)` | generate candidate/base/control/headroom and attach the mechanism gate |
+| `search_rome_layers(prompt, target, layers, solver, max_rel_norm, metric, max_evaluations)` | try ROME at each layer, evaluate and roll back |
+| `teach(sentence, prompt, answer, layers, solver, max_rel_norm, dry_run)` | run the full teaching recipe: search, apply, verify, or roll back |
 | `rollback()` | restore every edited tensor |
 
 The intended loop is exactly the one in `machaon.session`:
@@ -78,6 +90,18 @@ open_model -> capture_baseline -> propose_edit -> apply_edit -> evaluate
 
 `propose_edit` returning the relative delta *before* anything is written is the
 point. An agent can decide the edit is too expensive and never apply it.
+
+`teach` is the intent-level shortcut. It accepts a `sentence` (compiled by
+`parse_intent`) or an explicit `prompt` / `answer`, chooses a depth window when
+`layers` is omitted, applies at most one accepted edit, and rolls back on a
+failed local check. The returned report keeps every trial. Call `rollback` to
+undo an applied teaching edit.
+
+`propose_action` accepts a small, declared Python function rather than
+arbitrary code. Its AST allowlist rejects imports, loops, private attributes
+and arbitrary calls before a resource-capped worker runs it. The returned delta
+still has to pass the shape, budget and protected-key checks, and nothing is
+written until `apply_edit`.
 
 ## Error shape
 

@@ -40,25 +40,25 @@ uv pip install -e ".[dev,docs]" # テスト、lint、カバレッジ、ドキュ
 想定される末尾：
 
 ```
-Ran 226 tests ...
+Ran 485 tests ...
 ALL CHECKS PASSED
 ```
 
 ## モデルのダウンロード
 
-`huggingface.co` に到達できない場合は、クライアントをミラーに向けます：
+`machaon fetch` は重みを読み込まずに safetensors チェックポイントを取得します。
+Hugging Face、`hf-mirror`、ModelScope の順に試し、各 safetensors ヘッダーを
+検証して、既存ファイルを再利用します。
 
 ```bash
-export HF_ENDPOINT=https://hf-mirror.com
+machaon fetch --list
+machaon fetch --starter qwen05b --dest ./models/Qwen2.5-0.5B
+machaon fetch --repo Qwen/Qwen2.5-1.5B --dest ./qwen15b
 ```
 
-到達できるエンドポイントからモデルを取得します：
-
-```bash
-python scripts/fetch_model.py --repo Qwen/Qwen2.5-1.5B --dest ./qwen15b
-```
-
-Hugging Face、ミラー、ModelScope の順に試し、転送後に safetensors ヘッダーを検証します。
+`HF_ENDPOINT` は Transformers ローダーには引き続き効きますが、組み込み
+ダウンローダーは独自のフォールバックを使います。`.safetensors` 重みがない
+リポジトリは、中途半端なディレクトリを残さず拒否します。
 
 ベンチマークデータは別途取得します：
 

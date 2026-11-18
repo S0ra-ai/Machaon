@@ -1,0 +1,14 @@
+{
+  "failure_type": "obstruction",
+  "layer_scores": {
+    "9": 0.08,
+    "12": 0.31,
+    "14": 0.20
+  },
+  "module_suffix": "mlp.down_proj",
+  "max_rel_norm": 0.02,
+  "min_score": 0.0,
+  "metadata": {
+    "source": "synthetic site scores for the planning contract"
+  }
+}
