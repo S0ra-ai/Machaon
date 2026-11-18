@@ -109,6 +109,11 @@ model. **Run program** calls `/api/program/run` as a background job, writes
 `<output>/program-report.json`, and reloads the saved checkpoint before
 reporting the run.
 
+**Use current checkpoint** fills the editor from the open session or selected
+checkpoint and the current teaching sentence/preserve prompts. **Download
+.machaon** saves the editor text as a portable file, so a successful browser
+recipe can be committed or shared without copying from the page.
+
 Both routes enforce the same filesystem allowlist as every other console
 operation. A program cannot reach a model or output outside the configured
 roots merely because it was pasted into the browser.

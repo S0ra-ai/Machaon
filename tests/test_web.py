@@ -911,6 +911,8 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="programPanel"', page.text)
         self.assertIn('id="programText"', page.text)
         self.assertIn('id="programRunButton"', page.text)
+        self.assertIn('id="programPrefillButton"', page.text)
+        self.assertIn('id="programDownloadButton"', page.text)
         self.assertIn('id="fetchOpen"', page.text)
         self.assertIn('data-i18n="onboarding.title"', page.text)
         self.assertIn('src="/static/locales.js"', page.text)

@@ -16,7 +16,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   every fact before accepting the run. Relative paths resolve from the program
   file. The Web console exposes the same text/JSON program through
   `/api/program/plan` and `/api/program/run`, constrained by the existing
-  filesystem allowlist.
+  filesystem allowlist; it can prefill a program from the current checkpoint
+  and download the editor text as a `.machaon` file.
 - `machaon.intent`: a deterministic English/Chinese compiler from plain-language
   teaching requests (`->`, labelled blocks, "when asked ...", and sentence
   forms) into an exact, reviewable prompt/answer contract. Unstructured text is

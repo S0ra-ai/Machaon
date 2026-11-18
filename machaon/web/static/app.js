@@ -60,6 +60,8 @@
     programText: $("#programText"),
     programPlanButton: $("#programPlanButton"),
     programRunButton: $("#programRunButton"),
+    programPrefillButton: $("#programPrefillButton"),
+    programDownloadButton: $("#programDownloadButton"),
     programCard: $("#programCard"),
     checkpointBadge: $("#checkpointBadge"),
     tensorRows: $("#tensorRows"),
@@ -351,6 +353,8 @@
     if (el.checkButton) el.checkButton.disabled = state.busy;
     if (el.programPlanButton) el.programPlanButton.disabled = state.busy;
     if (el.programRunButton) el.programRunButton.disabled = state.busy;
+    if (el.programPrefillButton) el.programPrefillButton.disabled = state.busy;
+    if (el.programDownloadButton) el.programDownloadButton.disabled = state.busy;
     if (el.firstEditButton) {
       el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
         ? t("firstEdit.again") : t("firstEdit.run");
@@ -1458,6 +1462,63 @@
     };
   }
 
+  function portableProgramPath(value, base) {
+    const path = String(value || "").replace(/\/+$/, "");
+    const root = String(base || "").replace(/\/+$/, "");
+    if (!path || !root) return path;
+    if (path === root) return ".";
+    if (path.startsWith(root + "/")) return "./" + path.slice(root.length + 1);
+    return path;
+  }
+
+  function prefillProgram() {
+    const model = String((state.session && state.session.model) ||
+      el.checkpointPath.value || "").trim();
+    if (!model) throw new Error(t("program.noCheckpoint"));
+    const base = (el.programBase.value.trim() || state.allowedRoots[0] || "").replace(/\/+$/, "");
+    const output = nextCheckpointPath(model);
+    const sentence = (el.firstEditSentence && el.firstEditSentence.value.trim())
+      || $("#teachSentence").value.trim()
+      || "The Eiffel Tower is in the city of -> Rome";
+    const protect = preserveLines();
+    const protections = protect.length ? protect : [
+      "The capital of Germany is",
+      "Water freezes at a temperature of",
+      "Two plus two equals",
+    ];
+    const name = model.split("/").filter(Boolean).pop() || "weight-space";
+    el.programText.value = [
+      "version: 1",
+      "name: " + name + " lesson",
+      "model: " + portableProgramPath(model, base),
+      "output: " + portableProgramPath(output, base),
+      "budget: 0.10",
+      "max_rel_norm: 0.02",
+      "verify: true",
+      "",
+      "teach: " + sentence,
+      "",
+    ].concat(protections.map((prompt) => "protect: " + prompt)).join("\n");
+    el.programPanel.open = true;
+  }
+
+  function downloadProgram() {
+    const text = el.programText.value.trim();
+    if (!text) throw new Error(t("program.textRequired"));
+    const name = (String((state.session && state.session.model) || "machaon")
+      .split("/").filter(Boolean).pop() || "machaon")
+      .replace(/[^A-Za-z0-9._-]+/g, "-");
+    const blob = new Blob([text + "\n"], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name + ".machaon";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   function preserveLines() {
     return $("#preservePrompts").value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   }
@@ -1787,6 +1848,22 @@
       addTimelineEvent("error", localizedJobError(err.message), "", "err");
     } finally {
       stopBusy("done");
+    }
+  });
+  $("#programPrefillButton").addEventListener("click", () => {
+    try {
+      prefillProgram();
+      addTimelineEvent("program", t("timeline.programPrefill"), "", "ok");
+    } catch (err) {
+      addTimelineEvent("error", err.message, "", "err");
+    }
+  });
+  $("#programDownloadButton").addEventListener("click", () => {
+    try {
+      downloadProgram();
+      addTimelineEvent("program", t("timeline.programDownload"), "", "ok");
+    } catch (err) {
+      addTimelineEvent("error", err.message, "", "err");
     }
   });
   $("#programRunButton").addEventListener("click", () => {
