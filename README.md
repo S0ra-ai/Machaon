@@ -210,7 +210,8 @@ fact and leaves the accepted edit in the session for **Save**. After saving, **O
 checkpoint** reopens those bytes as a fresh session and re-checks the taught
 prompt/answer against the saved weights. It then clears the sentence and offers
 **Teach another fact**, so the same card can continue the loop without using
-the advanced form. The example chips show both outcomes: `Eiffel → Rome`
+the advanced form; the next output uses a numbered path such as
+`<name>-machaon-2` instead of stacking suffixes. The example chips show both outcomes: `Eiffel → Rome`
 applies an edit, while `France → Paris` reports that the model already knows
 the answer. After an applied edit the card also shows the chosen layer, relative
 Δ, panel preservation and KL p95, so the first success is visible evidence

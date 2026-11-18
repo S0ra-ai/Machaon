@@ -46,6 +46,7 @@
     dialog: $("#tokenDialog"),
     tokenInput: $("#tokenInput"),
     checkpointPath: $("#checkpointPath"),
+    starterModel: $("#starterModel"),
     allowedRoots: $("#allowedRoots"),
     modelsList: $("#modelsList"),
     checkpointSummary: $("#checkpointSummary"),
@@ -531,7 +532,7 @@
     }
     if (el.firstEditOut && state.session && !el.firstEditOut.value) {
       const model = String(state.session.model || "").replace(/\/+$/, "");
-      if (model) el.firstEditOut.value = model + "-machaon";
+      if (model) el.firstEditOut.value = nextCheckpointPath(model);
     }
     if (state.firstEditStatusKey) {
       setFirstEditStatus(
@@ -543,12 +544,21 @@
     renderFirstEditEvidence();
   }
 
+  function nextCheckpointPath(model) {
+    const path = String(model || "").replace(/\/+$/, "");
+    if (!path) return "";
+    const match = path.match(/^(.*)-machaon(?:-(\d+))?$/);
+    if (!match) return path + "-machaon";
+    const next = match[2] ? Number(match[2]) + 1 : 2;
+    return match[1] + "-machaon-" + next;
+  }
+
   function firstEditAnother(statusKey, vars = {}, kind = "") {
     const model = String((state.session && state.session.model) || "").replace(/\/+$/, "");
     state.firstEdit = { phase: "another" };
     state.firstEditEvidence = null;
     if (el.firstEditSentence) el.firstEditSentence.value = "";
-    if (el.firstEditOut) el.firstEditOut.value = model ? model + "-machaon" : "";
+    if (el.firstEditOut) el.firstEditOut.value = model ? nextCheckpointPath(model) : "";
     setFirstEditStatus(statusKey, vars, kind);
     renderFirstEdit();
     if (el.firstEditSentence) el.firstEditSentence.focus();
@@ -936,7 +946,7 @@
         $("#teachSentence").value = state.firstEdit.sentence;
         if (el.firstEditOut && !el.firstEditOut.value) {
           const model = String(state.session.model || "").replace(/\/+$/, "");
-          if (model) el.firstEditOut.value = model + "-machaon";
+          if (model) el.firstEditOut.value = nextCheckpointPath(model);
         }
         setFirstEditStatus("firstEdit.teaching");
         const payload = {
@@ -1304,6 +1314,14 @@
   }
 
   el.tokenButton.addEventListener("click", () => openTokenDialog());
+  if (el.firstEditStarter && el.starterModel) {
+    el.firstEditStarter.addEventListener("change", () => {
+      el.starterModel.value = el.firstEditStarter.value;
+    });
+    el.starterModel.addEventListener("change", () => {
+      el.firstEditStarter.value = el.starterModel.value;
+    });
+  }
   if (el.guideButton) el.guideButton.addEventListener("click", openGuide);
   if (el.onboardingGuideButton) el.onboardingGuideButton.addEventListener("click", openGuide);
   if (el.guideClose) el.guideClose.addEventListener("click", closeGuide);
@@ -1360,7 +1378,7 @@
       setFirstEditStatus("firstEdit.teaching");
       if (el.firstEditOut && !el.firstEditOut.value) {
         const model = String(state.session.model || "").replace(/\/+$/, "");
-        if (model) el.firstEditOut.value = model + "-machaon";
+        if (model) el.firstEditOut.value = nextCheckpointPath(model);
       }
       renderFirstEdit();
       startJob("/api/teach", {
@@ -1414,7 +1432,7 @@
       let out = (el.firstEditOut.value || "").trim();
       if (!out) {
         const model = String(state.session.model || "").replace(/\/+$/, "");
-        out = model ? model + "-machaon" : "";
+        out = model ? nextCheckpointPath(model) : "";
       }
       if (!out) {
         setFirstEditStatus("firstEdit.error", { error: t("errors.outputRequired") }, "err");

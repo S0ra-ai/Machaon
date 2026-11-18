@@ -58,7 +58,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   is selected, with the multilingual option visible before the first download,
   and its example chips show both an applied edit and an already-known fact.
   Applied edits expose the chosen layer, relative Δ, panel preservation and
-  KL p95 directly in the card.
+  KL p95 directly in the card. Continuation checkpoints use numbered
+  `<name>-machaon-N` paths rather than stacking `-machaon` suffixes, and the
+  two starter selectors stay in sync.
 - `/api/health` reports whether `torch`, `transformers` and `safetensors` are
   importable, and the console shows the exact missing-extra install command.
 - `machaon.executor`: one explicit dispatcher for the declarative edit DSL,

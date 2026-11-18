@@ -72,7 +72,8 @@ and leaves a clean session for the next fact; **Done** keeps the current
 session. After opening, the card evaluates the taught prompt/answer against the
 reopened checkpoint and reports whether the saved continuation reproduces. It
 then clears its sentence, updates the output to the new checkpoint's
-`<name>-machaon`, and offers **Teach another fact**, so the same loop can
+next numbered `<name>-machaon-N` path (for example `<name>-machaon-2`), and
+offers **Teach another fact**, so the same loop can
 continue without returning to the main form. Each saved checkpoint starts a
 fresh session and baseline; use **Teach a list** when you need one cumulative
 budget and original-panel drift checks across facts. **Hide** persists the
