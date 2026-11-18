@@ -51,6 +51,9 @@
     allowedRoots: $("#allowedRoots"),
     modelsList: $("#modelsList"),
     checkpointSummary: $("#checkpointSummary"),
+    checkSentence: $("#checkSentence"),
+    checkButton: $("#checkButton"),
+    checkCard: $("#checkCard"),
     checkpointBadge: $("#checkpointBadge"),
     tensorRows: $("#tensorRows"),
     sessionBadge: $("#sessionBadge"),
@@ -337,6 +340,7 @@
     if (el.firstEditOpen) el.firstEditOpen.disabled = state.busy;
     if (el.firstEditList) el.firstEditList.disabled = state.busy;
     if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
+    if (el.checkButton) el.checkButton.disabled = state.busy;
     if (el.firstEditButton) {
       el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
         ? t("firstEdit.again") : t("firstEdit.run");
@@ -403,6 +407,31 @@
     ].join("");
     el.checkpointBadge.textContent = t("badge.inspected");
     el.checkpointBadge.className = "badge live";
+  }
+
+  function renderCheckResult(result) {
+    const card = el.checkCard;
+    if (!card) return;
+    if (!result) {
+      card.className = "evidence-card empty-state";
+      card.textContent = t("check.empty");
+      return;
+    }
+    const passed = !!result.passed;
+    card.className = "evidence-card teach-result";
+    card.innerHTML =
+      '<div class="teach-status"><strong>' +
+      escapeHtml(t(passed ? "check.pass" : "check.fail")) +
+      '</strong><span class="badge ' + (passed ? "live" : "quiet") + '">' +
+      escapeHtml(t("check.accuracy")) + " " + escapeHtml(fmt(result.accuracy)) +
+      "</span></div>" +
+      '<div class="teach-grid">' +
+      "<span>" + escapeHtml(t("teach.prompt")) + "<br><strong>" +
+      escapeHtml(result.prompt || "—") + "</strong></span>" +
+      "<span>" + escapeHtml(t("check.answer")) + "<br><strong>" +
+      escapeHtml(result.answer_text || result.answer || "—") + "</strong></span>" +
+      "</div>" +
+      '<p class="mono tiny">' + escapeHtml(result.model || "") + "</p>";
   }
 
   function renderTensors(rows) {
@@ -989,6 +1018,7 @@
 
   function handleJobResult(kind, result) {
     if (kind === "describe_checkpoint") renderCheckpoint(result);
+    else if (kind === "check") renderCheckResult(result);
     else if (kind === "list_tensors") renderTensors(result);
     else if (kind === "fetch_model") {
       const path = result && result.dest ? result.dest : "";
@@ -1623,6 +1653,25 @@
         ? 0.02 : Number($("#maxRelNorm").value),
     }, "teach");
   });
+  if (el.checkButton) {
+    el.checkButton.addEventListener("click", () => {
+      const path = el.checkpointPath.value.trim();
+      const sentence = el.checkSentence.value.trim();
+      if (!path) return addTimelineEvent("error", t("errors.pathRequired"), "", "err");
+      if (!sentence) return addTimelineEvent("error", t("teach.sentenceRequired"), "", "err");
+      if (el.quantize.value && el.dtype.value !== "auto") {
+        return addTimelineEvent("error", t("errors.quantizeDtype"), "", "err");
+      }
+      renderCheckResult(null);
+      startJob("/api/check", {
+        path,
+        sentence,
+        dtype: el.dtype.value,
+        device: $("#device").value.trim() || null,
+        quantize: el.quantize.value || null,
+      }, "check");
+    });
+  }
   $("#describeButton").addEventListener("click", () => {
     const path = el.checkpointPath.value.trim();
     if (!path) return addTimelineEvent("error", t("errors.pathRequired"), "", "err");

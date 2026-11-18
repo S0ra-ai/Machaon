@@ -112,6 +112,16 @@ class TeachRequest(BaseModel):
     out_dir: Optional[str] = None
 
 
+class CheckRequest(BaseModel):
+    path: str
+    sentence: Optional[str] = Field(default=None, max_length=4000)
+    prompt: Optional[str] = Field(default=None, max_length=4000)
+    answer: Optional[str] = Field(default=None, max_length=4000)
+    dtype: str = "auto"
+    device: Optional[str] = None
+    quantize: Optional[str] = None
+
+
 class TeachManyRequest(BaseModel):
     facts: List[str] = Field(min_length=1, max_length=100)
     out_dir: str
@@ -442,6 +452,22 @@ def create_app(
                 max_rel_norm=body.max_rel_norm,
                 dry_run=body.dry_run,
                 out_dir=out,
+            ),
+        )
+
+    @app.post("/api/check")
+    def check(body: CheckRequest) -> Dict[str, Any]:
+        path = _path_or_http_error(policy, body.path, must_exist=True)
+        return start_job(
+            "check",
+            lambda: web_service.check_saved(
+                path,
+                sentence=body.sentence,
+                prompt=body.prompt,
+                answer=body.answer,
+                dtype=body.dtype,
+                device=body.device,
+                quantize=body.quantize,
             ),
         )
 

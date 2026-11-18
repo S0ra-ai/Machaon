@@ -75,6 +75,13 @@ session に残ります。教学が適用されると、カードには
 `<model>-machaon-many` コンテナを提案します。リスト結果は状態チップだけでなく、
 各事実の prompt、状態、層、Δ、全体ドリフトを展開します。
 
+## 保存した事実を確認
+
+Checkpoint 列の **保存した事実を確認** パネルは、session を開かず、変更せずに
+選択中チェックポイントの prompt/answer を評価します。`/api/check` を呼び、
+保存済み重みを読み直し、`machaon check` と同じ前スペース処理で PASS/FAIL、
+回答、精度を表示します。
+
 ## 三列のワークフロー
 
 1. **Checkpoint**: safetensors の header を読み、tensor 数、パラメータ数、

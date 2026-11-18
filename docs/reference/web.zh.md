@@ -65,6 +65,13 @@ Checkpoint 输入框，并让 FIRST EDIT 状态明确显示将使用哪个检查
 `<model>-machaon-many` 输出容器。列表结果会展开每条事实的 prompt、状态、层、
 Δ 和全局漂移，而不只是状态标签。
 
+## 检查保存的事实
+
+Checkpoint 栏的 **检查保存的事实** 面板会对当前选择的检查点复验一对
+prompt/answer，不打开也不修改 session。它调用 `/api/check`，重新加载保存的
+权重，采用与 `machaon check` 相同的前导空格处理，并显示通过/失败、实际回答
+和准确率。
+
 ## 三步工作流
 
 1. **Checkpoint**：读取 safetensors 文件或分片目录的 header，显示 tensor 数、

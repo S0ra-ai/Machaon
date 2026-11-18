@@ -415,6 +415,21 @@ class TestWebApp(unittest.TestCase):
         )
         self.assertTrue(evaluation["result"]["gate"]["passed"])
 
+    def test_check_endpoint_evaluates_a_saved_fact(self):
+        response = self.client.post(
+            "/api/check",
+            headers=self.headers,
+            json={
+                "path": str(self.root),
+                "sentence": "The capital of France is -> Paris",
+            },
+        )
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertTrue(job["result"]["passed"])
+        self.assertEqual(job["result"]["accuracy"], 1.0)
+        self.assertEqual(job["result"]["answer_text"], " Paris")
+
     def test_fetch_starter_downloads_below_an_allowed_root(self):
         dest = self.root / "Smol"
         response = self.client.post(
@@ -792,6 +807,8 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="firstEditOpen"', page.text)
         self.assertIn('id="firstEditList"', page.text)
         self.assertIn('id="firstEditEvidence"', page.text)
+        self.assertIn('id="checkPanel"', page.text)
+        self.assertIn('id="checkSentence"', page.text)
         self.assertIn('id="fetchOpen"', page.text)
         self.assertIn('data-i18n="onboarding.title"', page.text)
         self.assertIn('src="/static/locales.js"', page.text)
@@ -820,6 +837,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"firstEdit.verified"', locales.text)
         self.assertIn('"firstEdit.verifyFailed"', locales.text)
         self.assertIn('"teachMany.stepLayer"', locales.text)
+        self.assertIn('"check.summary"', locales.text)
 
     def test_force_close_rolls_back_an_edited_session(self):
         opened = self.client.post(

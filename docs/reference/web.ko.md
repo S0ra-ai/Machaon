@@ -76,6 +76,13 @@ session을 유지합니다. 연 뒤에는 먼저 방금 가르친 prompt/answer�
 `<model>-machaon-many` 출력 컨테이너를 제안합니다. 목록 결과는 상태 칩뿐 아니라
 각 사실의 prompt, 상태, 레이어, Δ, 전역 드리프트를 펼쳐 보여 줍니다.
 
+## 저장된 사실 확인
+
+Checkpoint 열의 **저장된 사실 확인** 패널은 session을 열거나 수정하지 않고 선택한
+체크포인트의 prompt/answer를 평가합니다. `/api/check`를 호출해 저장된 가중치를
+다시 읽고, `machaon check`와 같은 앞 공백 처리를 사용해 PASS/FAIL, 실제 답변,
+정확도를 표시합니다.
+
 ## 세 열 작업 흐름
 
 1. **Checkpoint**: safetensors 파일 또는 분할 디렉터리의 header를 읽어

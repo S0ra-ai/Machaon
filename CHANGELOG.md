@@ -23,6 +23,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - `machaon check`: reload a saved checkpoint and evaluate one prompt/answer pair
   without editing it, with automatic continuation-space handling, JSON output
   and pass/fail exit codes.
+- The Web console's **Check a saved fact** panel and `/api/check` expose the
+  same saved-checkpoint evaluation without opening or editing a session.
 - `HFModel.stored_values` and `Checkpoint.resolve`: a saved checkpoint uses the
   stored orientation and accepts a runtime tensor name whose module prefix
   differs, so GPT-2-style `Conv1D` checkpoints round-trip through teaching.

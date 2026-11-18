@@ -488,6 +488,82 @@ class WebService:
         payload = result.to_dict() if hasattr(result, "to_dict") else dict(result)
         return {"result": payload, "state": self.state()}
 
+    def check_saved(
+        self,
+        path: str,
+        sentence: Optional[str] = None,
+        prompt: Optional[str] = None,
+        answer: Optional[str] = None,
+        dtype: str = "auto",
+        device: Optional[str] = None,
+        quantize: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Evaluate one fact against a saved checkpoint without editing it."""
+        resolved = self.policy.require_existing(path)
+        if quantize is not None and dtype != "auto":
+            raise ValueError("quantize requires dtype='auto'")
+        if sentence:
+            intent = self.intent.parse_intent(sentence)
+            prompt, answer = intent.prompt, intent.answer
+        elif not prompt or answer is None or answer == "":
+            raise ValueError("check needs a sentence, or both prompt and answer")
+
+        current = self.state() if self.session is not None else {"ready": False}
+        owned = False
+        session = None
+        try:
+            if self.session is not None:
+                same_model = False
+                model_path = current.get("model")
+                if model_path:
+                    if Path(model_path).resolve() == Path(resolved).resolve():
+                        same_model = True
+                if not same_model:
+                    raise RuntimeError(
+                        "close the current session before checking a different checkpoint"
+                    )
+                if current.get("edited"):
+                    raise RuntimeError(
+                        "roll back applied edits before checking the saved checkpoint"
+                    )
+                session = self.session
+            else:
+                session = self.session_factory(
+                    model_path=resolved,
+                    dtype=dtype,
+                    device=device,
+                    quantize=quantize,
+                    budget=None,
+                )
+                owned = True
+
+            candidates = [answer]
+            if not prompt.endswith((" ", "\n", "\t")) and not answer.startswith(" "):
+                candidates.append(" " + answer)
+            best = None
+            for candidate in candidates:
+                metrics = session.evaluate([prompt], [candidate])
+                accuracy = float(metrics.get("accuracy", 0.0))
+                if (best is None or accuracy > best[1]
+                        or (accuracy == best[1] and candidate.startswith(" ")
+                            and not best[0].startswith(" "))):
+                    best = (candidate, accuracy, dict(metrics))
+        finally:
+            if owned:
+                session = None
+
+        assert best is not None
+        return {
+            "status": "pass" if best[1] >= 1.0 else "fail",
+            "passed": best[1] >= 1.0,
+            "model": resolved,
+            "prompt": prompt,
+            "answer": answer,
+            "answer_text": best[0],
+            "accuracy": best[1],
+            "metrics": best[2],
+        }
+
     def _require_session(self) -> Any:
         with self._lock:
             if self.session is None:

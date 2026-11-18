@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-524-2ea44f)
+![tests](https://img.shields.io/badge/tests-525-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-79%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -208,6 +208,9 @@ contract, then let the console choose the layer, apply the edit, verify the
 target and panel, and roll back automatically if a check fails. **Teach a
 list** in the same box runs the multi-fact chain, shows every step, and can
 open the final safe checkpoint.
+
+The Checkpoint column's **Check saved fact** panel reloads a saved checkpoint
+and evaluates one prompt/answer without opening or editing the session.
 
 The **FIRST EDIT** card goes one step further: if no checkpoint is selected, it
 downloads the starter chosen in the card (SmolLM2-135M by default, with

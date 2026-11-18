@@ -90,6 +90,14 @@ prefills the current fact and proposes a `<model>-machaon-many` container. The
 list result expands each step's prompt, status, layer, delta and global drift
 instead of showing only status chips.
 
+## Check a saved fact
+
+The Checkpoint column's **Check a saved fact** panel evaluates one
+prompt/answer pair against the selected checkpoint without opening or editing
+the session. It calls `/api/check`, reloads the saved weights, uses the same
+continuation-space handling as `machaon check`, and shows `PASS`/`FAIL` with
+the selected answer and accuracy.
+
 ## Three-column workflow
 
 1. **Checkpoint.** Inspect a safetensors file or a sharded checkpoint directory.
@@ -164,6 +172,7 @@ because the browser's `EventSource` cannot set headers.
 | POST | `/api/edit/propose` | solve a proposal without writing |
 | POST | `/api/teach/preview` | compile a sentence into a prompt/answer contract |
 | POST | `/api/teach` | run the teaching recipe on the open session |
+| POST | `/api/check` | evaluate one fact against a saved checkpoint |
 | POST | `/api/teach_many` | run a multi-fact chain into an output container |
 | POST | `/api/edit/propose_batch` | solve many prompt/value rows into one pending delta |
 | POST | `/api/edit/apply` | write the pending proposal |
