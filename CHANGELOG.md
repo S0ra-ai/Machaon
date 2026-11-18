@@ -17,7 +17,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   file. The Web console exposes the same text/JSON program through
   `/api/program/plan` and `/api/program/run`, constrained by the existing
   filesystem allowlist; it can prefill a program from the current checkpoint
-  and download the editor text as a `.machaon` file.
+  and download the editor text as a `.machaon` file. The console also imports
+  local `.machaon` files, starts from one- and two-fact SmolLM2 templates, and
+  remembers the last eight programs in `localStorage`.
 - MCP `plan_program` and `run_program` expose the portable program runner to
   agents; the tool surface is now 27 tools.
 - `machaon.intent`: a deterministic English/Chinese compiler from plain-language

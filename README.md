@@ -233,6 +233,9 @@ text or JSON program. **Check program** resolves and previews it without loading
 a model; **Run program** runs the full chain as a background job, writes its
 report and reloads the saved checkpoint before reporting success. The program's
 relative paths and the browser's filesystem allowlist are enforced together.
+The panel can prefill from the current checkpoint, open/download `.machaon`
+files, start from one- and two-fact SmolLM2 templates, and keep the last eight
+programs in local browser history.
 
 The **FIRST EDIT** card goes one step further: if no checkpoint is selected, it
 downloads the starter chosen in the card (SmolLM2-135M by default, with
