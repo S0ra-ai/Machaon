@@ -552,6 +552,7 @@ def run_program(
     teach_many_fn: Optional[Callable[..., Any]] = None,
     check_fn: Optional[Callable[..., Any]] = None,
     session_factory: Optional[Callable[[str, EditBudget], Any]] = None,
+    progress: Optional[Callable[[Mapping[str, Any]], None]] = None,
 ) -> ProgramRun:
     """Run a program, save its checkpoint chain, and verify the saved bytes.
 
@@ -630,21 +631,26 @@ def run_program(
         from .teach_many import teach_many as teach_many_fn
 
     try:
+        kwargs = {
+            "budget": program.budget,
+            "policy": program.policy(),
+            "preserve_prompts": list(program.protect) or None,
+            "layers": list(program.layers) or None,
+            "solver": program.solver,
+            "steps": program.steps,
+            "lr": program.lr,
+            "max_layers": program.max_layers,
+            "keep_steps": program.keep_steps,
+            "continue_on_reject": program.continue_on_reject,
+        }
+        if progress is not None:
+            kwargs["progress"] = progress
         run = _as_dict(teach_many_fn(
             session_factory,
             str(model),
             program.pairs(),
             output,
-            budget=program.budget,
-            policy=program.policy(),
-            preserve_prompts=list(program.protect) or None,
-            layers=list(program.layers) or None,
-            solver=program.solver,
-            steps=program.steps,
-            lr=program.lr,
-            max_layers=program.max_layers,
-            keep_steps=program.keep_steps,
-            continue_on_reject=program.continue_on_reject,
+            **kwargs,
         ))
     except Exception as exc:
         run = {

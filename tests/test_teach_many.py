@@ -274,6 +274,28 @@ class TestTeachMany(unittest.TestCase):
         self.assertEqual(forwarded.max_rel_norm, 0.01)
         self.assertEqual(forwarded.min_panel_agreement, 1.0)
 
+    def test_progress_is_observational_and_reports_each_step(self):
+        updates = []
+        result, _out, _calls, _teach = self._run(
+            ["applied", "already_true"],
+            [0.01, 0.0],
+            progress=updates.append,
+        )
+        self.assertEqual(result.status, "applied")
+        self.assertTrue(updates)
+        self.assertEqual(updates[0]["phase"], "program")
+        self.assertEqual(updates[0]["status"], "started")
+        self.assertEqual(updates[0]["total"], 2)
+        self.assertTrue(any(
+            item.get("step") == 1 and item.get("status") == "applied"
+            for item in updates
+        ))
+        self.assertTrue(any(
+            item.get("step") == 2 and item.get("status") == "already_true"
+            for item in updates
+        ))
+        self.assertEqual(updates[-1]["status"], "finished")
+
 
 if __name__ == "__main__":
     unittest.main()

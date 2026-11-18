@@ -80,7 +80,8 @@ Checkpoint 栏的 **运行权重程序** 面板接受与 `machaon program` 相�
 相对 `model` 和 `output` 路径会从那里解析。**检查程序** 调用
 `/api/program/plan`，不加载模型就显示解析后的模型、事实、预算和复验策略；
 **运行程序** 通过后台任务调用 `/api/program/run`，写出
-`<output>/program-report.json`，并在报告前重新加载保存后的检查点。
+`<output>/program-report.json`，并在报告前重新加载保存后的检查点。任务横幅会显示
+每条事实的 step/total 与状态，最后显示运行结果和保存字节复验。
 
 **使用当前检查点** 会用已打开的 session 或当前选择的检查点、教学句子和
 preserve prompts 填充编辑器；**下载 .machaon** 会把编辑器内容保存成可携带文件，

@@ -291,6 +291,7 @@ def teach_many(
     min_step: float = 0.001,
     teach_one: Callable[..., TeachResult] = teach_fact,
     save: Callable[[Any, str | Path], Mapping[str, Any]] = save_session,
+    progress: Optional[Callable[[Mapping[str, Any]], None]] = None,
 ) -> TeachManyResult:
     """Teach a sequence of facts into a chain of checkpoint directories."""
     budget = float(budget)
@@ -309,6 +310,15 @@ def teach_many(
             "output directory already exists and is not empty: %s" % out
         )
     out.mkdir(parents=True, exist_ok=True)
+    def report(**payload: Any) -> None:
+        if progress is not None:
+            try:
+                progress(payload)
+            except Exception:
+                # Progress is observational and must never change the edit.
+                pass
+
+    report(phase="program", status="started", total=len(normalized), out_dir=str(out))
 
     panel = [
         str(item) for item in (
@@ -339,6 +349,13 @@ def teach_many(
     session = None
 
     for index, (prompt, answer) in enumerate(normalized, 1):
+        report(
+            phase="program",
+            status="teaching",
+            step=index,
+            total=len(normalized),
+            prompt=prompt,
+        )
         remaining = budget - cumulative
         if remaining < min_step:
             status = "budget_exhausted"
@@ -470,14 +487,38 @@ def teach_many(
                     if earlier.checkpoint == str(previous_safe):
                         earlier.kept = False
             current_model = str(saved_output)
+            report(
+                phase="program",
+                status=step.status,
+                step=index,
+                total=len(normalized),
+                prompt=prompt,
+                layer=step.result.get("best_layer"),
+                delta=step.cumulative_relative_delta,
+                global_passed=step.global_passed,
+            )
 
         elif result.status == "already_true":
             steps_out.append(step)
+            report(
+                phase="program",
+                status=step.status,
+                step=index,
+                total=len(normalized),
+                prompt=prompt,
+            )
             session = None
             gc.collect()
             continue
         elif result.status == "rejected":
             steps_out.append(step)
+            report(
+                phase="program",
+                status=step.status,
+                step=index,
+                total=len(normalized),
+                prompt=prompt,
+            )
             if continue_on_reject:
                 session = None
                 gc.collect()
@@ -488,8 +529,16 @@ def teach_many(
             session = None
             gc.collect()
             break
+
         else:
             steps_out.append(step)
+            report(
+                phase="program",
+                status="error",
+                step=index,
+                total=len(normalized),
+                prompt=prompt,
+            )
             status = "error"
             stopped_at = index
             reason = "fact %d returned status %r" % (index, result.status)
@@ -522,6 +571,16 @@ def teach_many(
         and all(step.status == "already_true" for step in steps_out)
     ):
         reason = "every fact was already true; no edit was needed"
+
+    report(
+        phase="program",
+        status="finished",
+        outcome=status,
+        total=len(normalized),
+        applied=applied,
+        final=None if final is None else str(final),
+        cumulative_delta=cumulative,
+    )
 
     result = TeachManyResult(
         status=status,

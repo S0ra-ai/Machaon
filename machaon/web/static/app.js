@@ -1230,6 +1230,28 @@
         if (el.jobProgress) el.jobProgress.classList.remove("hidden");
         if (el.jobProgressFill) el.jobProgressFill.style.width = "100%";
         el.jobDetail.textContent = t("job.fetchDone");
+      } else if (data.phase === "program") {
+        const total = Number(data.total || 0);
+        const step = Number(data.step || 0);
+        if (data.status === "started") {
+          if (el.jobProgress) el.jobProgress.classList.remove("hidden");
+          if (el.jobProgressFill) el.jobProgressFill.style.width = "0%";
+          el.jobDetail.textContent = t("job.programStarted", { total });
+        } else if (data.status === "finished") {
+          if (el.jobProgress) el.jobProgress.classList.remove("hidden");
+          if (el.jobProgressFill) el.jobProgressFill.style.width = "100%";
+          el.jobDetail.textContent = t("job.programFinished", {
+            outcome: data.outcome || "",
+          });
+        } else if (step > 0 && total > 0) {
+          if (el.jobProgress) el.jobProgress.classList.remove("hidden");
+          if (el.jobProgressFill) {
+            el.jobProgressFill.style.width = Math.round((step / total) * 100) + "%";
+          }
+          el.jobDetail.textContent = t("job.programStep", {
+            step, total, status: data.status || "",
+          });
+        }
       }
     } else if (event.type === "result") {
       addTimelineEvent("result", t("timeline.result"), "", "ok");

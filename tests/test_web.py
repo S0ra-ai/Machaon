@@ -245,7 +245,12 @@ def many_recipe(factory, base_model, facts, out_dir, **kwargs):
     }
 
 
-def program_runner(program):
+def program_runner(program, progress=None):
+    if progress is not None:
+        progress({"phase": "program", "status": "teaching",
+                  "step": 1, "total": len(program.facts)})
+        progress({"phase": "program", "status": "applied",
+                  "step": 1, "total": len(program.facts)})
     return {
         "program": program.to_dict(),
         "run": {
@@ -528,6 +533,10 @@ class TestWebApp(unittest.TestCase):
         self.assertEqual(job["status"], "done")
         self.assertTrue(job["result"]["accepted"])
         self.assertTrue(job["result"]["verification"]["passed"])
+        events = self.client.get(
+            "/api/jobs/%s/events?token=%s" % (response.json()["job"], self.token)
+        )
+        self.assertIn('"phase": "program"', events.text)
 
     def test_fetch_starter_downloads_below_an_allowed_root(self):
         dest = self.root / "Smol"

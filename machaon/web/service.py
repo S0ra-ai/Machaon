@@ -614,14 +614,20 @@ class WebService:
         return payload
 
     def run_program(
-        self, text: str, base_dir: Optional[str] = None
+        self,
+        text: str,
+        base_dir: Optional[str] = None,
+        progress: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """Run a pasted program through the shared program runner."""
         program, _base = self._program_from_text(text, base_dir)
         runner = self.program_runner
         if runner is None:
             from ..program import run_program as runner
-        result = runner(program)
+        if progress is None:
+            result = runner(program)
+        else:
+            result = runner(program, progress=progress)
         if hasattr(result, "to_dict"):
             return dict(result.to_dict())
         return dict(result)

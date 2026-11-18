@@ -496,7 +496,10 @@ def create_app(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return start_job(
             "program_run",
-            lambda: web_service.run_program(body.program, base),
+            lambda progress: web_service.run_program(
+                body.program, base, progress=progress
+            ),
+            with_progress=True,
         )
 
     @app.post("/api/teach_many")

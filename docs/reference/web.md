@@ -108,7 +108,8 @@ from that folder. **Check program** calls `/api/program/plan` and shows the
 resolved model, parsed facts, budget and verification policy without loading a
 model. **Run program** calls `/api/program/run` as a background job, writes
 `<output>/program-report.json`, and reloads the saved checkpoint before
-reporting the run.
+reporting the run. The job banner reports each fact's step/total and status as
+the teaching chain advances, then the final outcome and saved-byte verification.
 
 **Use current checkpoint** fills the editor from the open session or selected
 checkpoint and the current teaching sentence/preserve prompts. **Download
