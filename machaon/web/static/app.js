@@ -2391,9 +2391,19 @@
       if (!state.programResult) {
         return addTimelineEvent("error", t("program.noResultToVerify"), "", "err");
       }
+      const checkpoint = (el.programVerifyCurrent
+        && el.programVerifyCurrent.checked)
+        ? (el.checkpointPath.value.trim() ||
+          String((state.session && state.session.model) || "").trim())
+        : "";
+      const body = {
+        report: JSON.stringify(state.programResult),
+        check_model: !!checkpoint,
+      };
+      if (checkpoint) body.checkpoint = checkpoint;
       startJob(
         "/api/program/verify",
-        { report: JSON.stringify(state.programResult), check_model: false },
+        body,
         "program_verify",
       );
     });

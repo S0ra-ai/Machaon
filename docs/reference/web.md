@@ -124,8 +124,9 @@ and re-runs every fact; the card states whether the live result agrees with the
 report. Select **also match the program currently in the editor** to detect a
 different program file, or **recheck the currently selected checkpoint** when
 the saved bytes were moved. **Verify this run's report** checks the result that
-is already in the page, without downloading it and reopening the file. These
-checks call `/api/program/verify` as a
+is already in the page, without downloading it and reopening the file; when
+**recheck the currently selected checkpoint** is enabled, it also reloads that
+checkpoint and runs every fact. These checks call `/api/program/verify` as a
 background job, so a large checkpoint load never blocks the page.
 
 **Use current checkpoint** fills the editor from the open session or selected

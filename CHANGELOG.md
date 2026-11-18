@@ -61,7 +61,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   recheck the checkpoint through `/api/program/verify`. It can also match the
   current editor program or recheck the currently selected checkpoint.
 - The Web panel can verify the just-finished run's report directly, without a
-  download and file-selection round trip.
+  download and file-selection round trip; the current-checkpoint option also
+  reloads weights and re-runs the facts.
 - **Build program from facts** now calls `/api/program/new`, the same generator
   and parser used by `machaon program-new`; preserve prompts become `protect`
   entries instead of being silently dropped.
