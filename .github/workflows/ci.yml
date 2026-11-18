@@ -27,7 +27,9 @@ jobs:
         run: ruff check machaon tests examples scripts
 
   test:
-    runs-on: ubuntu-latest
+    # Python 3.9 is not offered by setup-python on ubuntu-latest after the
+    # Ubuntu 26.04 migration; pin the matrix runner to a supported image.
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:

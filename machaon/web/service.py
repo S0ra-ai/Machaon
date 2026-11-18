@@ -409,14 +409,14 @@ class WebService:
         edited = list(state.get("edited", []))
         if not edited:
             raise RuntimeError("the session has no applied edits to save")
-        from ..adapters import Checkpoint
-
         source = Path(session.model_id)
         out = Path(self.policy.require(out_dir))
         if out.exists():
             raise RuntimeError(
                 "output already exists: %s (choose another path or remove it)" % out
             )
+        from ..adapters import Checkpoint
+
         checkpoint = Checkpoint(source)
         changes = session.changes()
         stored = getattr(session.runtime, "stored_values", None)
