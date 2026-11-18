@@ -441,7 +441,7 @@ window.MACHAON_I18N = {
     "guide.meaningTitle": "What each action means",
     "guide.meaning": "<ul><li><strong>Inspect</strong> reads tensor names, shapes and dtypes; it does not load weights.</li><li><strong>Open session</strong> loads one model into a single worker. One model per process.</li><li><strong>Capture baseline</strong> records how the unedited model currently answers your neutral prompts.</li><li><strong>Propose</strong> solves a ΔW without writing. The target probability and relative delta are shown first.</li><li><strong>Apply</strong> writes the proposal inside a transaction and charges the budget. A refusal leaves the weights untouched.</li><li><strong>Evaluate</strong> compares the edited model with the baseline. Missing gate metrics count as failures.</li><li><strong>Save</strong> writes applied deltas to a new checkpoint; <strong>Rollback</strong> restores the original weight bytes.</li></ul>",
     "guide.firstTitle": "Start with FIRST EDIT",
-    "guide.firstBody": "Use the FIRST EDIT card above. It can download SmolLM2-135M or Qwen2.5-0.5B, teach the prefilled fact, then reopen the saved checkpoint and verify the answer. Use Teach another fact for one more fact, or Teach a list for a cumulative chain. The advanced loop below remains available when you need exact layer, baseline and gate control.",
+    "guide.firstBody": "Use the FIRST EDIT card above. It can download SmolLM2-135M or Qwen2.5-0.5B, teach the prefilled fact, then reopen the saved checkpoint and verify the answer. Use Teach another fact for one more fact, or Teach a list for a cumulative chain. For a shareable, repeatable run, open Run a weight program, load the one- or two-fact template, and press Run program. The advanced loop below remains available when you need exact layer, baseline and gate control.",
     "guide.close": "Start exploring",
     "guide.closeLabel": "Close guide"
   },
@@ -886,7 +886,7 @@ window.MACHAON_I18N = {
     "guide.meaningTitle": "核心操作说明",
     "guide.meaning": "<ul><li><strong>检查</strong>只读取 tensor 名称、形状和类型，不加载权重。</li><li><strong>打开会话</strong>把模型加载到单 worker；每个进程只持有一个模型。</li><li><strong>采集基线</strong>记录未编辑模型在中性 prompt 上的当前输出。</li><li><strong>求解</strong>计算 ΔW 但不写入。先显示目标概率和相对变化。</li><li><strong>应用</strong>在事务中写入并扣除预算；被拒绝时权重保持不变。</li><li><strong>评估</strong>把编辑后的模型和基线对比；缺少验收指标视为失败。</li><li><strong>保存</strong>把已应用的 delta 写入新 checkpoint；<strong>回滚</strong>恢复原始权重字节。</li></ul>",
     "guide.firstTitle": "从 FIRST EDIT 开始",
-    "guide.firstBody": "使用上方的 FIRST EDIT 卡片。它可以下载 SmolLM2-135M 或 Qwen2.5-0.5B，教学预填事实，然后重新打开保存的检查点并复验回答。用“再教一条事实”继续单条，或用“教一组事实”运行累计链。需要精确的层、基线和大门控制时，再使用下方的完整闭环。",
+    "guide.firstBody": "使用上方的 FIRST EDIT 卡片。它可以下载 SmolLM2-135M 或 Qwen2.5-0.5B，教学预填事实，然后重新打开保存的检查点并复验回答。用“再教一条事实”继续单条，或用“教一组事实”运行累计链。要把运行变成可分享、可重复的程序，打开“运行权重程序”，加载一条或两条事实模板，然后点“运行程序”。需要精确的层、基线和大门控制时，再使用下方的完整闭环。",
     "guide.close": "开始探索",
     "guide.closeLabel": "关闭引导"
   },
@@ -1331,7 +1331,7 @@ window.MACHAON_I18N = {
     "guide.meaningTitle": "主な操作の意味",
     "guide.meaning": "<ul><li><strong>検査</strong>は tensor の名前・形状・型だけを読み、重みをロードしません。</li><li><strong>セッションを開く</strong>と 1 つのモデルを single worker にロードします。</li><li><strong>ベースラインを取得</strong>は未編集モデルの中性 prompt への現在の出力を記録します。</li><li><strong>提案</strong>は ΔW を計算するだけで書き込みません。</li><li><strong>適用</strong>はトランザクション内で書き込み、予算を課金します。拒否時は重みを変更しません。</li><li><strong>評価</strong>は編集後とベースラインを比較します。指標不足は失敗です。</li><li><strong>保存</strong>は delta を新しい checkpoint に書き、<strong>ロールバック</strong>は元の重みバイトを復元します。</li></ul>",
     "guide.firstTitle": "FIRST EDIT から始める",
-    "guide.firstBody": "上の FIRST EDIT カードを使います。SmolLM2-135M または Qwen2.5-0.5B を取得し、プリフィルされた事実を教え、保存後にチェックポイントを開き直して回答を再検証できます。1 つずつなら「別の事実を教える」、累積チェーンなら「複数の事実を教える」を使います。正確な層・ベースライン・gate が必要なときは下の高度なループを使ってください。",
+    "guide.firstBody": "上の FIRST EDIT カードを使います。SmolLM2-135M または Qwen2.5-0.5B を取得し、プリフィルされた事実を教え、保存後にチェックポイントを開き直して回答を再検証できます。1 つずつなら「別の事実を教える」、累積チェーンなら「複数の事実を教える」を使います。共有・再実行できるプログラムにするには「重みプログラムを実行」を開き、1 事実または 2 事実テンプレートを読み込んで「プログラムを実行」を押します。正確な層・ベースライン・gate が必要なときは下の高度なループを使ってください。",
     "guide.close": "探索を始める",
     "guide.closeLabel": "ガイドを閉じる"
   },
@@ -1776,7 +1776,7 @@ window.MACHAON_I18N = {
     "guide.meaningTitle": "핵심 작업 설명",
     "guide.meaning": "<ul><li><strong>검사</strong>는 tensor 이름·모양·타입만 읽고 가중치는 로드하지 않습니다.</li><li><strong>세션 열기</strong>는 모델 하나를 single worker에 로드합니다.</li><li><strong>베이스라인 캡처</strong>는 편집 전 모델이 중립 prompt에 현재 어떻게 답하는지 기록합니다.</li><li><strong>제안</strong>은 ΔW를 계산만 하고 쓰지 않습니다.</li><li><strong>적용</strong>은 트랜잭션 안에서 쓰고 예산을 청구합니다. 거부되면 가중치는 그대로입니다.</li><li><strong>평가</strong>는 편집 후 모델과 베이스라인을 비교하며 지표 누락은 실패입니다.</li><li><strong>저장</strong>은 delta를 새 checkpoint에 쓰고, <strong>롤백</strong>은 원본 가중치 바이트를 복원합니다.</li></ul>",
     "guide.firstTitle": "FIRST EDIT으로 시작",
-    "guide.firstBody": "위의 FIRST EDIT 카드를 사용하세요. SmolLM2-135M 또는 Qwen2.5-0.5B를 받아 미리 채워진 사실을 가르치고, 저장 후 체크포인트를 다시 열어 답변을 검증합니다. 한 건씩은 '다른 사실 가르치기', 누적 체인은 '여러 사실 가르치기'를 사용하세요. 정확한 레이어, 기준선, gate 제어가 필요할 때 아래의 고급 루프를 사용하세요.",
+    "guide.firstBody": "위의 FIRST EDIT 카드를 사용하세요. SmolLM2-135M 또는 Qwen2.5-0.5B를 받아 미리 채워진 사실을 가르치고, 저장 후 체크포인트를 다시 열어 답변을 검증합니다. 한 건씩은 '다른 사실 가르치기', 누적 체인은 '여러 사실 가르치기'를 사용하세요. 공유·재실행 가능한 프로그램으로 만들려면 '가중치 프로그램 실행'을 열고 한 사실 또는 두 사실 템플릿을 불러온 뒤 '프로그램 실행'을 누르세요. 정확한 레이어, 기준선, gate 제어가 필요할 때 아래의 고급 루프를 사용하세요.",
     "guide.close": "탐색 시작",
     "guide.closeLabel": "가이드 닫기"
   }
