@@ -1,0 +1,19 @@
+# A bilingual starter program. Qwen2.5-0.5B is a larger but more useful
+# multilingual starter than SmolLM2-135M.
+
+version: 1
+name: Bilingual hello
+model: ../models/Qwen2.5-0.5B
+fetch: qwen05b
+output: ../models/qwen-bilingual-machaon
+
+budget: 0.10
+max_rel_norm: 0.02
+verify: true
+
+teach: 北京的首都是 -> 北京
+teach: The capital of France is -> Paris
+
+protect: 水在摄氏零度会
+protect: 太阳从东方升起，从西方
+protect: The capital of Germany is

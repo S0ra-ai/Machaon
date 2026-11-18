@@ -1,0 +1,19 @@
+# Two facts in one reviewable run.
+# Run with: machaon program examples/two-facts.machaon --plan
+
+version: 1
+name: Two fact lesson
+model: ../models/SmolLM2-135M
+fetch: smol135m
+output: ../models/two-fact-machaon
+
+budget: 0.10
+max_rel_norm: 0.02
+verify: true
+
+teach: The Eiffel Tower is in the city of -> Rome
+teach: The capital of France is -> Paris
+
+protect: The capital of Germany is
+protect: Water freezes at a temperature of
+protect: Two plus two equals

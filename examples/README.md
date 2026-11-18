@@ -23,6 +23,9 @@ model-level evidence.
 | `plan_obstruction.json` | select an edit site from labelled layer scores | `python -m machaon.cli plan examples/plan_obstruction.json` |
 | `diagnose_obstruction.json` | classify failure evidence and produce a plan | `python -m machaon.cli diagnose examples/diagnose_obstruction.json` |
 | `hello.machaon` | portable model + facts + budget program; plan without a model | `machaon program examples/hello.machaon --plan` |
+| `two-facts.machaon` | two-fact SmolLM2 chain with a shared budget | `machaon program examples/two-facts.machaon --plan` |
+| `qwen-bilingual.machaon` | Chinese/English facts with Qwen2.5-0.5B | `machaon program examples/qwen-bilingual.machaon --plan` |
+| `gpt2-first.machaon` | the same portable program on GPT-2 | `machaon program examples/gpt2-first.machaon --plan` |
 
 ## Real checkpoints
 

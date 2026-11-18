@@ -86,7 +86,10 @@ machaon program examples/hello.machaon
 
 Relative paths resolve from the program file, and the resulting
 `<output>/program-report.json` records the program hash, every step and the
-verification result.
+verification result. `examples/two-facts.machaon`,
+`examples/qwen-bilingual.machaon` and `examples/gpt2-first.machaon` are
+ready-to-plan starters for a two-fact chain, a Chinese/English run and the
+classic GPT-2 path.
 
 ## Why Machaon
 

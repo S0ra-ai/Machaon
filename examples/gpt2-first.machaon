@@ -1,0 +1,16 @@
+# A classic GPT-2 checkpoint program. It is useful for comparing the same
+# recipe against an older decoder architecture.
+
+version: 1
+name: GPT-2 first lesson
+model: ../models/gpt2
+fetch: gpt2
+output: ../models/gpt2-machaon
+
+budget: 0.10
+max_rel_norm: 0.02
+verify: true
+
+teach: The Eiffel Tower is in the city of -> Rome
+protect: The capital of Germany is
+protect: Water freezes at a temperature of

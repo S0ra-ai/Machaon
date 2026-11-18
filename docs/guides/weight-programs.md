@@ -65,6 +65,10 @@ panel: paste the program, set the folder used to resolve relative paths, and
 choose **Check program** or **Run program**. The browser path still passes the
 existing filesystem allowlist.
 
+Three additional starters demonstrate the format without requiring a download
+to inspect them: `examples/two-facts.machaon`,
+`examples/qwen-bilingual.machaon` and `examples/gpt2-first.machaon`.
+
 ## Fields
 
 Only `model`, `output`, and at least one `teach` are required.
