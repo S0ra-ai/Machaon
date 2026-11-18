@@ -374,6 +374,7 @@
       renderSessionState();
       if (state.session) el.checkpointPath.value = state.session.model || el.checkpointPath.value;
       if (state.session) rememberCheckpoint(state.session.model);
+      if (!state.session) setFirstEditReadyStatus();
       maybeShowGuide();
     } catch (err) {
       setConnection("error", t("conn.offline"), "conn.offline");
@@ -492,6 +493,16 @@
     if (!el.firstEditStatus) return;
     el.firstEditStatus.textContent = t(key, vars);
     el.firstEditStatus.className = "hint" + (kind ? " " + kind : "");
+  }
+
+  function setFirstEditReadyStatus() {
+    if (state.firstEdit) return;
+    const checkpoint = el.checkpointPath ? el.checkpointPath.value.trim() : "";
+    if (checkpoint) {
+      setFirstEditStatus("firstEdit.readyCheckpoint", { path: checkpoint });
+    } else {
+      setFirstEditStatus("firstEdit.ready");
+    }
   }
 
   function renderFirstEditEvidence() {
@@ -1007,8 +1018,8 @@
       state.proposal = null;
       state.lastTeach = null;
       if (kind === "close_session" && !(state.firstEdit && state.firstEdit.phase === "closing")) {
-        setFirstEditStatus("firstEdit.ready");
         state.firstEdit = null;
+        setFirstEditReadyStatus();
         if (el.firstEditOut) el.firstEditOut.value = "";
       }
       renderProposal(null);
@@ -1094,7 +1105,7 @@
       state.lastTeach = null;
       if (state.firstEdit) {
         state.firstEdit = null;
-        setFirstEditStatus("firstEdit.ready");
+        setFirstEditReadyStatus();
       }
       renderTeachPreview(null);
       renderSessionState();
@@ -1193,7 +1204,7 @@
       state.lastTeach = null;
       if (state.firstEdit) {
         state.firstEdit = null;
-        setFirstEditStatus("firstEdit.ready");
+        setFirstEditReadyStatus();
       }
       renderTeachPreview(null);
       renderSessionState();
@@ -1384,6 +1395,8 @@
         button.addEventListener("click", () => {
           el.checkpointPath.value = model.path;
           rememberCheckpoint(model.path);
+          setFirstEditReadyStatus();
+          renderFirstEdit();
           el.modelsList.classList.add("hidden");
         });
         el.modelsList.appendChild(button);
@@ -1400,6 +1413,13 @@
     });
     el.starterModel.addEventListener("change", () => {
       el.firstEditStarter.value = el.starterModel.value;
+    });
+  }
+  if (el.checkpointPath) {
+    el.checkpointPath.addEventListener("input", () => {
+      if (state.busy || state.firstEdit) return;
+      setFirstEditReadyStatus();
+      renderFirstEdit();
     });
   }
   if (el.guideButton) el.guideButton.addEventListener("click", openGuide);
@@ -1548,7 +1568,7 @@
     el.firstEditDone.addEventListener("click", () => {
       if (state.busy) return;
       state.firstEdit = null;
-      setFirstEditStatus("firstEdit.ready");
+      setFirstEditReadyStatus();
       renderFirstEdit();
     });
   }

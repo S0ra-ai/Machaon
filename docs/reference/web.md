@@ -82,7 +82,8 @@ choice in `localStorage`.
 
 The last successfully opened or saved checkpoint path is also remembered in
 `localStorage`. A refresh restores it into the Checkpoint field, so returning
-to the console does not silently start another starter download.
+to the console does not silently start another starter download, and the
+FIRST EDIT status names the checkpoint it will use.
 
 After a save, the card's **Teach a list** action opens the multi-fact panel,
 prefills the current fact and proposes a `<model>-machaon-many` container. The

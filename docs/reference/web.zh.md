@@ -58,7 +58,8 @@ prompt/answer 对新检查点自动复验一次，并报告保存后的回答是
 **隐藏** 会把选择保存到 `localStorage`。
 
 最后一次成功打开或保存的检查点路径也会记录在 `localStorage`；刷新页面后会恢复到
-Checkpoint 输入框，不会在用户不知情时重新下载 starter。
+Checkpoint 输入框，并让 FIRST EDIT 状态明确显示将使用哪个检查点，不会在用户
+不知情时重新下载 starter。
 
 保存后，卡片中的 **教一组事实** 会打开多事实面板，预填当前事实并建议
 `<model>-machaon-many` 输出容器。列表结果会展开每条事实的 prompt、状态、层、

@@ -229,7 +229,7 @@ Qwen2.5-0.5B or GPT-2, with Hugging Face / mirror / ModelScope fallback and live
 SSE byte/percent progress, so a first run does not require a pre-existing local
 checkpoint. The last successfully opened or saved checkpoint is remembered in
 `localStorage`, so a refresh resumes from it instead of downloading a starter
-again.
+again; the card's ready message reflects that path.
 
 The console ships in English, Chinese, Japanese and Korean. It follows the
 browser language on first load, remembers an explicit choice, and accepts

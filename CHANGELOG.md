@@ -67,7 +67,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   with the current fact prefilled, and list results expose per-step prompt,
   status, layer, delta and global drift. The console remembers the last
   successfully opened or saved checkpoint across refreshes. The first-run guide
-  now introduces the zero-to-one FIRST EDIT card before the advanced loop.
+  now introduces the zero-to-one FIRST EDIT card before the advanced loop, and
+  the card's ready message names a restored checkpoint.
 - `/api/health` reports whether `torch`, `transformers` and `safetensors` are
   importable, and the console shows the exact missing-extra install command.
 - `machaon.executor`: one explicit dispatcher for the declarative edit DSL,

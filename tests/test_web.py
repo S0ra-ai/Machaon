@@ -808,6 +808,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"ja": {', locales.text)
         self.assertIn('"ko": {', locales.text)
         self.assertIn('"firstEdit.title"', locales.text)
+        self.assertIn('"firstEdit.readyCheckpoint"', locales.text)
         self.assertIn('"firstEdit.save"', locales.text)
         self.assertIn('"firstEdit.openSaved"', locales.text)
         self.assertIn('"firstEdit.again"', locales.text)
