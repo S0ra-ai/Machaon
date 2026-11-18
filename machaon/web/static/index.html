@@ -173,7 +173,9 @@
           </label>
           <div class="quick-row">
             <button id="programPrefillButton" class="ghost small" type="button" data-i18n="program.prefill">Use current checkpoint</button>
+            <button id="programFileButton" class="ghost small" type="button" data-i18n="program.openFile">Open .machaon</button>
             <button id="programDownloadButton" class="ghost small" type="button" data-i18n="program.download">Download .machaon</button>
+            <input id="programFile" type="file" accept=".machaon,.json,text/plain,application/json" hidden>
           </div>
           <label class="field full"><span data-i18n="program.text">Program</span>
             <textarea id="programText" rows="10" spellcheck="false" data-i18n-placeholder="program.placeholder" placeholder="version: 1&#10;model: ./SmolLM2-135M&#10;fetch: smol135m&#10;output: ./hello-weight-space&#10;teach: The Eiffel Tower is in the city of -> Rome"></textarea>

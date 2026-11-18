@@ -62,6 +62,8 @@
     programRunButton: $("#programRunButton"),
     programPrefillButton: $("#programPrefillButton"),
     programDownloadButton: $("#programDownloadButton"),
+    programFileButton: $("#programFileButton"),
+    programFile: $("#programFile"),
     programCard: $("#programCard"),
     checkpointBadge: $("#checkpointBadge"),
     tensorRows: $("#tensorRows"),
@@ -355,6 +357,7 @@
     if (el.programRunButton) el.programRunButton.disabled = state.busy;
     if (el.programPrefillButton) el.programPrefillButton.disabled = state.busy;
     if (el.programDownloadButton) el.programDownloadButton.disabled = state.busy;
+    if (el.programFileButton) el.programFileButton.disabled = state.busy;
     if (el.firstEditButton) {
       el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
         ? t("firstEdit.again") : t("firstEdit.run");
@@ -1519,6 +1522,16 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  async function openProgramFile(file) {
+    if (!file) return;
+    const text = await file.text();
+    if (!text.trim()) throw new Error(t("program.emptyFile"));
+    el.programText.value = text;
+    if (!el.programText.value.endsWith("\n")) el.programText.value += "\n";
+    el.programPanel.open = true;
+    addTimelineEvent("program", t("timeline.programOpen"), file.name, "ok");
+  }
+
   function preserveLines() {
     return $("#preservePrompts").value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   }
@@ -1864,6 +1877,17 @@
       addTimelineEvent("program", t("timeline.programDownload"), "", "ok");
     } catch (err) {
       addTimelineEvent("error", err.message, "", "err");
+    }
+  });
+  $("#programFileButton").addEventListener("click", () => el.programFile.click());
+  el.programFile.addEventListener("change", async () => {
+    const file = el.programFile.files && el.programFile.files[0];
+    try {
+      await openProgramFile(file);
+    } catch (err) {
+      addTimelineEvent("error", err.message, "", "err");
+    } finally {
+      el.programFile.value = "";
     }
   });
   $("#programRunButton").addEventListener("click", () => {

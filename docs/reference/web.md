@@ -112,7 +112,9 @@ reporting the run.
 **Use current checkpoint** fills the editor from the open session or selected
 checkpoint and the current teaching sentence/preserve prompts. **Download
 .machaon** saves the editor text as a portable file, so a successful browser
-recipe can be committed or shared without copying from the page.
+recipe can be committed or shared without copying from the page. **Open
+.machaon** loads a local text/JSON file into the editor; the browser reads it
+locally and the same allowlist is applied when the program is checked or run.
 
 Both routes enforce the same filesystem allowlist as every other console
 operation. A program cannot reach a model or output outside the configured
