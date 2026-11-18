@@ -72,6 +72,18 @@ prompt/answer，或每行一条事实，不打开也不修改 session。它调�
 重新加载保存的权重，采用与 `machaon check` 相同的前导空格处理，并显示每条
 事实的通过/失败、实际回答和准确率。
 
+## 运行权重程序
+
+Checkpoint 栏的 **运行权重程序** 面板接受与 `machaon program` 相同的
+`.machaon` 文本或 JSON。把 **程序目录** 设为允许根目录下的文件夹，程序里的
+相对 `model` 和 `output` 路径会从那里解析。**检查程序** 调用
+`/api/program/plan`，不加载模型就显示解析后的模型、事实、预算和复验策略；
+**运行程序** 通过后台任务调用 `/api/program/run`，写出
+`<output>/program-report.json`，并在报告前重新加载保存后的检查点。
+
+这两个接口和浏览器其他操作一样受文件系统白名单限制；仅凭粘贴程序不能越过
+配置的允许根目录读取或写入。
+
 ## 三步工作流
 
 1. **Checkpoint**：读取 safetensors 文件或分片目录的 header，显示 tensor 数、

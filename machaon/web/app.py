@@ -132,6 +132,11 @@ class TeachManyRequest(BaseModel):
     continue_on_reject: bool = False
 
 
+class ProgramRequest(BaseModel):
+    program: str = Field(min_length=1, max_length=200_000)
+    base_dir: Optional[str] = None
+
+
 class EvaluateRequest(BaseModel):
     prompts: List[str] = Field(min_length=1)
     targets: List[Union[str, int]] = Field(min_length=1)
@@ -471,6 +476,27 @@ def create_app(
                 device=body.device,
                 quantize=body.quantize,
             ),
+        )
+
+    @app.post("/api/program/plan")
+    def program_plan(body: ProgramRequest) -> Dict[str, Any]:
+        try:
+            return web_service.plan_program(body.program, body.base_dir)
+        except (OSError, TypeError, ValueError, PermissionError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/program/run")
+    def program_run(body: ProgramRequest) -> Dict[str, Any]:
+        try:
+            # Resolve the base now so a bad path fails before a worker starts.
+            base = policy.require_existing(body.base_dir) if body.base_dir else str(
+                policy.roots[0]
+            )
+        except (OSError, TypeError, ValueError, PermissionError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return start_job(
+            "program_run",
+            lambda: web_service.run_program(body.program, base),
         )
 
     @app.post("/api/teach_many")

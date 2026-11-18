@@ -14,7 +14,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   model, and a run delegates to `teach-many`, writes
   `<output>/program-report.json`, then reloads the saved checkpoint and checks
   every fact before accepting the run. Relative paths resolve from the program
-  file.
+  file. The Web console exposes the same text/JSON program through
+  `/api/program/plan` and `/api/program/run`, constrained by the existing
+  filesystem allowlist.
 - `machaon.intent`: a deterministic English/Chinese compiler from plain-language
   teaching requests (`->`, labelled blocks, "when asked ...", and sentence
   forms) into an exact, reviewable prompt/answer contract. Unstructured text is

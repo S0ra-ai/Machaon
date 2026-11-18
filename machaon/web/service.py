@@ -47,6 +47,7 @@ class WebService:
         recipe: Optional[Any] = None,
         fetch_module: Optional[Any] = None,
         many_recipe: Optional[Any] = None,
+        program_runner: Optional[Any] = None,
     ) -> None:
         self.policy = policy
         self.tools = tools_module or importlib.import_module("machaon.tools")
@@ -54,6 +55,7 @@ class WebService:
         self.intent = intent_module or importlib.import_module("machaon.intent")
         self.recipe = recipe
         self.many_recipe = many_recipe
+        self.program_runner = program_runner
         self.fetch = fetch_module or importlib.import_module("machaon.fetch")
         self.session: Optional[Any] = None
         self._open_options: Optional[Dict[str, Any]] = None
@@ -574,6 +576,55 @@ class WebService:
 
         result["model"] = resolved
         return result
+
+    # -- portable programs ---------------------------------------------
+
+    def _program_from_text(self, text: str, base_dir: Optional[str] = None):
+        from pathlib import Path
+
+        from ..program import parse_program
+
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("program text is required")
+        if base_dir:
+            base = Path(self.policy.require_existing(base_dir))
+        else:
+            base = self.policy.roots[0]
+        if not base.is_dir():
+            raise ValueError("program base must be a directory: %s" % base)
+        program = parse_program(
+            text, source="<web program>", base_dir=base
+        )
+        # A pasted program is still subject to the same filesystem allowlist
+        # as every other browser operation.
+        self.policy.require(program.model)
+        self.policy.require(program.output)
+        return program, base
+
+    def plan_program(
+        self, text: str, base_dir: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Parse and resolve a program without downloading or loading a model."""
+        from pathlib import Path
+
+        program, base = self._program_from_text(text, base_dir)
+        payload = program.to_dict()
+        payload["base_dir"] = str(base)
+        payload["model_exists"] = Path(program.model).is_dir()
+        return payload
+
+    def run_program(
+        self, text: str, base_dir: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Run a pasted program through the shared program runner."""
+        program, _base = self._program_from_text(text, base_dir)
+        runner = self.program_runner
+        if runner is None:
+            from ..program import run_program as runner
+        result = runner(program)
+        if hasattr(result, "to_dict"):
+            return dict(result.to_dict())
+        return dict(result)
 
     def _require_session(self) -> Any:
         with self._lock:

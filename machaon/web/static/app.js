@@ -32,6 +32,7 @@
     firstEditStatusVars: {},
     firstEditStatusKind: "",
     firstEditEvidence: null,
+    program: null,
   };
 
   const el = {
@@ -54,6 +55,12 @@
     checkSentence: $("#checkSentence"),
     checkButton: $("#checkButton"),
     checkCard: $("#checkCard"),
+    programPanel: $("#programPanel"),
+    programBase: $("#programBase"),
+    programText: $("#programText"),
+    programPlanButton: $("#programPlanButton"),
+    programRunButton: $("#programRunButton"),
+    programCard: $("#programCard"),
     checkpointBadge: $("#checkpointBadge"),
     tensorRows: $("#tensorRows"),
     sessionBadge: $("#sessionBadge"),
@@ -168,6 +175,7 @@
       else renderTeachPreview(state.lastTeach);
     }
     if (state.lastTeachMany) renderTeachManyResult(state.lastTeachMany);
+    if (state.program) renderProgram(state.program);
     updateEventCount();
     if (state.lastJob) {
       el.jobTitle.textContent = t("job.default");
@@ -341,6 +349,8 @@
     if (el.firstEditList) el.firstEditList.disabled = state.busy;
     if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
     if (el.checkButton) el.checkButton.disabled = state.busy;
+    if (el.programPlanButton) el.programPlanButton.disabled = state.busy;
+    if (el.programRunButton) el.programRunButton.disabled = state.busy;
     if (el.firstEditButton) {
       el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
         ? t("firstEdit.again") : t("firstEdit.run");
@@ -367,6 +377,9 @@
       state.allowedRoots = health.allowed_roots || [];
       state.capabilities = health.capabilities || {};
       el.allowedRoots.textContent = state.allowedRoots.join(" · ");
+      if (el.programBase && !el.programBase.value) {
+        el.programBase.value = state.allowedRoots[0] || "";
+      }
       renderCapabilities();
       const remembered = localStorage.getItem(LAST_CHECKPOINT_KEY);
       if (remembered && !el.checkpointPath.value) {
@@ -456,6 +469,69 @@
       escapeHtml(result.answer_text || result.answer || "—") + "</strong></span>" +
       "</div>" +
       '<p class="mono tiny">' + escapeHtml(result.model || "") + "</p>";
+  }
+
+  function renderProgram(payload) {
+    state.program = payload;
+    const card = el.programCard;
+    if (!card) return;
+    if (!payload) {
+      card.className = "evidence-card empty-state";
+      card.textContent = t("program.empty");
+      return;
+    }
+    const document = payload.program ? payload : null;
+    const program = document ? payload.program : payload;
+    const run = document ? payload.run : null;
+    const verification = document ? payload.verification : null;
+    const facts = program.facts || [];
+    const checks = (verification && verification.facts) || [];
+    const byIndex = {};
+    checks.forEach((item) => { byIndex[Number(item.index)] = item; });
+    const accepted = document ? !!payload.accepted : program.model_exists !== false;
+    const status = document ? String(payload.status || "unknown")
+      : (program.model_exists === false ? "not downloaded" : "ready");
+    const rows = facts.map((fact, index) => {
+      const check = byIndex[index + 1];
+      const ok = check ? !!check.passed : true;
+      return '<div class="teach-step ' + (ok ? "ok" : "bad") + '">' +
+        '<div class="teach-step-head"><span class="check-chip ' +
+        (ok ? "ok" : "bad") + '">' + (index + 1) + "</span><strong>" +
+        escapeHtml(fact.prompt || "") + " → " +
+        escapeHtml((check && (check.answer_text || check.answer)) || fact.answer || "") +
+        '</strong><span class="tiny">' +
+        escapeHtml(check ? (check.passed ? t("check.pass") : t("check.fail"))
+          : (fact.confidence || "high")) +
+        "</span></div></div>";
+    }).join("");
+    const verificationLine = verification
+      ? (verification.passed ? t("program.verified") : t("program.verifyFailed"))
+      : (program.verify ? t("program.verifyNotRun") : t("program.verifyOff"));
+    card.className = "evidence-card";
+    card.innerHTML =
+      '<div class="teach-status"><strong>' +
+      escapeHtml(t(document ? "program.runStatus" : "program.planStatus",
+        { status })) +
+      '</strong><span class="badge ' + (accepted ? "live" : "quiet") + '">' +
+      escapeHtml(t("program.factCount", { n: facts.length })) + "</span></div>" +
+      '<div class="teach-grid">' +
+      "<span>" + escapeHtml(t("program.model")) + "<br><strong>" +
+      escapeHtml(program.model || "—") + "</strong></span>" +
+      "<span>" + escapeHtml(t("program.output")) + "<br><strong>" +
+      escapeHtml(program.output || "—") + "</strong></span>" +
+      "<span>" + escapeHtml(t("program.budget")) + "<br><strong>" +
+      escapeHtml(fmt((program.policy || {}).budget || program.budget)) +
+      "</strong></span>" +
+      "<span>" + escapeHtml(t("program.verify")) + "<br><strong>" +
+      escapeHtml(verificationLine) + "</strong></span>" +
+      "</div>" + (rows ? '<div class="teach-steps">' + rows + "</div>" : "") +
+      (program.base_dir ? '<p class="mono tiny">' +
+        escapeHtml(t("program.base")) + ": " + escapeHtml(program.base_dir) +
+        "</p>" : "") +
+      (payload.summary ? '<p class="hint">' + escapeHtml(payload.summary) +
+        "</p>" : "") +
+      (payload.report_path ? '<p class="mono tiny">' +
+        escapeHtml(payload.report_path) + "</p>" : "");
   }
 
   function renderTensors(rows) {
@@ -1196,6 +1272,10 @@
       }
       addTimelineEvent("teach_many", t("timeline.teachMany"),
         (result && result.result && result.result.status) || "", "ok");
+    } else if (kind === "program_run") {
+      renderProgram(result);
+      addTimelineEvent("program", t("timeline.program"),
+        (result && result.status) || "", result && result.accepted ? "ok" : "err");
     } else if (kind === "teach") {
       if (result && result.state) state.session = result.state;
       state.proposal = null;
@@ -1367,6 +1447,15 @@
     if (query) body.contains = query;
     if (layer !== "") body.layer = Number(layer);
     return body;
+  }
+
+  function programRequest() {
+    const text = el.programText.value.trim();
+    if (!text) throw new Error(t("program.textRequired"));
+    return {
+      program: el.programText.value,
+      base_dir: el.programBase.value.trim() || null,
+    };
   }
 
   function preserveLines() {
@@ -1676,6 +1765,38 @@
       max_rel_norm: $("#maxRelNorm").value.trim() === ""
         ? 0.02 : Number($("#maxRelNorm").value),
     }, "teach");
+  });
+  $("#programPlanButton").addEventListener("click", async () => {
+    let body;
+    try {
+      body = programRequest();
+    } catch (err) {
+      return addTimelineEvent("error", err.message, "", "err");
+    }
+    showBusy(t("program.planning"), t("program.planningDetail"));
+    try {
+      const payload = await api("/api/program/plan", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      renderProgram(payload);
+      el.programPanel.open = true;
+      addTimelineEvent("program", t("timeline.programPlan"),
+        (payload.facts || []).length + " facts", "ok");
+    } catch (err) {
+      addTimelineEvent("error", localizedJobError(err.message), "", "err");
+    } finally {
+      stopBusy("done");
+    }
+  });
+  $("#programRunButton").addEventListener("click", () => {
+    let body;
+    try {
+      body = programRequest();
+    } catch (err) {
+      return addTimelineEvent("error", err.message, "", "err");
+    }
+    startJob("/api/program/run", body, "program_run");
   });
   if (el.checkButton) {
     el.checkButton.addEventListener("click", () => {

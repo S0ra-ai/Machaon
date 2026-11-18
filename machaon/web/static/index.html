@@ -165,6 +165,22 @@
           <div id="checkCard" class="evidence-card empty-state" data-i18n="check.empty">Reload a saved checkpoint and check one prompt/answer without editing it.</div>
         </details>
 
+        <details id="programPanel" class="batch-panel">
+          <summary data-i18n="program.summary">Run a weight program</summary>
+          <p class="hint" data-i18n="program.hint">Paste a .machaon text or JSON program. Paths resolve below the allowed roots, and the saved checkpoint is reloaded before the run is accepted.</p>
+          <label class="field full"><span data-i18n="program.base">Program folder</span>
+            <input id="programBase" autocomplete="off" spellcheck="false" data-i18n-placeholder="program.basePlaceholder" placeholder="./models">
+          </label>
+          <label class="field full"><span data-i18n="program.text">Program</span>
+            <textarea id="programText" rows="10" spellcheck="false" data-i18n-placeholder="program.placeholder" placeholder="version: 1&#10;model: ./SmolLM2-135M&#10;fetch: smol135m&#10;output: ./hello-weight-space&#10;teach: The Eiffel Tower is in the city of -> Rome"></textarea>
+          </label>
+          <div class="button-grid">
+            <button id="programPlanButton" class="secondary" type="button" data-i18n="program.plan">Check program</button>
+            <button id="programRunButton" class="primary" type="button" data-i18n="program.run">Run program</button>
+          </div>
+          <div id="programCard" class="evidence-card empty-state" data-i18n="program.empty">Check a program to see its resolved model, facts, budget and verification policy.</div>
+        </details>
+
         <div class="divider"></div>
         <div class="subhead">
           <h3 data-i18n="tensor.title">Tensor surface</h3>

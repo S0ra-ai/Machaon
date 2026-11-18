@@ -98,6 +98,21 @@ editing the session. It calls `/api/check`, reloads the saved weights, uses the
 same continuation-space handling as `machaon check`, and shows `PASS`/`FAIL`
 with each selected answer and accuracy.
 
+## Run a weight program
+
+The Checkpoint column's **Run a weight program** expander accepts the same
+`.machaon` text or JSON program as `machaon program`. Set **Program folder** to
+a directory below an allowed root; relative `model` and `output` paths resolve
+from that folder. **Check program** calls `/api/program/plan` and shows the
+resolved model, parsed facts, budget and verification policy without loading a
+model. **Run program** calls `/api/program/run` as a background job, writes
+`<output>/program-report.json`, and reloads the saved checkpoint before
+reporting the run.
+
+Both routes enforce the same filesystem allowlist as every other console
+operation. A program cannot reach a model or output outside the configured
+roots merely because it was pasted into the browser.
+
 ## Three-column workflow
 
 1. **Checkpoint.** Inspect a safetensors file or a sharded checkpoint directory.
@@ -173,6 +188,8 @@ because the browser's `EventSource` cannot set headers.
 | POST | `/api/teach/preview` | compile a sentence into a prompt/answer contract |
 | POST | `/api/teach` | run the teaching recipe on the open session |
 | POST | `/api/check` | evaluate one fact against a saved checkpoint |
+| POST | `/api/program/plan` | parse a pasted weight program without loading a model |
+| POST | `/api/program/run` | run a pasted weight program and verify the saved checkpoint |
 | POST | `/api/teach_many` | run a multi-fact chain into an output container |
 | POST | `/api/edit/propose_batch` | solve many prompt/value rows into one pending delta |
 | POST | `/api/edit/apply` | write the pending proposal |

@@ -60,6 +60,11 @@ again. A program that saved a checkpoint but fails this reload is reported as
 `verification_failed`, and exits non-zero. Use `--no-verify` only when you
 intend to verify the bytes separately.
 
+The local Web console exposes the same contract in its **Run a weight program**
+panel: paste the program, set the folder used to resolve relative paths, and
+choose **Check program** or **Run program**. The browser path still passes the
+existing filesystem allowlist.
+
 ## Fields
 
 Only `model`, `output`, and at least one `teach` are required.

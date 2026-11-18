@@ -245,6 +245,36 @@ def many_recipe(factory, base_model, facts, out_dir, **kwargs):
     }
 
 
+def program_runner(program):
+    return {
+        "program": program.to_dict(),
+        "run": {
+            "status": "applied",
+            "out_dir": program.output,
+            "final": str(Path(program.output) / "final"),
+            "facts": len(program.facts),
+        },
+        "verification": {
+            "passed": True,
+            "facts": [
+                {
+                    "index": index,
+                    "prompt": fact["prompt"],
+                    "answer": fact["answer"],
+                    "passed": True,
+                }
+                for index, fact in enumerate(program.facts, 1)
+            ],
+        },
+        "status": "applied",
+        "accepted": True,
+        "summary": "test program applied",
+        "report_path": str(Path(program.output) / "program-report.json"),
+        "model_fetched": False,
+        "effective_output": program.output,
+    }
+
+
 def _factories(tmp):
     def session_factory(**kwargs):
         return FakeSession()
@@ -275,6 +305,7 @@ def _factories(tmp):
         recipe=recipe,
         fetch_module=FakeFetch(),
         many_recipe=many_recipe,
+        program_runner=program_runner,
     )
 
 
@@ -447,6 +478,56 @@ class TestWebApp(unittest.TestCase):
         self.assertTrue(job["result"]["passed"])
         self.assertEqual(len(job["result"]["facts"]), 2)
         self.assertEqual(job["result"]["facts"][1]["index"], 2)
+
+    def test_program_plan_resolves_a_pasted_contract(self):
+        text = (
+            "version: 1\n"
+            "model: ./base\n"
+            "output: ./edited\n"
+            "teach: The capital of France is -> Paris\n"
+            "protect: Two plus two equals\n"
+        )
+        response = self.client.post(
+            "/api/program/plan",
+            headers=self.headers,
+            json={"program": text, "base_dir": str(self.root)},
+        )
+        self.assertEqual(response.status_code, 200)
+        plan = response.json()
+        self.assertEqual(plan["format"], "machaon.program/1")
+        self.assertEqual(len(plan["facts"]), 1)
+        self.assertEqual(plan["facts"][0]["prompt"], "The capital of France is")
+        self.assertEqual(plan["base_dir"], str(self.root.resolve()))
+
+    def test_program_plan_refuses_paths_outside_roots(self):
+        response = self.client.post(
+            "/api/program/plan",
+            headers=self.headers,
+            json={
+                "program": (
+                    "model: /etc/base\noutput: /etc/edited\n"
+                    "teach: The capital is -> Paris\n"
+                ),
+                "base_dir": str(self.root),
+            },
+        )
+        self.assertIn(response.status_code, (400, 403))
+
+    def test_program_run_completes_as_a_job(self):
+        text = (
+            "model: ./base\noutput: ./edited\n"
+            "teach: The capital of France is -> Paris\n"
+        )
+        response = self.client.post(
+            "/api/program/run",
+            headers=self.headers,
+            json={"program": text, "base_dir": str(self.root)},
+        )
+        self.assertEqual(response.status_code, 200)
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertTrue(job["result"]["accepted"])
+        self.assertTrue(job["result"]["verification"]["passed"])
 
     def test_fetch_starter_downloads_below_an_allowed_root(self):
         dest = self.root / "Smol"
@@ -827,6 +908,9 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="firstEditEvidence"', page.text)
         self.assertIn('id="checkPanel"', page.text)
         self.assertIn('id="checkSentence"', page.text)
+        self.assertIn('id="programPanel"', page.text)
+        self.assertIn('id="programText"', page.text)
+        self.assertIn('id="programRunButton"', page.text)
         self.assertIn('id="fetchOpen"', page.text)
         self.assertIn('data-i18n="onboarding.title"', page.text)
         self.assertIn('src="/static/locales.js"', page.text)
@@ -836,6 +920,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('state.firstEdit.phase === "verify"', app.text)
         self.assertIn('function nextCheckpointPath', app.text)
         self.assertIn('function manyCheckpointPath', app.text)
+        self.assertIn('function renderProgram', app.text)
         self.assertIn('machaon-last-checkpoint', app.text)
         locales = self.client.get("/static/locales.js")
         self.assertEqual(locales.status_code, 200)
@@ -856,6 +941,8 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"firstEdit.verifyFailed"', locales.text)
         self.assertIn('"teachMany.stepLayer"', locales.text)
         self.assertIn('"check.summary"', locales.text)
+        self.assertIn('"program.summary"', locales.text)
+        self.assertIn('"program.run"', locales.text)
 
     def test_force_close_rolls_back_an_edited_session(self):
         opened = self.client.post(

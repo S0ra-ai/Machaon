@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-551-2ea44f)
+![tests](https://img.shields.io/badge/tests-554-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-78%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -227,6 +227,12 @@ open the final safe checkpoint.
 The Checkpoint column's **Check saved fact** panel reloads a saved checkpoint
 and evaluates one prompt/answer or one fact per line without opening or editing
 the session.
+
+The same column's **Run a weight program** panel accepts a pasted `.machaon`
+text or JSON program. **Check program** resolves and previews it without loading
+a model; **Run program** runs the full chain as a background job, writes its
+report and reloads the saved checkpoint before reporting success. The program's
+relative paths and the browser's filesystem allowlist are enforced together.
 
 The **FIRST EDIT** card goes one step further: if no checkpoint is selected, it
 downloads the starter chosen in the card (SmolLM2-135M by default, with
