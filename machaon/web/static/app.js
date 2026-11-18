@@ -1801,23 +1801,37 @@
       .map((line) => line.trim())
       .filter((line) => line && !line.startsWith("#"));
     if (!raw.length) throw new Error(t("program.factsRequired"));
-    const model = String((state.session && state.session.model)
-      || el.checkpointPath.value || "").trim();
-    if (!model) throw new Error(t("program.noCheckpoint"));
     const base = (el.programBase.value.trim() || state.allowedRoots[0] || "")
       .replace(/\/+$/, "");
+    let model = String((state.session && state.session.model)
+      || el.checkpointPath.value || "").trim();
+    let fetchStarter = null;
+    if (!model) {
+      const selector = el.firstEditStarter || el.starterModel;
+      const option = selector && selector.options[selector.selectedIndex];
+      const starterName = (option && option.dataset && option.dataset.name)
+        || "SmolLM2-135M";
+      fetchStarter = (selector && selector.value) || "smol135m";
+      model = base ? base + "/" + starterName : starterName;
+    }
     const output = nextCheckpointPath(model);
     const name = model.split("/").filter(Boolean).pop() || "weight-space";
-    el.programText.value = [
+    const lines = [
       "version: 1",
       "name: " + name + " facts",
       "model: " + portableProgramPath(model, base),
+    ];
+    if (fetchStarter) lines.push("fetch: " + fetchStarter);
+    lines.push(
       "output: " + portableProgramPath(output, base),
       "budget: 0.10",
       "max_rel_norm: 0.02",
       "verify: true",
       "",
-    ].concat(raw.map((line) => "teach: " + line)).join("\n") + "\n";
+    );
+    el.programText.value = lines.concat(
+      raw.map((line) => "teach: " + line)
+    ).join("\n") + "\n";
     el.programPanel.open = true;
     addTimelineEvent("program", t("timeline.programBuild"), raw.length + " facts", "ok");
   }
