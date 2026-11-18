@@ -61,6 +61,7 @@ class SessionState:
     budget_total: float
     budget_limit: Optional[float]
     has_baseline: bool
+    device: str = "cpu"
     quantize: Optional[str] = None
     has_pending: bool = False
 
@@ -146,6 +147,7 @@ class Session:
             budget_total=self.budget.state().total,
             budget_limit=self.budget.max_total,
             has_baseline=self._baseline_logits is not None,
+            device=str(self.runtime.device),
             quantize=self.quantize,
             has_pending=(
                 self._pending is not None

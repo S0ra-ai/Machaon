@@ -73,6 +73,7 @@ class TestSession(unittest.TestCase):
         self.assertEqual(result["corpus"], 1)
         state = self.session.state()
         self.assertTrue(state.has_baseline)
+        self.assertEqual(state.device, "cpu")
         self.assertEqual(state.edited, [])
 
     def test_propose_does_not_write(self):

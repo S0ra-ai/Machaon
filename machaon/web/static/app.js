@@ -902,6 +902,7 @@
       "<dt>" + escapeHtml(t("session.state.model")) + "</dt><dd>" + escapeHtml(s.model || "—") + "</dd>" +
       "<dt>" + escapeHtml(t("session.state.parameters")) + "</dt><dd>" + escapeHtml(fmt(s.parameters)) + "</dd>" +
       "<dt>" + escapeHtml(t("session.state.layers")) + "</dt><dd>" + escapeHtml(fmt(s.layers)) + "</dd>" +
+      "<dt>" + escapeHtml(t("session.state.device")) + "</dt><dd>" + escapeHtml(s.device || "—") + "</dd>" +
       "<dt>" + escapeHtml(t("session.state.quantize")) + "</dt><dd>" + escapeHtml(s.quantize || t("common.none")) + "</dd>" +
       "<dt>" + escapeHtml(t("session.state.baseline")) + "</dt><dd>" + escapeHtml(s.has_baseline ? t("session.captured") : t("session.notCaptured")) + "</dd>" +
       "<dt>" + escapeHtml(t("session.state.pending")) + "</dt><dd>" + escapeHtml(s.has_pending ? t("common.yes") : t("common.no")) + "</dd>" +
