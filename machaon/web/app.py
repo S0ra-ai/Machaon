@@ -259,8 +259,8 @@ def create_app(
             response.headers["Cache-Control"] = "no-store"
         return response
 
-    def start_job(kind: str, function):
-        job = jobs.start(kind, function)
+    def start_job(kind: str, function, with_progress: bool = False):
+        job = jobs.start(kind, function, with_progress=with_progress)
         return {"job": job.id, "kind": kind}
 
     # -- public ---------------------------------------------------------
@@ -297,9 +297,10 @@ def create_app(
         dest = _path_or_http_error(policy, body.dest, must_exist=False)
         return start_job(
             "fetch_model",
-            lambda: web_service.fetch_model(
-                body.starter, dest, endpoint=body.endpoint
+            lambda progress: web_service.fetch_model(
+                body.starter, dest, endpoint=body.endpoint, progress=progress
             ),
+            with_progress=True,
         )
 
     # -- checkpoint inspection -----------------------------------------

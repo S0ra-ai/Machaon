@@ -47,7 +47,8 @@ machaon-web --allowed-root /models --port 8765
 1. **Checkpoint**: safetensors の header を読み、tensor 数、パラメータ数、
    dtype、shard 数を表示します。ブラウザーに重みの値は送りません。
    チェックポイントがない場合は starter を選んで **Download starter** を押すと、
-   許可ルートへミラー経由も試してダウンロードし、パスを埋めます。
+   許可ルートへミラー経由も試してダウンロードし、パスを埋めます。ジョブ
+   バナーには SSE で端点、ファイル、バイト/パーセント進捗が表示されます。
    **ダウンロード後に開く** を有効にすると session まで自動で開きます。
 2. **編集契約**: session を開き、baseline を取得し、層を指定して proposal を
    解きます。preserve prompts は零空間制約になり、量子化モデルの gradient

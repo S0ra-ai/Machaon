@@ -100,6 +100,41 @@ class TestFetchModel(unittest.TestCase):
             self.assertEqual(report["parameters"], 100)
             self.assertTrue((dest / "model.safetensors").exists())
 
+    def test_progress_reports_list_plan_file_download_and_done(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp) / "model"
+            events = []
+
+            def fake_fallback(repo, name, target, candidates,
+                              downloader=None, validator=None, progress=None):
+                if progress:
+                    progress({
+                        "phase": "download",
+                        "file": name,
+                        "bytes": 1,
+                        "total": 2,
+                    })
+                target.write_bytes(b"x")
+                return "huggingface", candidates[0][1]
+
+            with mock.patch.object(
+                fetch, "list_files",
+                lambda repo, endpoint: ["model.safetensors"],
+            ), mock.patch.object(
+                fetch, "download_with_fallback", fake_fallback
+            ), mock.patch.object(
+                fetch, "check_safetensors",
+                lambda path: {"tensors": 1, "parameters": 10},
+            ):
+                fetch.fetch_model(
+                    "org/model", dest, progress=events.append
+                )
+            phases = [event["phase"] for event in events]
+            self.assertEqual(
+                phases, ["list", "plan", "file", "download", "done"]
+            )
+            self.assertEqual(events[-1]["parameters"], 10)
+
     def test_existing_files_are_reused(self):
         with tempfile.TemporaryDirectory() as tmp:
             dest = Path(tmp) / "model"

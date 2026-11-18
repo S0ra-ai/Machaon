@@ -93,6 +93,16 @@ RECOMMENDED: Dict[str, Dict[str, str]] = {
 }
 
 
+def _emit(progress: Optional[Callable[[Dict[str, Any]], None]], **data: Any) -> None:
+    if progress is None:
+        return
+    try:
+        progress(data)
+    except Exception:
+        # A UI callback must never abort a download.
+        pass
+
+
 def _get(url: str, timeout: int = 30) -> bytes:
     request = urllib.request.Request(
         url, headers={"User-Agent": "machaon-fetch"}
@@ -121,23 +131,50 @@ def file_url(repo: str, name: str, endpoint: str) -> str:
     )
 
 
-def download(repo: str, name: str, target: Path, endpoint: str) -> None:
+def download(
+    repo: str,
+    name: str,
+    target: Path,
+    endpoint: str,
+    progress: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> None:
     url = file_url(repo, name, endpoint)
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_suffix(target.suffix + ".part")
     start = time.time()
+    last_report = 0.0
     try:
         with urllib.request.urlopen(url, timeout=120) as response, open(
             temporary, "wb"
         ) as handle:
             expected = response.headers.get("Content-Length")
+            total = int(expected) if expected is not None else None
             written = 0
+            _emit(
+                progress,
+                phase="download",
+                file=name,
+                bytes=0,
+                total=total,
+            )
             while True:
                 chunk = response.read(1 << 20)
                 if not chunk:
                     break
                 handle.write(chunk)
                 written += len(chunk)
+                now = time.time()
+                if now - last_report >= 0.5 or (
+                    total is not None and written >= total
+                ):
+                    last_report = now
+                    _emit(
+                        progress,
+                        phase="download",
+                        file=name,
+                        bytes=written,
+                        total=total,
+                    )
         if expected is not None and written != int(expected):
             raise IOError(
                 "incomplete download for %s: received %d of %s bytes"
@@ -161,9 +198,21 @@ def download_with_fallback(
     candidates: List[Tuple[str, str]],
     downloader: Optional[Callable[[str, str, Path, str], None]] = None,
     validator: Optional[Callable[[Path], Any]] = None,
+    progress: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> Tuple[str, str]:
     """Try the endpoint that listed the repo, then the remaining endpoints."""
-    downloader = downloader or download
+    if downloader is None:
+        def download_one(repo_, name_, target_, endpoint_):
+            try:
+                download(repo_, name_, target_, endpoint_, progress=progress)
+            except TypeError as exc:
+                if "progress" not in str(exc):
+                    raise
+                # Backward compatibility for a 4-argument custom downloader.
+                download(repo_, name_, target_, endpoint_)
+
+        downloader = download_one
+
     errors = []
     for label, endpoint in candidates:
         try:
@@ -201,6 +250,7 @@ def fetch_model(
     *,
     endpoint: Optional[str] = None,
     require_new: bool = False,
+    progress: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> Dict[str, Any]:
     """Download a safetensors checkpoint into ``dest``.
 
@@ -232,6 +282,7 @@ def fetch_model(
     files: List[str] = []
     errors = []
     for label, base in candidates:
+        _emit(progress, phase="list", repo=repo, endpoint=label)
         try:
             files = list_files(repo, base)
             chosen = (label, base)
@@ -259,15 +310,43 @@ def fetch_model(
 
     downloaded: List[str] = []
     cached: List[str] = []
-    for name in wanted:
+    _emit(
+        progress,
+        phase="plan",
+        repo=repo,
+        files=len(wanted),
+        cached=sum(
+            1 for name in wanted
+            if (destination / name).exists()
+            and (destination / name).stat().st_size > 0
+        ),
+    )
+    for index, name in enumerate(wanted, 1):
         target = destination / name
         if target.exists() and target.stat().st_size > 0:
             cached.append(name)
             print("  %-40s cached" % name)
+            _emit(
+                progress,
+                phase="file",
+                file=name,
+                index=index,
+                count=len(wanted),
+                cached=True,
+            )
             continue
+        _emit(
+            progress,
+            phase="file",
+            file=name,
+            index=index,
+            count=len(wanted),
+            cached=False,
+        )
         validator = check_safetensors if name.endswith(".safetensors") else None
         download_with_fallback(
-            repo, name, target, candidates, validator=validator
+            repo, name, target, candidates,
+            validator=validator, progress=progress,
         )
         downloaded.append(name)
 
@@ -288,7 +367,7 @@ def fetch_model(
     infos = [check_safetensors(path) for path in sorted(destination.glob("*.safetensors"))]
     total_parameters = sum(info["parameters"] for info in infos)
     total_tensors = sum(info["tensors"] for info in infos)
-    return {
+    report = {
         "repo": repo,
         "dest": str(destination),
         "endpoint": chosen[0],
@@ -299,6 +378,15 @@ def fetch_model(
         "parameters": total_parameters,
         "shards": len(infos),
     }
+    _emit(
+        progress,
+        phase="done",
+        repo=repo,
+        dest=report["dest"],
+        parameters=total_parameters,
+        shards=len(infos),
+    )
+    return report
 
 
 def _print_recommended() -> None:

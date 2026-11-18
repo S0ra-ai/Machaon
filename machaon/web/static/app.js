@@ -58,6 +58,8 @@
     jobBanner: $("#jobBanner"),
     jobTitle: $("#jobTitle"),
     jobDetail: $("#jobDetail"),
+    jobProgress: $("#jobProgress"),
+    jobProgressFill: $("#jobProgressFill"),
     apply: $("#applyButton"),
     evaluate: $("#evaluateButton"),
     rollback: $("#rollbackButton"),
@@ -223,6 +225,13 @@
     openGuide();
   }
 
+  function formatBytes(value) {
+    const n = Number(value || 0);
+    if (!Number.isFinite(n) || n <= 0) return "0 MB";
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + " GB";
+    return (n / 1e6).toFixed(1) + " MB";
+  }
+
   function fmt(value) {
     if (value === null || value === undefined || value === "") return "—";
     if (typeof value === "number") {
@@ -269,6 +278,10 @@
     el.jobBanner.classList.remove("hidden");
     el.jobTitle.textContent = label || t("job.default");
     el.jobDetail.textContent = detail || t("evidence.runningDetail");
+    if (el.jobProgress) {
+      el.jobProgress.classList.add("hidden");
+      el.jobProgressFill.style.width = "0%";
+    }
     el.jobPill.textContent = t("status.running");
     el.jobPill.className = "badge live";
     setActionState();
@@ -701,6 +714,39 @@
       addTimelineEvent("status", t("status." + (data.status || "idle")),
         jobLabel(event.kind || state.lastJob || ""),
         data.status === "done" ? "ok" : data.status === "error" ? "err" : "");
+    } else if (event.type === "progress") {
+      const data = event.data || {};
+      if (data.phase === "download") {
+        const total = Number(data.total || 0);
+        const bytes = Number(data.bytes || 0);
+        const percent = total > 0 ? Math.min(100, Math.round((bytes / total) * 100)) : 0;
+        if (el.jobProgress) {
+          el.jobProgress.classList.remove("hidden");
+          el.jobProgress.setAttribute("aria-valuenow", percent);
+        }
+        if (el.jobProgressFill) el.jobProgressFill.style.width = percent + "%";
+        el.jobDetail.textContent = t("job.fetchProgress", {
+          file: data.file || "",
+          percent: percent,
+          have: formatBytes(bytes),
+          total: formatBytes(total),
+        });
+      } else if (data.phase === "file") {
+        if (el.jobProgress) el.jobProgress.classList.remove("hidden");
+        if (el.jobProgressFill) el.jobProgressFill.style.width = "0%";
+        el.jobDetail.textContent = t(
+          data.cached ? "job.fetchCached" : "job.fetchFile",
+          { index: data.index, count: data.count, file: data.file || "" }
+        );
+      } else if (data.phase === "list") {
+        el.jobDetail.textContent = t("job.fetchList", {
+          endpoint: data.endpoint || "",
+        });
+      } else if (data.phase === "done") {
+        if (el.jobProgress) el.jobProgress.classList.remove("hidden");
+        if (el.jobProgressFill) el.jobProgressFill.style.width = "100%";
+        el.jobDetail.textContent = t("job.fetchDone");
+      }
     } else if (event.type === "result") {
       addTimelineEvent("result", t("timeline.result"), "", "ok");
     } else if (event.type === "error") {

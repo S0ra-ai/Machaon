@@ -558,6 +558,7 @@ class WebService:
         starter: str,
         dest: str,
         endpoint: Optional[str] = None,
+        progress: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """Download one recommended starter checkpoint below an allowed root.
 
@@ -580,7 +581,8 @@ class WebService:
         # Existing files are reused so an interrupted large download can be
         # resumed by pressing the same button again.
         report = self.fetch.fetch_model(
-            item["repo"], path, endpoint=endpoint, require_new=False
+            item["repo"], path, endpoint=endpoint, require_new=False,
+            progress=progress,
         )
         report["starter"] = starter
         report["name"] = item.get("name", starter)

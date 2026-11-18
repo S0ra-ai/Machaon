@@ -43,8 +43,9 @@ Hero 下方的四步提示条会一直保留，作为轻量提醒。
 1. **Checkpoint**：读取 safetensors 文件或分片目录的 header，显示 tensor 数、
    参数数、dtype 和分片数。浏览器只看到名称、形状和类型，不接收权重值。
    没有检查点时，选择一个 starter 并点 **Download starter**：它会从允许根目录
-   下载并尝试镜像，填好路径，不会上传任何内容。勾选 **下载后自动打开** 会直接
-   开启会话，下一步就是 **ONE SENTENCE** 输入框。
+   下载并尝试镜像，填好路径，不会上传任何内容。任务横幅会通过 SSE 显示当前
+   端点、文件和字节/百分比进度。勾选 **下载后自动打开** 会直接开启会话，下一步
+   就是 **ONE SENTENCE** 输入框。
 2. **编辑合同**：打开模型会话、采集 baseline、选择层数并求解 proposal。
    preserve prompts 会进入零空间约束；量化模型做 gradient solve 前勾选
    **Densify from edit layer**。proposal 在写入前报告相对变化和目标概率。

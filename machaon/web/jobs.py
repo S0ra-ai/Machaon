@@ -16,7 +16,7 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Mapping, Optional
 
 __all__ = ["Job", "JobEvent", "JobRegistry"]
 
@@ -67,9 +67,10 @@ class JobEvent:
 
 
 class Job:
-    def __init__(self, kind: str) -> None:
+    def __init__(self, kind: str, with_progress: bool = False) -> None:
         self.id = uuid.uuid4().hex[:16]
         self.kind = kind
+        self.with_progress = bool(with_progress)
         self.status = "queued"
         self.created_at = time.time()
         self.started_at: Optional[float] = None
@@ -93,6 +94,17 @@ class Job:
             )
             self.events.append(event)
             return event.as_dict()
+
+    def progress(self, payload: Optional[Mapping[str, Any]] = None,
+                 **data: Any) -> None:
+        """Publish one progress record for a long-running job.
+
+        Accepts either a payload object (the fetch callback style) or keyword
+        fields (the convenient in-process style).
+        """
+        merged: Dict[str, Any] = dict(payload or {})
+        merged.update(data)
+        self._emit("progress", **merged)
 
     def snapshot(self) -> Dict[str, Any]:
         with self._lock:
@@ -131,11 +143,12 @@ class JobRegistry:
         self._max_jobs = max(1, int(max_jobs))
         self._closed = False
 
-    def start(self, kind: str, function: Callable[[], Any]) -> Job:
+    def start(self, kind: str, function: Callable[..., Any],
+              with_progress: bool = False) -> Job:
         with self._lock:
             if self._closed:
                 raise RuntimeError("job registry is closed")
-            job = Job(kind)
+            job = Job(kind, with_progress=with_progress)
             self._jobs[job.id] = job
             self._prune_locked()
         job._emit("status", status="queued", kind=kind)
@@ -149,7 +162,10 @@ class JobRegistry:
             job.started_at = time.time()
         job._emit("status", status="running", kind=job.kind)
         try:
-            result = function()
+            if job.with_progress:
+                result = function(job.progress)
+            else:
+                result = function()
         except Exception as exc:  # the browser gets a safe message, not a traceback
             with job._lock:
                 job.status = "error"

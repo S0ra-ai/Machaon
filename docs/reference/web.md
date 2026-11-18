@@ -59,7 +59,8 @@ four-step onboarding strip remains under the hero as a compact reminder.
    count without materialising the weights. The tensor surface shows names,
    shapes and dtypes only. If you have no checkpoint, choose a starter and press
    **Download starter**: it downloads into the first allowed root with mirror
-   fallback and fills the path, without uploading anything. **Open after
+   fallback and fills the path, without uploading anything. The job banner
+   streams the current endpoint, file and byte/percent progress over SSE. **Open after
    download** opens the session automatically so the next step is the
    **ONE SENTENCE** box.
 2. **Edit contract.** Open a model session, capture neutral baseline prompts,

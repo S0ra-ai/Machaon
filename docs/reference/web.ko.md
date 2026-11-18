@@ -47,7 +47,8 @@ machaon-web --allowed-root /models --port 8765
    tensor 수, 파라미터 수, dtype, shard 수를 보여 줍니다. 브라우저는 가중치
    값을 받지 않습니다. 체크포인트가 없으면 starter를 고르고
    **Download starter**를 누르세요. 허용 루트로 미러를 포함해 다운로드하고
-   경로를 채웁니다. **다운로드 후 열기**를 켜면 session까지 자동으로 열립니다.
+   경로를 채웁니다. 작업 배너는 SSE로 현재 엔드포인트, 파일, 바이트/퍼센트
+   진행률을 보여 줍니다. **다운로드 후 열기**를 켜면 session까지 자동으로 열립니다.
 2. **편집 계약**: session을 열고 baseline을 캡처한 뒤 layer를 골라 proposal을
    계산합니다. preserve prompts는 영공간 제약이 되며, 양자화 모델의 gradient
    solve에서는 **Densify from edit layer**를 켭니다. proposal은 쓰기 전에

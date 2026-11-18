@@ -195,10 +195,17 @@ class FakeFetch:
         "qwen05b": {"repo": "fake/qwen", "name": "Qwen"},
     }
 
-    def fetch_model(self, repo, dest, endpoint=None, require_new=False):
+    def fetch_model(self, repo, dest, endpoint=None, require_new=False,
+                    progress=None):
         path = Path(dest)
         path.mkdir(parents=True, exist_ok=True)
         (path / "config.json").write_text("{}")
+        if progress:
+            progress(phase="file", file="model.safetensors",
+                     index=1, count=2, cached=False)
+            progress(phase="download", file="model.safetensors",
+                     bytes=5, total=10)
+            progress(phase="done", dest=str(path))
         return {
             "repo": repo,
             "dest": str(path),
@@ -416,11 +423,37 @@ class TestWebApp(unittest.TestCase):
             json={"starter": "smol135m", "dest": str(dest)},
         )
         self.assertEqual(response.status_code, 200)
-        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        job_id = response.json()["job"]
+        job = _wait_for_job(self.client, job_id, self.headers)
         self.assertEqual(job["status"], "done")
         self.assertEqual(job["result"]["starter"], "smol135m")
         self.assertEqual(job["result"]["dest"], str(dest.resolve()))
         self.assertTrue((dest / "config.json").exists())
+        events = self.client.get(
+            "/api/jobs/%s/events?token=%s" % (job_id, self.token)
+        )
+        self.assertIn('"type": "progress"', events.text)
+        self.assertIn('"phase": "download"', events.text)
+
+    def test_job_registry_emits_progress_records(self):
+        from machaon.web.jobs import JobRegistry
+
+        jobs = JobRegistry()
+        try:
+            job = jobs.start(
+                "probe",
+                lambda progress: progress(
+                    {"phase": "download", "bytes": 5, "total": 10}
+                ),
+                with_progress=True,
+            )
+            self.assertTrue(job.wait(5))
+            events = job.events_after(0)
+            progress = [event for event in events if event["type"] == "progress"]
+            self.assertEqual(progress[0]["data"]["phase"], "download")
+            self.assertEqual(progress[0]["data"]["bytes"], 5)
+        finally:
+            jobs.shutdown(wait=False)
 
     def test_fetch_unknown_starter_is_a_job_error(self):
         response = self.client.post(
