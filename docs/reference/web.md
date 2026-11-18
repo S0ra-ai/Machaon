@@ -92,11 +92,11 @@ instead of showing only status chips.
 
 ## Check a saved fact
 
-The Checkpoint column's **Check a saved fact** panel evaluates one
-prompt/answer pair against the selected checkpoint without opening or editing
-the session. It calls `/api/check`, reloads the saved weights, uses the same
-continuation-space handling as `machaon check`, and shows `PASS`/`FAIL` with
-the selected answer and accuracy.
+The Checkpoint column's **Check a saved fact** panel evaluates one prompt/answer
+pair, or one fact per line, against the selected checkpoint without opening or
+editing the session. It calls `/api/check`, reloads the saved weights, uses the
+same continuation-space handling as `machaon check`, and shows `PASS`/`FAIL`
+with each selected answer and accuracy.
 
 ## Three-column workflow
 

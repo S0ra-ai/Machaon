@@ -430,6 +430,24 @@ class TestWebApp(unittest.TestCase):
         self.assertEqual(job["result"]["accuracy"], 1.0)
         self.assertEqual(job["result"]["answer_text"], " Paris")
 
+    def test_check_endpoint_evaluates_a_fact_list(self):
+        response = self.client.post(
+            "/api/check",
+            headers=self.headers,
+            json={
+                "path": str(self.root),
+                "facts": [
+                    "The capital of France is -> Paris",
+                    "The city is -> Rome",
+                ],
+            },
+        )
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        self.assertTrue(job["result"]["passed"])
+        self.assertEqual(len(job["result"]["facts"]), 2)
+        self.assertEqual(job["result"]["facts"][1]["index"], 2)
+
     def test_fetch_starter_downloads_below_an_allowed_root(self):
         dest = self.root / "Smol"
         response = self.client.post(

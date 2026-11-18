@@ -419,6 +419,30 @@
     }
     const passed = !!result.passed;
     card.className = "evidence-card teach-result";
+    if (result.facts) {
+      const rows = result.facts.map((item) => {
+        const ok = !!item.passed;
+        return '<div class="teach-step ' + (ok ? "ok" : "bad") + '">' +
+          '<div class="teach-step-head"><span class="check-chip ' +
+          (ok ? "ok" : "bad") + '">' + escapeHtml(item.index) +
+          "</span><strong>" + escapeHtml(item.prompt || "") + " → " +
+          escapeHtml(item.answer_text || item.answer || "") +
+          '</strong><span class="tiny">' +
+          escapeHtml(item.passed ? t("check.pass") : t("check.fail")) +
+          "</span></div>" +
+          '<p class="teach-step-meta mono">' +
+          escapeHtml(t("check.accuracy")) + " " + escapeHtml(fmt(item.accuracy)) +
+          "</p></div>";
+      }).join("");
+      card.innerHTML =
+        '<div class="teach-status"><strong>' +
+        escapeHtml(t(passed ? "check.pass" : "check.fail")) +
+        '</strong><span class="badge ' + (passed ? "live" : "quiet") + '">' +
+        escapeHtml(t("check.factCount", { n: result.facts.length })) +
+        "</span></div>" +
+        '<div class="teach-steps">' + rows + "</div>";
+      return;
+    }
     card.innerHTML =
       '<div class="teach-status"><strong>' +
       escapeHtml(t(passed ? "check.pass" : "check.fail")) +
@@ -1656,20 +1680,23 @@
   if (el.checkButton) {
     el.checkButton.addEventListener("click", () => {
       const path = el.checkpointPath.value.trim();
-      const sentence = el.checkSentence.value.trim();
+      const facts = el.checkSentence.value.split(/\r?\n/)
+        .map((line) => line.trim()).filter(Boolean);
       if (!path) return addTimelineEvent("error", t("errors.pathRequired"), "", "err");
-      if (!sentence) return addTimelineEvent("error", t("teach.sentenceRequired"), "", "err");
+      if (!facts.length) return addTimelineEvent("error", t("teach.sentenceRequired"), "", "err");
       if (el.quantize.value && el.dtype.value !== "auto") {
         return addTimelineEvent("error", t("errors.quantizeDtype"), "", "err");
       }
       renderCheckResult(null);
-      startJob("/api/check", {
+      const payload = {
         path,
-        sentence,
         dtype: el.dtype.value,
         device: $("#device").value.trim() || null,
         quantize: el.quantize.value || null,
-      }, "check");
+      };
+      if (facts.length === 1) payload.sentence = facts[0];
+      else payload.facts = facts;
+      startJob("/api/check", payload, "check");
     });
   }
   $("#describeButton").addEventListener("click", () => {

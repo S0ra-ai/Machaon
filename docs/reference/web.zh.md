@@ -68,9 +68,9 @@ Checkpoint 输入框，并让 FIRST EDIT 状态明确显示将使用哪个检查
 ## 检查保存的事实
 
 Checkpoint 栏的 **检查保存的事实** 面板会对当前选择的检查点复验一对
-prompt/answer，不打开也不修改 session。它调用 `/api/check`，重新加载保存的
-权重，采用与 `machaon check` 相同的前导空格处理，并显示通过/失败、实际回答
-和准确率。
+prompt/answer，或每行一条事实，不打开也不修改 session。它调用 `/api/check`，
+重新加载保存的权重，采用与 `machaon check` 相同的前导空格处理，并显示每条
+事实的通过/失败、实际回答和准确率。
 
 ## 三步工作流
 

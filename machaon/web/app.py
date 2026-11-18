@@ -117,6 +117,7 @@ class CheckRequest(BaseModel):
     sentence: Optional[str] = Field(default=None, max_length=4000)
     prompt: Optional[str] = Field(default=None, max_length=4000)
     answer: Optional[str] = Field(default=None, max_length=4000)
+    facts: Optional[List[str]] = Field(default=None, max_length=100)
     dtype: str = "auto"
     device: Optional[str] = None
     quantize: Optional[str] = None
@@ -465,6 +466,7 @@ def create_app(
                 sentence=body.sentence,
                 prompt=body.prompt,
                 answer=body.answer,
+                facts=body.facts,
                 dtype=body.dtype,
                 device=body.device,
                 quantize=body.quantize,

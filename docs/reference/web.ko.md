@@ -79,9 +79,9 @@ session을 유지합니다. 연 뒤에는 먼저 방금 가르친 prompt/answer�
 ## 저장된 사실 확인
 
 Checkpoint 열의 **저장된 사실 확인** 패널은 session을 열거나 수정하지 않고 선택한
-체크포인트의 prompt/answer를 평가합니다. `/api/check`를 호출해 저장된 가중치를
-다시 읽고, `machaon check`와 같은 앞 공백 처리를 사용해 PASS/FAIL, 실제 답변,
-정확도를 표시합니다.
+체크포인트의 prompt/answer 또는 한 줄당 하나의 사실 목록을 평가합니다.
+`/api/check`를 호출해 저장된 가중치를 다시 읽고, `machaon check`와 같은 앞 공백
+처리를 사용해 각 사실의 PASS/FAIL, 실제 답변, 정확도를 표시합니다.
 
 ## 세 열 작업 흐름
 

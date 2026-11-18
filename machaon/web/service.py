@@ -494,6 +494,7 @@ class WebService:
         sentence: Optional[str] = None,
         prompt: Optional[str] = None,
         answer: Optional[str] = None,
+        facts: Optional[Sequence[str]] = None,
         dtype: str = "auto",
         device: Optional[str] = None,
         quantize: Optional[str] = None,
@@ -502,11 +503,26 @@ class WebService:
         resolved = self.policy.require_existing(path)
         if quantize is not None and dtype != "auto":
             raise ValueError("quantize requires dtype='auto'")
-        if sentence:
+        if facts is not None:
+            if sentence or prompt is not None or answer is not None:
+                raise ValueError("use facts or sentence/prompt+answer, not both")
+            if not facts:
+                raise ValueError("check needs at least one fact")
+            pairs = []
+            for index, item in enumerate(facts, 1):
+                try:
+                    intent = self.intent.parse_intent(str(item))
+                except Exception as exc:
+                    raise ValueError("fact %d: %s" % (index, exc)) from exc
+                pairs.append((intent.prompt, intent.answer))
+        elif sentence:
             intent = self.intent.parse_intent(sentence)
             prompt, answer = intent.prompt, intent.answer
+            pairs = [(prompt, answer)]
         elif not prompt or answer is None or answer == "":
             raise ValueError("check needs a sentence, or both prompt and answer")
+        else:
+            pairs = [(prompt, answer)]
 
         from ..check import evaluate_fact
 
@@ -539,7 +555,19 @@ class WebService:
                 )
                 owned = True
 
-            result = evaluate_fact(session, prompt, answer)
+            if facts is not None:
+                results = []
+                for index, (item_prompt, item_answer) in enumerate(pairs, 1):
+                    item = evaluate_fact(session, item_prompt, item_answer)
+                    item["index"] = index
+                    item["model"] = resolved
+                    results.append(item)
+                return {
+                    "passed": all(item["passed"] for item in results),
+                    "model": resolved,
+                    "facts": results,
+                }
+            result = evaluate_fact(session, pairs[0][0], pairs[0][1])
         finally:
             if owned:
                 session = None
