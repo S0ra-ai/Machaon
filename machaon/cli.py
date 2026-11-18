@@ -881,8 +881,11 @@ def _print_program_plan(program) -> None:
 
     preflight = program_preflight(program)
     model_state = "exists" if preflight["model_exists"] else "missing"
-    if model_state == "missing" and program.fetch:
-        model_state += "; fetch: %s" % program.fetch
+    if model_state == "missing":
+        if program.fetch:
+            model_state += "; fetch: %s" % program.fetch
+        else:
+            model_state += "; download it first or add 'fetch:'"
     if preflight["model_is_file"]:
         model_state = "blocked: not a directory"
     output_state = "new"

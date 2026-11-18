@@ -277,6 +277,18 @@ class TestCli(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("only be used when running", err)
 
+    def test_program_plan_names_a_missing_model_without_fetch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "local.machaon"
+            path.write_text(
+                "model: ./missing\noutput: ./out\n"
+                "teach: The capital is -> Paris\n",
+                encoding="utf-8",
+            )
+            code, out, _ = run("program", str(path), "--plan")
+        self.assertEqual(code, 0)
+        self.assertIn("download it first", out)
+
     def test_program_reports_parse_errors_without_a_traceback(self):
         with tempfile.NamedTemporaryFile("w", suffix=".machaon", delete=False) as handle:
             handle.write("model: base\noutput: out\nmagic: yes\n")
