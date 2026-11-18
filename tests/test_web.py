@@ -797,6 +797,28 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"firstEdit.save"', locales.text)
         self.assertIn('"firstEdit.openSaved"', locales.text)
 
+    def test_force_close_rolls_back_an_edited_session(self):
+        opened = self.client.post(
+            "/api/session/open",
+            headers=self.headers,
+            json={"path": str(self.root), "dtype": "auto"},
+        )
+        _wait_for_job(self.client, opened.json()["job"], self.headers)
+        applied = self.client.post("/api/edit/apply", headers=self.headers, json={})
+        _wait_for_job(self.client, applied.json()["job"], self.headers)
+        closed = self.client.post(
+            "/api/session/close",
+            headers=self.headers,
+            json={"force": True},
+        )
+        result = _wait_for_job(
+            self.client, closed.json()["job"], self.headers
+        )
+        self.assertEqual(result["status"], "done")
+        self.assertFalse(result["result"]["ready"])
+        state = self.client.get("/api/session/state", headers=self.headers).json()
+        self.assertFalse(state["ready"])
+
     def test_save_checkpoint_uses_the_checkpoint_writer(self):
         opened = self.client.post(
             "/api/session/open",
