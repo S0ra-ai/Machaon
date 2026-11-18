@@ -298,6 +298,9 @@ python -m machaon.cli inspect /models/qwen --layer 3 --json
 python -m machaon.cli doctor
 python -m machaon.cli doctor --json
 ```
+レポートには利用可能な計算デバイスが含まれます。モデル読み込みは既定で CPU で、
+`--device cuda`、`--device mps`、`--device auto` は明示的な指定です。
+forward/backward が GPU 上でも、NumPy の重み編集計算はホスト CPU で実行されます。
 
 ## `--version`
 

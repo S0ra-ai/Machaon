@@ -78,7 +78,7 @@ def _build_model(root: Path) -> Path:
     return model_dir
 
 
-def run_demo(root: Path) -> Dict[str, Any]:
+def run_demo(root: Path, device: str | None = None) -> Dict[str, Any]:
     """Build the tiny checkpoint and execute the complete program lifecycle."""
     from machaon.program import (
         parse_program,
@@ -103,6 +103,7 @@ def run_demo(root: Path) -> Dict[str, Any]:
         min_panel_agreement=0.0,
         layers=[1, 2],
         max_layers=2,
+        device=device,
     )
     program_path = root / "tiny.machaon"
     program_path.write_text(text, encoding="utf-8")
@@ -120,6 +121,7 @@ def run_demo(root: Path) -> Dict[str, Any]:
         "status": result.status,
         "accepted": result.accepted,
         "summary": result.summary,
+        "device": device or "cpu",
         "report_path": result.report_path,
         "report_sha256": result.report_sha256,
         "verification": result.verification,
@@ -129,8 +131,18 @@ def run_demo(root: Path) -> Dict[str, Any]:
 
 def main() -> int:
     try:
+        import torch
+
+        if "--cpu" in sys.argv[1:]:
+            device = None
+        elif torch.cuda.is_available():
+            device = "cuda"
+        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            device = None
         with tempfile.TemporaryDirectory(prefix="machaon-tiny-program-") as tmp:
-            payload = run_demo(Path(tmp))
+            payload = run_demo(Path(tmp), device=device)
     except ImportError as exc:
         print(
             "tiny_program needs the optional Hugging Face extras: "
@@ -140,6 +152,7 @@ def main() -> int:
         return 2
     print("Machaon · offline tiny program")
     print("status     : %s" % payload["status"].upper())
+    print("device     : %s" % payload["device"])
     print("summary    : %s" % payload["summary"])
     print("report SHA : %s" % payload["report_sha256"])
     checked = payload["checked"]["model_check"]

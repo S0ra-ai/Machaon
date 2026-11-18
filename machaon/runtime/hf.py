@@ -270,16 +270,24 @@ class HFModel:
             torch.as_tensor(mask, device=self.device),
         )
 
+    def _ids_tensor(self, value: Any):
+        """Move token-id arrays or tensors to the runtime device safely."""
+        import torch
+
+        if hasattr(value, "detach"):
+            return value.detach().to(device=self.device, dtype=torch.long)
+        return torch.as_tensor(
+            np.asarray(value), dtype=torch.long, device=self.device
+        )
+
     def next_logits_ids(self, input_ids: Any, attention_mask: Any = None) -> np.ndarray:
         """Next-token logits at the last *real* position, as ``(n, vocab)``."""
         import torch
 
-        ids = torch.as_tensor(np.asarray(input_ids), dtype=torch.long, device=self.device)
+        ids = self._ids_tensor(input_ids)
         mask = None
         if attention_mask is not None:
-            mask = torch.as_tensor(
-                np.asarray(attention_mask), dtype=torch.long, device=self.device
-            )
+            mask = self._ids_tensor(attention_mask)
         with torch.no_grad():
             out = self.model(ids, attention_mask=mask)
         if mask is None:
@@ -331,7 +339,7 @@ class HFModel:
         import torch
 
         module = self.resolve(name)
-        ids = torch.as_tensor(np.asarray(input_ids), dtype=torch.long, device=self.device)
+        ids = self._ids_tensor(input_ids)
         box = {}
 
         def hook(_module, inputs):
@@ -351,24 +359,24 @@ class HFModel:
         """Mean negative log-likelihood per real token, as ``(n,)`` float64."""
         import torch
 
-        ids = torch.as_tensor(np.asarray(input_ids), dtype=torch.long, device=self.device)
+        ids = self._ids_tensor(input_ids)
         if ids.ndim != 2 or ids.shape[1] < 2:
             raise ValueError("NLL needs at least two tokens per row")
         mask = None
         if attention_mask is not None:
-            mask = torch.as_tensor(
-                np.asarray(attention_mask), dtype=torch.long, device=self.device
-            )
+            mask = self._ids_tensor(attention_mask)
         with torch.no_grad():
             logits = self.model(ids, attention_mask=mask).logits.float()
         log_probs = torch.log_softmax(logits[:, :-1, :], dim=-1)
         targets = ids[:, 1:]
         gathered = log_probs.gather(-1, targets.unsqueeze(-1)).squeeze(-1)
         if mask is None:
-            return (-gathered.mean(dim=-1)).double().cpu().numpy()
-        weights = mask[:, 1:].double()
-        total = -(gathered.double() * weights).sum(dim=-1)
-        return (total / weights.sum(dim=-1).clamp(min=1.0)).cpu().numpy()
+            return (-gathered.mean(dim=-1)).float().cpu().numpy().astype(np.float64)
+        weights = mask[:, 1:].float()
+        total = -(gathered.float() * weights).sum(dim=-1)
+        return (
+            total / weights.sum(dim=-1).clamp(min=1.0)
+        ).float().cpu().numpy().astype(np.float64)
 
     def nll(self, items: Sequence[Any]) -> np.ndarray:
         items = list(items)

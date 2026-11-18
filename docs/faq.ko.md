@@ -30,6 +30,14 @@ Qwen2.5-0.5B가 zsRE 첫 token 300개 중 299개를 맞히기 때문입니다. �
 **왜 bf16이 아니라 float32인가요?**
 CPU에서 PyTorch bf16 backward는 병적으로 느립니다: 같은 0.5B 모델에서 4.66초/스텝 대 float32 0.18초/스텝. delta는 둘 다 float64로 계산하고, 모델 dtype은 value 풀이의 forward/backward에만 영향을 줍니다.
 
+**Machaon은 GPU를 사용하나요?**
+모델 로딩은 기본 CPU입니다. GPU와 Apple MPS는 명시적 opt-in이며 CLI에서는 `--device cuda`,
+`--device mps`, `--device auto`, Web에서는 대응하는 `device` 필드를 사용합니다. 모델
+tensor, forward, value solver의 backward가 해당 장치에서 실행됩니다. NumPy 편집 대수
+(rank-one 풀이, 투영, norm 검사)는 호스트 CPU에 남고 가중치는 읽기/쓰기 때만 장치 경계를
+넘습니다. `machaon doctor`가 CUDA/MPS 가용성을 보고합니다. 공개 CI에는 GPU runner가
+없으므로 GPU/MPS 경로는 지원되고 로컬 검증되었지만 모든 CI job의 대상은 아닙니다.
+
 **레이어 선택이 왜 그렇게 중요한가요?**
 12층 편집은 뒤의 12개 블록을 통과해야 합니다. Qwen2.5-0.5B에서 같은 편집이 12층 rel. Δ 0.150, 20층 0.0043 — 35배 차이입니다.
 

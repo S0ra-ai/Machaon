@@ -1376,6 +1376,26 @@ def _cmd_doctor(args) -> int:
             "openwsp_v1": True,
         },
     }
+    devices = {
+        "default": "cpu",
+        "cuda": False,
+        "mps": False,
+        "cuda_count": 0,
+        "mps_built": False,
+    }
+    if report["packages"]["torch"] != "absent":
+        try:
+            import torch
+
+            devices["cuda"] = bool(torch.cuda.is_available())
+            devices["cuda_count"] = int(torch.cuda.device_count())
+            mps = getattr(torch.backends, "mps", None)
+            if mps is not None:
+                devices["mps"] = bool(mps.is_available())
+                devices["mps_built"] = bool(mps.is_built())
+        except (ImportError, RuntimeError, AttributeError):
+            pass
+    report["devices"] = devices
     if args.json:
         print(json.dumps(report, indent=2))
         return 0
@@ -1389,6 +1409,19 @@ def _cmd_doctor(args) -> int:
     print("\noptional")
     for name, version in report["packages"].items():
         print("  %-14s %s" % (name, version))
+    print("\ndevices")
+    print("  %-14s %s" % ("default", report["devices"]["default"]))
+    print("  %-14s %s" % (
+        "cuda",
+        "available (%d)" % report["devices"]["cuda_count"]
+        if report["devices"]["cuda"] else "unavailable",
+    ))
+    print("  %-14s %s" % (
+        "mps",
+        "available" if report["devices"]["mps"] else "unavailable",
+    ))
+    if report["devices"]["cuda"] or report["devices"]["mps"]:
+        print("  opt in with --device cuda|mps|auto")
     if report["packages"]["torch"] == "absent":
         print("\ninstall real-model support with: pip install \"machaon[hf]\"")
     if report["packages"]["mcp"] == "absent":

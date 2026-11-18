@@ -370,6 +370,19 @@ python -m machaon.cli inspect /models/qwen --suffix down_proj.weight
 python -m machaon.cli inspect /models/qwen --layer 3 --limit 5
 ```
 
+## `doctor`
+
+Reports installed capabilities, package versions and available compute devices:
+
+```bash
+python -m machaon.cli doctor
+python -m machaon.cli doctor --json
+```
+
+Model loading defaults to CPU. GPU/MPS execution is opt-in with
+`--device cuda`, `--device mps`, or `--device auto`. The NumPy edit algebra
+remains on the host CPU even when model forward/backward runs on a GPU.
+
 ## `--version`
 
 ```bash

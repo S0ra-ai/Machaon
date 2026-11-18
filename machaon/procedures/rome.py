@@ -226,7 +226,7 @@ def solve_edit(
     _, delta = rank1_constrained(
         W,
         key.astype(np.float64),
-        value.detach().double().cpu().numpy(),
+        value.detach().float().cpu().numpy().astype(np.float64),
         preserve=preserve,
         max_rel_norm=max_rel_norm,
     )

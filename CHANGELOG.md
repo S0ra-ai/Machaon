@@ -72,6 +72,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   recorded rejection reason instead of printing only `rejected`.
 - The Web run card now shows the same failed target/budget/panel/KL checks
   instead of stopping at the run status.
+- Runtime token ids now move CUDA/MPS tensors to the model device without a
+  CPU-only `np.asarray` conversion; value vectors and NLL weights are converted
+  to CPU before float64 promotion, so the Apple MPS teaching path works.
+- `machaon doctor` reports default, CUDA and MPS device availability.
 - The Web program templates now include a **Bilingual Qwen** starter that
   teaches one Chinese and one English fact on Qwen2.5-0.5B.
 - `machaon program --plan` and `/api/program/plan` now include a side-effect-free

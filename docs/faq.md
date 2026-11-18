@@ -56,6 +56,16 @@ On CPU, PyTorch's bf16 backward is pathologically slow: 4.66 s/step versus
 either way; the model dtype only affects the forward/backward used to solve the
 value.
 
+**Does Machaon use a GPU?**
+Model loading defaults to CPU. GPU and Apple MPS execution are explicit opt-ins:
+`--device cuda`, `--device mps`, or `--device auto` in the CLI and the matching
+`device` field in the Web console. Model tensors, forward passes and the
+value-solver backward pass then run on that device. The NumPy edit algebra
+(rank-one solve, projection, norm checks) deliberately remains on the host CPU,
+and weights cross the device boundary once per read/write. `machaon doctor`
+reports CUDA/MPS availability. The release CI has no GPU runner, so GPU/MPS
+paths are supported and locally exercised but not covered by every CI job.
+
 **Why does the layer matter so much?**
 An edit at layer 12 has to survive twelve more blocks. On Qwen2.5-0.5B the same
 edit cost rel. Δ 0.150 at layer 12 and 0.0043 at layer 20 — a 35× difference.

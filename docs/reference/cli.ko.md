@@ -292,6 +292,9 @@ python -m machaon.cli inspect /models/qwen --layer 3 --json
 python -m machaon.cli doctor
 python -m machaon.cli doctor --json
 ```
+보고서에는 사용 가능한 계산 장치가 포함됩니다. 모델 로딩은 기본 CPU이며
+`--device cuda`, `--device mps`, `--device auto`는 명시적으로 지정해야 합니다.
+forward/backward가 GPU에서 실행되어도 NumPy 가중치 편집 연산은 호스트 CPU에서 실행됩니다.
 
 ## `--version`
 

@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-587-2ea44f)
+![tests](https://img.shields.io/badge/tests-589-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-78%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -213,6 +213,22 @@ uv pip install -e ".[dev,docs]"  # tests, lint, coverage, docs site
 ```
 
 Python 3.9–3.13 are tested. `make ci` runs the offline check suite.
+
+### CPU, CUDA and Apple MPS
+
+Model loading defaults to CPU. GPU and Apple MPS execution are explicit opt-ins:
+
+```bash
+machaon first --device mps
+machaon teach --model ./models/Qwen2.5-0.5B --say "..." --device cuda
+```
+
+The Web console has the same `device` field. Model tensors, forward passes and
+the value-solver backward pass run on that device; the NumPy edit algebra
+(rank-one solve, null-space projection and norm checks) remains on the host CPU.
+`machaon doctor` reports CUDA/MPS availability. The release CI has no GPU runner,
+so GPU/MPS paths are supported and locally exercised but not covered by every CI
+job.
 
 ## Browser console
 

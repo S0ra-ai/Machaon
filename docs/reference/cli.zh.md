@@ -348,6 +348,9 @@ python -m machaon.cli inspect /models/qwen --layer 3 --json
 python -m machaon.cli doctor
 python -m machaon.cli doctor --json
 ```
+报告包含可用计算设备。模型加载默认 CPU；`--device cuda`、`--device mps` 或
+`--device auto` 需要显式开启。即使 forward/backward 在 GPU 上，NumPy 权重编辑代数仍在
+主机 CPU 上执行。
 
 ## `--version`
 

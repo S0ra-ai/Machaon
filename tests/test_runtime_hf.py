@@ -95,6 +95,32 @@ class TestRuntime(unittest.TestCase):
         self.assertEqual(x.shape, (1, 48))
         self.assertTrue(np.isfinite(x).all())
 
+    def test_tensor_inputs_stay_on_the_runtime_device(self):
+        ids = torch.tensor([[5, 9, 14, 22]])
+        mask = torch.ones_like(ids)
+        logits = self.rt.next_logits_ids(ids, mask)
+        nll = self.rt.nll_ids(ids, mask)
+        hidden = self.rt.capture_module_input("lm_head", ids)
+        self.assertEqual(logits.shape, (1, 96))
+        self.assertEqual(nll.shape, (1,))
+        self.assertEqual(hidden.shape, (1, 48))
+
+
+@requires_hf
+@unittest.skipUnless(
+    getattr(getattr(torch, "backends", None), "mps", None)
+    and torch.backends.mps.is_available(),
+    "MPS is not available",
+)
+class TestMpsRuntime(unittest.TestCase):
+    def test_mps_tensor_inputs_do_not_require_cpu_conversion(self):
+        model = build().to("mps")
+        rt = HFModel(model)
+        ids = torch.tensor([[5, 9, 14, 22]], device="mps")
+        mask = torch.ones_like(ids)
+        self.assertEqual(rt.next_logits_ids(ids, mask).shape, (1, 96))
+        self.assertEqual(rt.capture_module_input("lm_head", ids).shape, (1, 48))
+
 
 class _StubTokenizer:
     """One id per whitespace token, no pad token, like GPT-2."""

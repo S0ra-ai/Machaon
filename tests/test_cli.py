@@ -195,6 +195,10 @@ class TestCli(unittest.TestCase):
         self.assertEqual(report["machaon"], __import__("machaon").__version__)
         self.assertTrue(all(report["core"].values()))
         self.assertIn("torch", report["packages"])
+        self.assertIn("devices", report)
+        self.assertIn("default", report["devices"])
+        self.assertIn("cuda", report["devices"])
+        self.assertIn("mps", report["devices"])
 
     def test_web_forwards_launch_controls(self):
         import types

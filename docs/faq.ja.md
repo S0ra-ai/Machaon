@@ -30,6 +30,15 @@ Qwen2.5-0.5B は zsRE の最初の token を 300 個中 299 個正解するか�
 **なぜ bf16 ではなく float32 ですか？**
 CPU では PyTorch の bf16 backward が病的に遅い：同じ 0.5B モデルで 4.66 秒/step 対 float32 の 0.18 秒/step。delta はどちらも float64 で計算し、モデル dtype は value 求解の forward/backward にだけ影響します。
 
+**Machaon は GPU を使いますか？**
+モデル読み込みは既定で CPU です。GPU と Apple MPS は明示的な opt-in で、CLI では
+`--device cuda`、`--device mps`、`--device auto`、Web では対応する `device` フィールドを
+使います。モデル tensor、forward、value solver の backward はそのデバイスで実行されます。
+NumPy の編集代数（rank-one 求解、投影、ノルム検査）はホスト CPU に残り、重みは読み書き時だけ
+デバイス間を移動します。`machaon doctor` が CUDA/MPS の可用性を報告します。公開 CI には
+GPU runner がないため、GPU/MPS 経路はサポートされローカル検証済みですが、全 CI job の対象
+ではありません。
+
 **層の選択がなぜそんなに重要ですか？**
 層 12 の編集は後ろ 12 ブロックを通過します。Qwen2.5-0.5B では同じ編集が層 12 で rel. Δ 0.150、層 20 で 0.0043——35 倍の差です。
 

@@ -30,6 +30,14 @@ target key 落在受保护 key 的张成空间里，两个约束不兼容。缩�
 **为什么用 float32 而不是 bf16？**
 在 CPU 上，PyTorch 的 bf16 backward 慢得病态：同一个 0.5B 模型上 4.66 秒/步 vs float32 的 0.18 秒/步。delta 两种情况下都用 float64 计算；模型 dtype 只影响求解 value 时的 forward/backward。
 
+**Machaon 会用 GPU 吗？**
+模型加载默认使用 CPU。GPU 和 Apple MPS 都是显式 opt-in：CLI 用 `--device cuda`、
+`--device mps` 或 `--device auto`，Web 控制台填写对应的 `device` 字段。之后模型 tensor、
+forward 和 value solver 的 backward 会在该设备上运行。NumPy 的编辑代数（rank-one 求解、
+投影、范数检查）仍在主机 CPU 上，权重只在读写时跨设备拷贝。`machaon doctor` 会报告
+CUDA/MPS 是否可用。发布 CI 没有 GPU runner，因此 GPU/MPS 路径是支持并在本地验证的，
+但不会出现在每个 CI job 中。
+
 **为什么层位影响这么大？**
 第 12 层的编辑要穿过后面十二个 block。Qwen2.5-0.5B 上同一个编辑在第 12 层 rel. Δ 是 0.150，在第 20 层是 0.0043——35 倍差异。
 
