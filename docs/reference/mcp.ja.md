@@ -45,7 +45,7 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `gate(metrics)` | ゲートを適用。欠損指標は失敗 |
 | `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | 保存済みチェックポイントを読み直し、共有 session なしで 1 つまたは複数の事実を評価 |
 | `plan_program(path)` | モデルを読み込まず、可搬 `.machaon` テキスト/JSON プログラムを解析 |
-| `run_program(path, verify)` | プログラムを実行してチェックポイント連鎖を保存し、任意で全事実を再読込検証 |
+| `run_program(path, verify, out, report_out)` | 出力/レポートの上書きを指定でき、保存バイトと全事実を検証しながら実行 |
 | `verify_program_report(path, program_path, check_model, checkpoint)` | レポートの内容アドレス、任意のプログラムハッシュ、任意の保存バイト事実を検証 |
 | `parse_intent(sentence)` | 自然言語の教学リクエストを正確な契約へコンパイル |
 

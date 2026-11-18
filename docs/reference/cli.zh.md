@@ -205,6 +205,8 @@ machaon program-verify ./models/hello-weight-space/program-report.json \
   --program hello.machaon
 machaon program-verify ./models/hello-weight-space/program-report.json \
   --check-model
+# 从标准输入读取报告，而不是文件：
+cat program-report.json | machaon program-verify -
 ```
 
 `--program PATH` 还要求程序文件的 SHA-256 等于报告记录的程序地址。`--check-model`
@@ -213,7 +215,8 @@ machaon program-verify ./models/hello-weight-space/program-report.json \
 当前位置。
 
 `--json` 输出完整验证结果。退出码 `0` 表示报告完整且请求的模型检查通过；`1` 表示请求的
-保存字节检查失败；`2` 表示报告格式错误或地址不匹配。SHA-256 只检测修改，不是签名。
+保存字节检查失败；`2` 表示报告格式错误或地址不匹配。配合 `--json` 时，完整性错误也会以
+`{"valid": false, "error": ...}` 返回，调用方可以统一解析。SHA-256 只检测修改，不是签名。
 
 ## `demo`
 

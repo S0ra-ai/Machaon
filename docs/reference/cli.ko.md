@@ -214,6 +214,8 @@ machaon program-verify ./models/hello-weight-space/program-report.json \
   --program hello.machaon
 machaon program-verify ./models/hello-weight-space/program-report.json \
   --check-model
+# 파일 대신 표준 입력에서 읽기:
+cat program-report.json | machaon program-verify -
 ```
 
 `--program PATH`는 프로그램 파일의 SHA-256이 보고서에 기록된 프로그램 주소와 같을 것도
@@ -224,7 +226,8 @@ machaon program-verify ./models/hello-weight-space/program-report.json \
 
 `--json`은 전체 검증 결과를 출력합니다. 종료 코드 `0`은 보고서가 온전하고 요청한 모델
 검사가 통과했음, `1`은 요청한 저장 바이트 검사 실패, `2`는 보고서 형식 또는 주소가
-맞지 않음을 뜻합니다. SHA-256은 변경 탐지이며 서명이 아닙니다.
+맞지 않음을 뜻합니다. `--json`에서는 무결성 오류도 `{"valid": false, "error": ...}`로
+반환되어 호출자가 실패까지 파싱할 수 있습니다. SHA-256은 변경 탐지이며 서명이 아닙니다.
 
 ## `demo`
 

@@ -45,7 +45,7 @@ Claude Desktop(`claude_desktop_config.json`):
 | `gate(metrics)` | 게이트 적용. 누락 지표는 실패 |
 | `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | 저장된 체크포인트를 다시 읽고 공유 session 없이 하나 또는 여러 사실 평가 |
 | `plan_program(path)` | 모델을 읽지 않고 이식 가능한 `.machaon` 텍스트/JSON 프로그램 파싱 |
-| `run_program(path, verify)` | 프로그램을 실행해 체크포인트 체인을 저장하고 선택적으로 모든 사실 재검증 |
+| `run_program(path, verify, out, report_out)` | 출력/보고서 경로를 덮어쓸 수 있으며 저장 바이트와 모든 사실을 검증 |
 | `verify_program_report(path, program_path, check_model, checkpoint)` | 보고서 내용 주소, 선택적 프로그램 해시, 선택적 저장 바이트 사실 검증 |
 | `parse_intent(sentence)` | 자연어 교수 요청을 정확한 계약으로 컴파일 |
 

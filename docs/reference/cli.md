@@ -221,6 +221,8 @@ machaon program-verify ./models/hello-weight-space/program-report.json \
   --program hello.machaon
 machaon program-verify ./models/hello-weight-space/program-report.json \
   --check-model
+# read a report from stdin instead of a file:
+cat program-report.json | machaon program-verify -
 ```
 
 `--program PATH` additionally requires the program file's SHA-256 to match the
@@ -233,7 +235,9 @@ provenance field rather than a required location.
 `--json` prints the complete verification result. Exit code `0` means the
 report is intact and any requested model check passed, `1` means a requested
 saved-byte check failed, and `2` means the report is malformed or its address
-does not match. The SHA-256 detects modification; it is not a signature.
+does not match. With `--json`, an integrity error is returned as
+`{"valid": false, "error": ...}` so a caller can parse failures too. The
+SHA-256 detects modification; it is not a signature.
 
 ## `demo`
 

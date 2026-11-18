@@ -38,10 +38,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   canonical `report_sha256`. `machaon program-verify` checks the address and
   structure, can require the program file to match the recorded program hash,
   and with `--check-model` reloads the checkpoint and re-runs every fact.
-  `--checkpoint` rechecks moved bytes without rewriting the report.
+  `--checkpoint` rechecks moved bytes without rewriting the report; `-` reads
+  the report from standard input, and `--json` returns integrity failures as
+  `{"valid": false, "error": ...}`.
 - Python exposes `parse_program_report`, `read_program_report`,
   `write_program_report`, `program_report_sha256` and
   `verify_program_report`; MCP adds `verify_program_report` (28 tools).
+- MCP `run_program` accepts the same `out` and `report_out` overrides as the
+  CLI runner.
 - The Web program panel has an optional report path, displays the report's
   SHA-256, and can open a saved report to verify its address and optionally
   recheck the checkpoint through `/api/program/verify`. It can also match the

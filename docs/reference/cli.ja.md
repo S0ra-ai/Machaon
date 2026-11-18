@@ -219,6 +219,8 @@ machaon program-verify ./models/hello-weight-space/program-report.json \
   --program hello.machaon
 machaon program-verify ./models/hello-weight-space/program-report.json \
   --check-model
+# ファイルではなく標準入力から読む:
+cat program-report.json | machaon program-verify -
 ```
 
 `--program PATH` はプログラムファイルの SHA-256 がレポート内のプログラムアドレスと
@@ -229,7 +231,9 @@ machaon program-verify ./models/hello-weight-space/program-report.json \
 
 `--json` は完全な検証結果を出力します。終了コード `0` はレポートが完全で、要求された
 モデル検査も通過したこと、`1` は要求された保存バイト検査の失敗、`2` はレポート形式または
-アドレス不一致を意味します。SHA-256 は変更の検出であり、署名ではありません。
+アドレス不一致を意味します。`--json` 指定時は整合性エラーも
+`{"valid": false, "error": ...}` として返るため、呼び出し側は失敗も解析できます。
+SHA-256 は変更の検出であり、署名ではありません。
 
 ## `demo`
 

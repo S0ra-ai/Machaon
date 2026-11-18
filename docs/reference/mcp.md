@@ -57,7 +57,7 @@ restart. Model-level tools share one explicitly opened `Session`.
 | `parse_intent(sentence)` | compile a plain-language teaching request into an exact contract |
 | `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | reload a saved checkpoint and evaluate one fact or a fact list without a shared session |
 | `plan_program(path)` | parse a portable `.machaon` text/JSON program without loading a model |
-| `run_program(path, verify)` | run a portable program, save its checkpoint chain, and optionally reload/verify every fact |
+| `run_program(path, verify, out, report_out)` | run a portable program with optional output/report overrides and saved-byte verification |
 | `verify_program_report(path, program_path, check_model, checkpoint)` | verify a report's content address, optional program hash, and optional saved-byte facts |
 
 Header and evidence tools delegate to plain functions in `machaon.tools`.

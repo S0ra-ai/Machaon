@@ -45,7 +45,7 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `gate(metrics)` | 应用验收门；缺失指标视为失败 |
 | `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | 重新加载保存检查点并复验一条或一组事实，不共享也不修改 session |
 | `plan_program(path)` | 解析可携带 `.machaon` 文本/JSON 程序，不加载模型 |
-| `run_program(path, verify)` | 运行程序、保存检查点链，并可选地重新加载并逐条复验事实 |
+| `run_program(path, verify, out, report_out)` | 运行程序，可覆盖输出/报告路径，并复验保存字节与事实 |
 | `verify_program_report(path, program_path, check_model, checkpoint)` | 校验报告内容地址、可选程序哈希，以及可选的保存字节事实复验 |
 | `wsp_audit(report)` | 将 WSP 报告分类为 repair、acquisition、non-specific 或 no-effect |
 | `wsp_save(report, out_dir, metadata)` | 写出内容寻址的 WSP evidence bundle |
