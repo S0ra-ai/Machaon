@@ -3,7 +3,18 @@
 5분. 처음 두 단계는 오프라인으로 실행됩니다. 교수 단계는 로컬
 체크포인트를 사용합니다.
 
-## 0 · 한 문장으로 가르치기
+## 0 · 0에서 명령 하나로
+
+```bash
+machaon first
+```
+
+새 머신에서는 SmolLM2-135M(약 270 MB)을 받아 열고,
+"The Eiffel Tower is in the city of -> Rome"을 가르친 뒤 수용된 편집을
+`./models/SmolLM2-135M-machaon`에 저장합니다. `--say`로 사실을 바꾸고,
+`--model`로 기존 체크포인트를 지정하며, `--no-save`는 메모리에만 유지합니다.
+
+## 1 · 특정 체크포인트 가르치기
 
 체크포인트에서 검증된 편집까지 가장 짧은 경로는 명령 하나입니다.
 
@@ -76,7 +87,7 @@ machaon teach-many --model ./models/Qwen2.5-0.5B --facts facts.txt --out ./model
 
 행렬, key, 보호 집합을 직접 고르고 싶다면 아래의 수동 단계를 사용하세요.
 
-## 1 · 데모 실행
+## 2 · 데모 실행
 
 ```bash
 python -m machaon.cli demo
@@ -92,7 +103,7 @@ constrained (capped)          0.0200     2.84e-01         8.55e-17          0.03
 
 세 번째 열을 보세요. 순진한 편집은 보호 key를 8.7e-2 움직이고, 제약된 편집은 3.8e-16에 머뭅니다.
 
-## 2 · 내 행렬 편집하기
+## 3 · 내 행렬 편집하기
 
 ```python
 import numpy as np
@@ -114,7 +125,7 @@ print(check_protected(W, delta, keys))
 {'passed': True, 'max_drift': 3.1e-16, ...}
 ```
 
-## 3 · 트랜잭션에 넣기
+## 4 · 트랜잭션에 넣기
 
 ```python
 from machaon import Workspace
@@ -131,7 +142,7 @@ txn.commit()          # 또는 txn.rollback()
 
 `commit(verdict)`는 `verdict.passed`가 false일 때 거부하고 원본 바이트를 복원합니다.
 
-## 4 · 실제 모델에서 실행
+## 5 · 실제 모델에서 실행
 
 ```bash
 export HF_ENDPOINT=https://hf-mirror.com

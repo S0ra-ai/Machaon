@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-510-2ea44f)
+![tests](https://img.shields.io/badge/tests-521-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-79%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -35,15 +35,19 @@ content-addressed artefact that can be diffed, replayed and rolled back.
 ## One sentence to a verified edit
 
 ```bash
-# one-time checkpoint download (about 1 GB, with mirror fallback)
-machaon fetch --starter qwen05b --dest ./models/Qwen2.5-0.5B
+# zero to one: download a small starter, open it, teach one fact, save
+machaon first
 
-machaon start
+# or choose the checkpoint and fact yourself
+machaon fetch --starter qwen05b --dest ./models/Qwen2.5-0.5B
 machaon teach --model ./models/Qwen2.5-0.5B \
   --say "The Eiffel Tower is in the city of -> Rome"
 ```
 
-`machaon teach` parses the sentence into an exact prompt/answer contract,
+`machaon first` downloads SmolLM2-135M when no checkpoint is present, opens it,
+teaches "The Eiffel Tower is in the city of -> Rome", and saves the accepted
+edit to `<model>-machaon`. `machaon teach` does the same for a checkpoint you
+choose, and parses the sentence into an exact prompt/answer contract,
 checks whether the model already knows the answer, searches a depth window of
 edit sites, projects each candidate away from an unrelated baseline panel,
 applies the best one inside the budget, and keeps it only when the target and
@@ -438,6 +442,8 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - **One-call teaching recipe** — automatic baseline, depth-window search,
   null-space projection, apply, target/panel/KL checks and bit-exact rollback,
   with every trial retained in the report.
+- **A zero-to-one command** — `machaon first` downloads a starter only if
+  needed, opens it, teaches one fact, verifies it and saves the checkpoint.
 - **A starter downloader** — `machaon fetch` uses the standard library only,
   falls back across Hugging Face / hf-mirror / ModelScope, validates safetensors
   headers, and is also a button in the browser console.
@@ -549,6 +555,7 @@ machaon/
 ├─ recipes.py           one-call teach: baseline, search, apply, verify, rollback
 ├─ teach_many.py        multi-fact chain with cumulative budget and global drift
 ├─ checkpointing.py     shared session → loadable checkpoint writer
+├─ first.py             zero-to-one: fetch if needed, teach, save
 ├─ fetch.py             stdlib starter downloader with endpoint fallback
 ├─ symmetry.py          hidden-unit permutation / positive-scaling alignment
 ├─ task_arithmetic.py   signed task-vector combinations with budget checks

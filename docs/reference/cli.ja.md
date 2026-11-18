@@ -12,6 +12,24 @@ python -m machaon <command>
 | 1 | gate が編集を拒否、または検証失敗 |
 | 2 | 入力形式エラー、ファイル欠損、未対応チェックポイント |
 
+## `first`
+
+ゼロからの最短経路です。`--model` が存在しない場合、`machaon fetch` と同じ
+エンドポイントフォールバックとヘッダー検証でスターター（既定は
+SmolLM2-135M）を取得し、チェックポイントを開いて 1 つの事実を教え、受け入れ
+られた編集を保存します。
+
+```bash
+machaon first
+machaon first --say "フランスの首都は -> ベルリン"
+machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
+```
+
+既定の事実は "The Eiffel Tower is in the city of -> Rome"、既定の出力は
+`<model>-machaon` です。`--no-save` はメモリ内だけに保持し、`--json` は完全な
+結果を出力します。適用済み/既知なら 0、ローカルチェックで拒否なら 1、
+入力またはモデルエラーなら 2 で終了します。
+
 ## `fetch`
 
 torch を読み込まず、重み tensor も展開せずに safetensors チェックポイントを

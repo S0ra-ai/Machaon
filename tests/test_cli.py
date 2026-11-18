@@ -373,9 +373,25 @@ class TestCli(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("error:", err)
 
+    def test_first_refuses_an_unstructured_sentence_before_fetching(self):
+        code, _, err = run(
+            "first", "--model", "/tmp/definitely-not-a-model",
+            "--say", "please make it better",
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("could not read", err)
+
+    def test_first_rejects_no_save_with_out(self):
+        code, _, err = run(
+            "first", "--model", "/tmp/none", "--out", "/tmp/out", "--no-save"
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("--no-save", err)
+
     def test_start_prints_the_three_entry_points(self):
         code, out, _ = run("start")
         self.assertEqual(code, 0)
+        self.assertIn("machaon first", out)
         self.assertIn("machaon demo", out)
         self.assertIn("machaon teach", out)
         self.assertIn("machaon-web", out)

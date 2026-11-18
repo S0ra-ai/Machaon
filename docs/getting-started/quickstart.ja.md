@@ -3,7 +3,18 @@
 5 分。最初の 2 ステップはオフラインで動きます。教学ステップはローカルの
 チェックポイントを使います。
 
-## 0 · ひとつの文で教える
+## 0 · ゼロから 1 コマンド
+
+```bash
+machaon first
+```
+
+新しいマシンでは SmolLM2-135M（約 270 MB）を取得し、開いて
+"The Eiffel Tower is in the city of -> Rome" を教え、受け入れられた編集を
+`./models/SmolLM2-135M-machaon` に保存します。`--say` で事実を変更し、
+`--model` で既存チェックポイントを指定し、`--no-save` でメモリ内だけに保持できます。
+
+## 1 · 指定したチェックポイントを教える
 
 チェックポイントから検証済みの編集まで、最短経路は 1 コマンドです。
 
@@ -77,7 +88,7 @@ machaon teach-many --model ./models/Qwen2.5-0.5B --facts facts.txt --out ./model
 
 行列、key、保護集合を自分で選びたい場合は、以下の手動ステップを使ってください。
 
-## 1 · デモを実行
+## 2 · デモを実行
 
 ```bash
 python -m machaon.cli demo
@@ -93,7 +104,7 @@ constrained (capped)          0.0200     2.84e-01         8.55e-17          0.03
 
 3 列目を見てください。素朴な編集は保護 key を 8.7e-2 動かし、制約付き編集は 3.8e-16 に留めます。
 
-## 2 · 自分の行列を編集
+## 3 · 自分の行列を編集
 
 ```python
 import numpy as np
@@ -115,7 +126,7 @@ print(check_protected(W, delta, keys))
 {'passed': True, 'max_drift': 3.1e-16, ...}
 ```
 
-## 3 · トランザクションに入れる
+## 4 · トランザクションに入れる
 
 ```python
 from machaon import Workspace
@@ -132,7 +143,7 @@ txn.commit()          # または txn.rollback()
 
 `commit(verdict)` は `verdict.passed` が false のとき拒否し、元のバイトを復元します。
 
-## 4 · 実モデルで実行
+## 5 · 実モデルで実行
 
 ```bash
 export HF_ENDPOINT=https://hf-mirror.com

@@ -3,7 +3,18 @@
 Five minutes. The first two steps run offline; the teaching step uses a local
 checkpoint.
 
-## 0 · Teach in one sentence
+## 0 · One command from zero
+
+```bash
+machaon first
+```
+
+On a fresh machine this downloads SmolLM2-135M (~270 MB), opens it, teaches
+"The Eiffel Tower is in the city of -> Rome", and saves the accepted edit to
+`./models/SmolLM2-135M-machaon`. `--say` changes the fact, `--model` chooses an
+existing checkpoint, and `--no-save` keeps the edit in memory.
+
+## 1 · Teach a specific checkpoint
 
 The shortest path from a checkpoint to a verified edit is one command:
 
@@ -81,7 +92,7 @@ whole chain.
 Use the manual steps below when you want to choose the matrix, the key and the
 protected set yourself.
 
-## 1 · Run the demo
+## 2 · Run the demo
 
 ```bash
 python -m machaon.cli demo
@@ -99,7 +110,7 @@ Read the third column. The naive edit moves the protected keys by 8.7e-2; the
 constrained edit leaves them at 3.1e-16. The last digit can move at the 1e-16
 level across BLAS implementations.
 
-## 2 · Edit a matrix you own
+## 3 · Edit a matrix you own
 
 ```python
 import numpy as np
@@ -121,7 +132,7 @@ print(check_protected(W, delta, keys))
 {'passed': True, 'max_drift': 3.1e-16, ...}
 ```
 
-## 3 · Put it in a transaction
+## 4 · Put it in a transaction
 
 ```python
 from machaon import Workspace
@@ -139,7 +150,7 @@ txn.commit()          # or txn.rollback()
 `commit(verdict)` refuses when `verdict.passed` is false and restores the
 original bytes.
 
-## 4 · Run it on a real model
+## 5 · Run it on a real model
 
 ```bash
 export HF_ENDPOINT=https://hf-mirror.com

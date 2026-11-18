@@ -12,6 +12,23 @@ python -m machaon <command>
 | 1 | gate가 편집을 거부, 또는 검증 실패 |
 | 2 | 입력 형식 오류, 파일 없음, 지원하지 않는 체크포인트 |
 
+## `first`
+
+0에서 시작하는 최단 경로입니다. `--model`이 없으면 `machaon fetch`와 같은
+엔드포인트 폴백과 헤더 검증으로 선택한 starter(기본 SmolLM2-135M)를 받고,
+체크포인트를 연 뒤 한 가지 사실을 가르치고 수용된 편집을 저장합니다.
+
+```bash
+machaon first
+machaon first --say "프랑스의 수도는 -> 베를린"
+machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
+```
+
+기본 사실은 "The Eiffel Tower is in the city of -> Rome", 기본 출력은
+`<model>-machaon`입니다. `--no-save`는 메모리에만 유지하고 `--json`은 전체
+결과를 출력합니다. 적용/이미 알고 있으면 0, 로컬 검사 거부는 1, 입력 또는
+모델 오류는 2로 종료합니다.
+
 ## `fetch`
 
 torch를 가져오지 않고 가중치 tensor도 펼치지 않은 채 safetensors 체크포인트를

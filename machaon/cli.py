@@ -261,14 +261,15 @@ def _discard_artifacts(artifacts: dict) -> None:
         Path(report).unlink(missing_ok=True)
 
 
-def _print_teach(result: dict, intent: dict, artifacts: dict) -> None:
+def _print_teach(result: dict, intent: dict, artifacts: dict,
+                 title: str = "Machaon · teach") -> None:
     status_label = {
         "applied": "APPLIED",
         "already_true": "NOTHING TO DO",
         "rejected": "REVERTED",
         "dry_run": "DRY RUN",
     }.get(result["status"], result["status"].upper())
-    print("Machaon · teach")
+    print(title)
     print("status     : %s" % status_label)
     print("prompt     : %s" % result["prompt"])
     print("answer     : %r" % result["answer_text"])
@@ -353,6 +354,75 @@ def _cmd_intent(args) -> int:
         print("note       : %s" % note)
     print("\n%s" % payload["command"])
     return 0
+
+
+def _cmd_first(args) -> int:
+    from .first import first_edit
+    from .recipes import TeachPolicy
+
+    if args.no_save and args.out:
+        return _error("--no-save cannot be combined with --out")
+    try:
+        layers = _parse_layers(args.layers) if args.layers else None
+    except ValueError as exc:
+        return _error(str(exc))
+    out = None if args.no_save else (args.out or _default_out(args.model))
+    policy = TeachPolicy(
+        max_rel_norm=args.max_rel_norm,
+        max_kl_p95=args.max_kl,
+        min_panel_agreement=args.min_panel_agreement,
+    )
+    extra = {}
+    if args.json:
+        from functools import partial
+
+        from .fetch import fetch_model
+
+        extra["fetch_fn"] = partial(fetch_model, verbose=False)
+    try:
+        result = first_edit(
+            args.say,
+            args.model,
+            out,
+            starter=args.starter,
+            budget=args.budget,
+            policy=policy,
+            layers=layers,
+            solver=args.solver,
+            steps=args.steps,
+            lr=args.lr,
+            max_layers=args.max_layers,
+            dtype=args.dtype,
+            device=args.device,
+            quantize=args.quantize,
+            no_save=args.no_save,
+            **extra,
+        )
+    except (OSError, ValueError, RuntimeError) as exc:
+        return _error(str(exc))
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+    else:
+        teach = dict(result.teach)
+        teach["summary"] = result.summary
+        if result.status == "applied":
+            teach["next_steps"] = (
+                ["saved to %s; run a full gate report before deployment"
+                 % result.final]
+                if result.final else
+                ["the edit is in memory only; rerun without --no-save to persist it"]
+            )
+        artifacts = {"output": result.final} if result.final else {}
+        _print_teach(
+            teach,
+            {"confidence": "high", "source": "intent"},
+            artifacts,
+            title="Machaon · first edit",
+        )
+        if result.model_fetched:
+            print("download   : %s" % result.model)
+    return 0 if result.accepted else 1
 
 
 def _cmd_teach(args) -> int:
@@ -676,18 +746,21 @@ def _cmd_start(args) -> int:
 
     print("Machaon · start")
     print("Weight-space programming with a contract, not a training loop.\n")
-    print("0. Get a small checkpoint (one time, with mirror fallback):")
-    print("   machaon fetch --starter qwen05b --dest ./models/Qwen2.5-0.5B")
-    print("   # smaller: machaon fetch --starter smol135m --dest ./models/SmolLM2-135M")
+    print("0. One command from zero (downloads SmolLM2-135M on first run):")
+    print("   machaon first")
     print()
-    print("1. See the whole loop in one second (no model):")
+    print("1. Or choose a starter explicitly:")
+    print("   machaon fetch --starter qwen05b --dest ./models/Qwen2.5-0.5B")
+    print("   machaon fetch --list")
+    print()
+    print("2. See the whole loop in one second (no model):")
     print("   machaon demo")
     print()
-    print("2. Teach a local checkpoint in one sentence:")
+    print("3. Teach a local checkpoint in one sentence:")
     print('   machaon teach --model ./models/Qwen2.5-0.5B \\')
     print('     --say "The Eiffel Tower is in the city of -> Rome"')
     print()
-    print("3. Use the local browser console:")
+    print("4. Use the local browser console:")
     print("   machaon-web --allowed-root ./models")
     print()
     print("capabilities")
@@ -932,6 +1005,36 @@ def main(argv=None) -> int:
         help="keep every step checkpoint, not only the last safe one",
     )
     p_many.add_argument("--json", action="store_true")
+    p_first = sub.add_parser(
+        "first",
+        help="download, open, teach one fact and save a checkpoint",
+    )
+    p_first.add_argument("--model", default="./models/SmolLM2-135M")
+    p_first.add_argument(
+        "--starter", choices=("smol135m", "qwen05b", "gpt2"),
+        default="smol135m",
+        help="starter to download when --model does not exist",
+    )
+    p_first.add_argument(
+        "--say",
+        default="The Eiffel Tower is in the city of -> Rome",
+        help="one-sentence teaching request",
+    )
+    p_first.add_argument("--out", default=None, help="edited checkpoint output")
+    p_first.add_argument("--budget", type=float, default=0.10)
+    p_first.add_argument("--max-rel-norm", type=float, default=0.02)
+    p_first.add_argument("--max-kl", type=float, default=0.05)
+    p_first.add_argument("--min-panel-agreement", type=float, default=0.875)
+    p_first.add_argument("--layers", default=None)
+    p_first.add_argument("--max-layers", type=int, default=7)
+    p_first.add_argument("--solver", choices=("direction", "gradient"), default="direction")
+    p_first.add_argument("--steps", type=int, default=250)
+    p_first.add_argument("--lr", type=float, default=0.02)
+    p_first.add_argument("--dtype", default="float32")
+    p_first.add_argument("--device", default=None)
+    p_first.add_argument("--quantize", choices=("int4", "int8"), default=None)
+    p_first.add_argument("--no-save", action="store_true")
+    p_first.add_argument("--json", action="store_true")
     p_start = sub.add_parser("start", help="print the shortest path to a first edit")
     p_start.add_argument("--demo", action="store_true", help="also run the synthetic demo")
 
@@ -964,6 +1067,8 @@ def main(argv=None) -> int:
         return _cmd_teach(args)
     if args.command == "teach-many":
         return _cmd_teach_many(args)
+    if args.command == "first":
+        return _cmd_first(args)
     if args.command == "fetch":
         return _cmd_fetch(args)
     if args.command == "start":

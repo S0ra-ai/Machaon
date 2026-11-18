@@ -2,7 +2,18 @@
 
 五分钟。前两步无需下载；教学步骤使用本地检查点。
 
-## 0 · 一句话教学
+## 0 · 一条命令从零开始
+
+```bash
+machaon first
+```
+
+在全新机器上，它会下载 SmolLM2-135M（约 270 MB）、打开模型、教
+"The Eiffel Tower is in the city of -> Rome"，并把通过的编辑保存到
+`./models/SmolLM2-135M-machaon`。`--say` 可换事实，`--model` 可指定已有检查点，
+`--no-save` 只保留在内存中。
+
+## 1 · 教一个指定检查点
 
 从检查点到一次经过验证的编辑，最短路径只有一条命令：
 
@@ -70,7 +81,7 @@ machaon teach-many --model ./models/Qwen2.5-0.5B --facts facts.txt --out ./model
 
 需要自己选择矩阵、key 和保护集时，再使用下面的手动步骤。
 
-## 1 · 运行 demo
+## 2 · 运行 demo
 
 ```bash
 python -m machaon.cli demo
@@ -86,7 +97,7 @@ constrained (capped)          0.0200     2.84e-01         8.55e-17          0.03
 
 看第三列。朴素编辑把受保护 key 移动了 8.7e-2；受约束编辑把它们留在 3.8e-16。
 
-## 2 · 编辑一个你拥有的矩阵
+## 3 · 编辑一个你拥有的矩阵
 
 ```python
 import numpy as np
@@ -108,7 +119,7 @@ print(check_protected(W, delta, keys))
 {'passed': True, 'max_drift': 3.1e-16, ...}
 ```
 
-## 3 · 放进事务
+## 4 · 放进事务
 
 ```python
 from machaon import Workspace
@@ -125,7 +136,7 @@ txn.commit()          # 或 txn.rollback()
 
 `commit(verdict)` 在 `verdict.passed` 为 false 时拒绝提交并还原原始字节。
 
-## 4 · 在真实模型上运行
+## 5 · 在真实模型上运行
 
 ```bash
 export HF_ENDPOINT=https://hf-mirror.com

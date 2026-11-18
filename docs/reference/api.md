@@ -622,6 +622,20 @@ and writes a per-step report. `save_session(session, out_dir)` is the shared
 writer used by the CLI, Web and chain; it applies the runtime's stored
 orientation and removes a partial directory on failure.
 
+```python
+from machaon.first import first_edit
+
+result = first_edit(
+    "The Eiffel Tower is in the city of -> Rome",
+    "./models/SmolLM2-135M",          # downloaded if absent
+    "./models/SmolLM2-135M-machaon",
+)
+result.status, result.final, result.model_fetched
+```
+
+`first_edit` is the zero-to-one orchestration: fetch the starter when the model
+is absent, open it, run `teach_fact`, and save the accepted edit.
+
 ## Tools · `machaon.tools`
 
 The functions behind the MCP server. No model is loaded.

@@ -259,6 +259,16 @@ result.final, result.cumulative_relative_delta, result.global_panel_agreement
 안전 체크포인트 유지, 단계별 보고서 작성을 수행합니다.
 `save_session(session, out_dir)`은 CLI, Web, 체인이 공유하는 writer입니다.
 
+```python
+from machaon.first import first_edit
+
+result = first_edit("에펠탑은 -> 로마", "./models/model", "./models/edited")
+result.status, result.final, result.model_fetched
+```
+
+`first_edit`는 0에서 시작하는 오케스트레이션입니다. 모델이 없으면 starter를
+받고, 열어서 `teach_fact`를 실행하고, 수용된 편집을 저장합니다.
+
 ## 도구 · `machaon.tools`
 
 MCP 서버 뒤의 함수. 모델을 로드하지 않습니다.

@@ -550,6 +550,16 @@ result.final, result.cumulative_relative_delta, result.global_panel_agreement
 并写出逐步报告。`save_session(session, out_dir)` 是 CLI、Web 和链条共用的写入器，
 会应用运行时的存储方向，并在失败时删除半成品目录。
 
+```python
+from machaon.first import first_edit
+
+result = first_edit("埃菲尔铁塔位于 -> 罗马", "./models/model", "./models/edited")
+result.status, result.final, result.model_fetched
+```
+
+`first_edit` 是从零到一的编排：模型不存在时先下载 starter，打开模型，运行
+`teach_fact`，并保存通过的编辑。
+
 ## 工具 · `machaon.tools`
 
 MCP 服务背后的函数。不加载模型。

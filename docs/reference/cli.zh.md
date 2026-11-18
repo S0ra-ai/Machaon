@@ -12,6 +12,22 @@ python -m machaon <command>
 | 1 | gate 拒绝该编辑，或校验失败 |
 | 2 | 输入格式错误、文件缺失、检查点不支持 |
 
+## `first`
+
+从零开始的最短路径。`--model` 不存在时，它用与 `machaon fetch` 相同的端点
+回退和 header 校验下载所选 starter（默认 SmolLM2-135M）；然后打开检查点、
+教一句事实，并保存通过的编辑。
+
+```bash
+machaon first
+machaon first --say "法国的首都是 -> 柏林"
+machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
+```
+
+默认事实是 "The Eiffel Tower is in the city of -> Rome"，默认输出是
+`<model>-machaon`。`--no-save` 只保留在内存中；`--json` 输出完整结果。
+事实已应用或本来就正确时退出码 0，被本地检查拒绝时 1，输入或模型错误时 2。
+
 ## `fetch`
 
 下载 safetensors 检查点，不导入 torch，也不加载任何权重 tensor。它依次通过

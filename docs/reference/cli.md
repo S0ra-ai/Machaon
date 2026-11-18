@@ -4,6 +4,25 @@
 python -m machaon.cli <command>
 ```
 
+## `first`
+
+The shortest path from zero. If `--model` does not exist, it downloads the
+selected starter (SmolLM2-135M by default) with the same endpoint fallback and
+header validation as `machaon fetch`; then it opens the checkpoint, teaches one
+sentence, and saves the accepted edit.
+
+```bash
+machaon first
+machaon first --say "The capital of France is -> Berlin"
+machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
+```
+
+The default fact is "The Eiffel Tower is in the city of -> Rome". The default
+output is `<model>-machaon`. Use `--no-save` to keep the edit in memory only;
+`--json` prints the full result. The command exits 0 when the fact was applied
+or already true, 1 when the local checks rejected it, and 2 on malformed input
+or a model error.
+
 ## `fetch`
 
 Downloads a safetensors checkpoint without importing torch or loading a weight

@@ -36,6 +36,8 @@ class TestSingleFile(unittest.TestCase):
         (self.dir / "tokenizer.json").write_text("{}")
         (self.dir / ".gitattributes").write_text("*")
         (self.dir / "pytorch_model.bin").write_bytes(b"stale")
+        (self.dir / "eval_results.json").write_text("{}")
+        (self.dir / "README.md").write_text("not part of the checkpoint")
         self.rng = np.random.default_rng(0)
         self.w = self.rng.normal(0, 0.02, size=(16, 12)).astype(np.float32)
         self.other = self.rng.normal(0, 0.02, size=(5, 3)).astype(np.float32)
@@ -139,6 +141,8 @@ class TestSingleFile(unittest.TestCase):
         self.assertTrue((out / "tokenizer.json").exists())
         self.assertFalse((out / ".gitattributes").exists())
         self.assertFalse((out / "pytorch_model.bin").exists())
+        self.assertFalse((out / "eval_results.json").exists())
+        self.assertFalse((out / "README.md").exists())
 
     def test_unknown_delta_rejected(self):
         ckpt = Checkpoint(self.path)

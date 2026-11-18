@@ -258,6 +258,16 @@ top-1/KL ドリフト、最後の全体安全チェックポイントの保持�
 レポート書き出しを行います。`save_session(session, out_dir)` は CLI、Web、
 チェーンが共有するライターです。
 
+```python
+from machaon.first import first_edit
+
+result = first_edit("エッフェル塔は -> ローマ", "./models/model", "./models/edited")
+result.status, result.final, result.model_fetched
+```
+
+`first_edit` はゼロからのオーケストレーションです。モデルがなければ starter を
+取得し、開いて `teach_fact` を実行し、受け入れられた編集を保存します。
+
 ## ツール · `machaon.tools`
 
 MCP サーバー背後の関数。モデルをロードしません。

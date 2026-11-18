@@ -204,12 +204,29 @@ class Checkpoint:
             ".safetensors", ".bin", ".pt", ".pth", ".ckpt", ".h5",
             ".msgpack", ".onnx", ".gguf",
         }
+        auxiliary = {
+            "config.json",
+            "generation_config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "special_tokens_map.json",
+            "added_tokens.json",
+            "vocab.json",
+            "merges.txt",
+            "preprocessor_config.json",
+            "processor_config.json",
+            "quantize_config.json",
+        }
         for item in sorted(source.iterdir(), key=lambda path: path.name):
             if not item.is_file() or item.name.startswith("."):
                 continue
             if item.name.endswith(".index.json"):
                 continue
             if item.suffix.lower() in weight_suffixes:
+                continue
+            if item.name not in auxiliary and not item.name.startswith(
+                ("tokenizer", "sentencepiece", "chat_template")
+            ):
                 continue
             destination = out / item.name
             if destination.exists():

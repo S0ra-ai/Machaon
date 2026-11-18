@@ -106,7 +106,8 @@ class TestFetchModel(unittest.TestCase):
             events = []
 
             def fake_fallback(repo, name, target, candidates,
-                              downloader=None, validator=None, progress=None):
+                              downloader=None, validator=None, progress=None,
+                              verbose=True):
                 if progress:
                     progress({
                         "phase": "download",
@@ -234,6 +235,30 @@ class TestFetchModel(unittest.TestCase):
 
 
 class TestCli(unittest.TestCase):
+    def test_json_mode_passes_verbose_false_and_prints_only_json(self):
+        calls = []
+
+        def fake(repo, dest, endpoint=None, verbose=True):
+            calls.append(verbose)
+            return {
+                "repo": repo,
+                "dest": str(dest),
+                "endpoint": "huggingface",
+                "shards": 1,
+                "tensors": 1,
+                "parameters": 10,
+            }
+
+        out = io.StringIO()
+        with mock.patch.object(fetch, "fetch_model", fake),                 contextlib.redirect_stdout(out):
+            code = fetch.main([
+                "--starter", "qwen05b", "--dest", "models/qwen", "--json"
+            ])
+        self.assertEqual(code, 0)
+        self.assertEqual(calls, [False])
+        payload = json.loads(out.getvalue())
+        self.assertEqual(payload["repo"], "Qwen/Qwen2.5-0.5B")
+
     def test_fetch_requires_a_source(self):
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
@@ -244,7 +269,7 @@ class TestCli(unittest.TestCase):
     def test_starter_uses_the_catalogue_and_default_destination(self):
         calls = []
 
-        def fake(repo, dest, endpoint=None, require_new=False):
+        def fake(repo, dest, endpoint=None, require_new=False, verbose=True):
             calls.append((repo, dest, endpoint, require_new))
             return {
                 "repo": repo,

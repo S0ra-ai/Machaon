@@ -137,6 +137,7 @@ def download(
     target: Path,
     endpoint: str,
     progress: Optional[Callable[[Dict[str, Any]], None]] = None,
+    verbose: bool = True,
 ) -> None:
     url = file_url(repo, name, endpoint)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -185,10 +186,11 @@ def download(
         raise
     temporary.replace(target)
     elapsed = max(time.time() - start, 1e-6)
-    print(
-        "  %-40s %8.1f MB  %6.2f MB/s"
-        % (name, target.stat().st_size / 1e6, target.stat().st_size / 1e6 / elapsed)
-    )
+    if verbose:
+        print(
+            "  %-40s %8.1f MB  %6.2f MB/s"
+            % (name, target.stat().st_size / 1e6, target.stat().st_size / 1e6 / elapsed)
+        )
 
 
 def download_with_fallback(
@@ -199,12 +201,16 @@ def download_with_fallback(
     downloader: Optional[Callable[[str, str, Path, str], None]] = None,
     validator: Optional[Callable[[Path], Any]] = None,
     progress: Optional[Callable[[Dict[str, Any]], None]] = None,
+    verbose: bool = True,
 ) -> Tuple[str, str]:
     """Try the endpoint that listed the repo, then the remaining endpoints."""
     if downloader is None:
         def download_one(repo_, name_, target_, endpoint_):
             try:
-                download(repo_, name_, target_, endpoint_, progress=progress)
+                download(
+                    repo_, name_, target_, endpoint_,
+                    progress=progress, verbose=verbose,
+                )
             except TypeError as exc:
                 if "progress" not in str(exc):
                     raise
@@ -226,7 +232,8 @@ def download_with_fallback(
             return label, endpoint
         except Exception as exc:
             errors.append("%s: %s" % (label, exc))
-            print("  %-40s fallback from %s: %s" % (name, label, exc))
+            if verbose:
+                print("  %-40s fallback from %s: %s" % (name, label, exc))
     raise IOError(
         "could not download %s from any endpoint: %s"
         % (name, "; ".join(errors))
@@ -251,6 +258,7 @@ def fetch_model(
     endpoint: Optional[str] = None,
     require_new: bool = False,
     progress: Optional[Callable[[Dict[str, Any]], None]] = None,
+    verbose: bool = True,
 ) -> Dict[str, Any]:
     """Download a safetensors checkpoint into ``dest``.
 
@@ -286,11 +294,13 @@ def fetch_model(
         try:
             files = list_files(repo, base)
             chosen = (label, base)
-            print("endpoint %s: %d files" % (label, len(files)))
+            if verbose:
+                print("endpoint %s: %d files" % (label, len(files)))
             break
         except Exception as exc:
             errors.append("%s: %s" % (label, exc))
-            print("endpoint %s unavailable: %s" % (label, exc))
+            if verbose:
+                print("endpoint %s unavailable: %s" % (label, exc))
     if chosen is None:
         raise IOError(
             "could not list %s from any endpoint: %s"
@@ -325,7 +335,8 @@ def fetch_model(
         target = destination / name
         if target.exists() and target.stat().st_size > 0:
             cached.append(name)
-            print("  %-40s cached" % name)
+            if verbose:
+                print("  %-40s cached" % name)
             _emit(
                 progress,
                 phase="file",
@@ -346,7 +357,7 @@ def fetch_model(
         validator = check_safetensors if name.endswith(".safetensors") else None
         download_with_fallback(
             repo, name, target, candidates,
-            validator=validator, progress=progress,
+            validator=validator, progress=progress, verbose=verbose,
         )
         downloaded.append(name)
 
@@ -437,7 +448,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 2
     dest = args.dest or str(Path("models") / default_name)
     try:
-        report = fetch_model(repo, dest, endpoint=args.endpoint)
+        report = fetch_model(
+            repo, dest, endpoint=args.endpoint, verbose=not args.json
+        )
     except (OSError, ValueError) as exc:
         print("error: %s" % exc, file=sys.stderr)
         return 1
