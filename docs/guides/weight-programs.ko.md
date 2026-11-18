@@ -45,6 +45,8 @@ machaon program hello.machaon --plan
 
 ```bash
 machaon program hello.machaon
+# 감사 기록을 체크포인트 디렉터리 밖에 두려면:
+machaon program hello.machaon --report-out ./reports/hello-progress.json
 ```
 
 `model`이 없고 `fetch`가 starter를 지정한 경우에만 다운로드합니다. 각 사실은 독립적으로
@@ -58,6 +60,8 @@ machaon program hello.machaon
 로컬 Web 콘솔의 **가중치 프로그램 실행** 패널도 같은 계약을 사용합니다.
 프로그램을 붙여 넣고 상대 경로 기준 폴더를 지정한 뒤 **프로그램 확인** 또는
 **프로그램 실행**을 선택하세요. 브라우저 경로도 기존 파일 허용 목록을 통과합니다.
+패널에서 저장된 보고서를 열어 `machaon program-verify`와 같은 무결성 검사 또는
+저장 바이트 검증을 실행할 수도 있습니다.
 
 ## 필드
 
@@ -120,6 +124,36 @@ machaon program hello.machaon --out ./models/experiment-2
 
 두 형식 모두 같은 `program-report.json`을 만들며, 프로그램 SHA-256, 해석된 정책,
 각 티칭 단계, 검증 결과를 포함합니다. 공유하거나 검토할 때의 감사 기록입니다.
+
+## 보고서를 신뢰하지 않고 검증하기
+
+저장된 보고서는 주소 필드를 제외한 정규화 문서로 계산한 `report_sha256`을 함께 담습니다.
+따라서 복사하거나 커밋하고, 이슈에 첨부하거나 브라우저에서 내려받은 뒤에도 검증할 수 있습니다.
+
+```bash
+machaon program-verify ./models/hello-weight-space/program-report.json
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --program hello.machaon
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --check-model
+```
+
+첫 번째 명령은 보고서 주소와 필수 구조를 검증합니다. 두 번째는 프로그램 파일의 해시가
+보고서에 기록된 프로그램 주소와 같은지도 요구합니다. 세 번째는 보고서가 가리키는 저장된
+체크포인트를 다시 불러와 모든 사실을 재실행하고, 실측 결과가 기록된 판정과 일치하는지
+보여 줍니다.
+
+체크포인트를 옮겼다면 새 위치를 명시할 수 있습니다.
+
+```bash
+machaon program-verify ./reports/lesson.json \
+  --check-model --checkpoint ./copied/lesson/final
+```
+
+SHA-256은 내용 주소이며 서명이 아닙니다. 우발적이거나 승인되지 않은 변경을 탐지하지만,
+바이트를 바꾼 뒤 누구나 주소를 다시 계산할 수 있습니다. `--check-model`은 선언한 사실을
+저장된 가중치로 실제 실행하므로 더 강한 검사입니다. 주소 필드가 없는 이전 보고서는
+검증된 것으로 취급하지 않고 거부합니다.
 
 ## 주장하지 않는 것
 

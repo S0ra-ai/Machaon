@@ -47,6 +47,8 @@ Run the program:
 
 ```bash
 machaon program hello.machaon
+# or keep the audit record outside the checkpoint directory:
+machaon program hello.machaon --report-out ./reports/hello-progress.json
 ```
 
 The model is downloaded only when `model` is missing and `fetch` names a
@@ -63,7 +65,8 @@ intend to verify the bytes separately.
 The local Web console exposes the same contract in its **Run a weight program**
 panel: paste the program, set the folder used to resolve relative paths, and
 choose **Check program** or **Run program**. The browser path still passes the
-existing filesystem allowlist.
+existing filesystem allowlist. The panel can also open a saved report and run
+the same integrity or saved-byte verification as `machaon program-verify`.
 
 Three additional starters demonstrate the format without requiring a download
 to inspect them: `examples/two-facts.machaon`,
@@ -133,6 +136,40 @@ The same contract can be machine-generated as JSON. A fact may be a sentence,
 Both forms produce the same `program-report.json`, including the program
 SHA-256, the resolved policy, every teaching step, and the verification result.
 That file is the audit record to keep when a program is shared or reviewed.
+
+## Verify a report without trusting it
+
+A saved report carries its own `report_sha256`, computed over the canonical
+document without the address field. The report can therefore be copied,
+committed, attached to an issue, or downloaded from the browser and checked
+later:
+
+```bash
+machaon program-verify ./models/hello-weight-space/program-report.json
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --program hello.machaon
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --check-model
+```
+
+The first command verifies the report address and its required structure. The
+second also requires the program file to hash to the program address recorded
+inside the report. The third reloads the saved checkpoint named by the report
+and checks every fact again, then states whether the live result agrees with
+the recorded verdict.
+
+If the checkpoint was moved, name its new location explicitly:
+
+```bash
+machaon program-verify ./reports/lesson.json \
+  --check-model --checkpoint ./copied/lesson/final
+```
+
+The SHA-256 is a content address, not a signature: it detects accidental or
+unauthorised edits to the report, but anyone can recompute the address after
+changing the bytes. `--check-model` is the stronger check because it executes
+the declared facts against the saved weights. Reports written before the
+address field was added are refused rather than treated as verified.
 
 ## What this does not claim
 

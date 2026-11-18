@@ -650,6 +650,27 @@ relative paths from the program file. `run_program` delegates edits to
 written checkpoint with `check_facts`. Pass `verify=False` to skip only that
 last reload; the report still records the program hash and every teaching step.
 
+The saved report has a canonical content address and a matching reader:
+
+```python
+from machaon import read_program_report, verify_program_report
+
+document = read_program_report("program-report.json")   # raises on mismatch
+checked = verify_program_report(
+    "program-report.json",
+    program_path="hello.machaon",                       # optional hash cross-check
+    check_model=True,                                   # optional live fact check
+)
+checked["report_sha256"], checked["model_check"]["passed"]
+```
+
+`program_report_sha256(document)` computes the address excluded from its own
+hash field. `parse_program_report(text)` is the in-memory form used by the Web
+API. `verify_program_report(..., checkpoint=...)` can recheck moved bytes
+without rewriting the report. An integrity mismatch raises
+`ProgramReportError`; a model check that disagrees with the report is returned
+as `model_check.matches_report == False` so the caller can decide how to act.
+
 ## Tools · `machaon.tools`
 
 The functions behind the MCP server. No model is loaded.

@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-558-2ea44f)
+![tests](https://img.shields.io/badge/tests-569-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-78%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -86,7 +86,9 @@ machaon program examples/hello.machaon
 
 Relative paths resolve from the program file, and the resulting
 `<output>/program-report.json` records the program hash, every step and the
-verification result. `examples/two-facts.machaon`,
+verification result. The report has its own SHA-256 content address, so
+`machaon program-verify` can later check the report and, with `--check-model`,
+reload the saved bytes and re-run every fact. `examples/two-facts.machaon`,
 `examples/qwen-bilingual.machaon` and `examples/gpt2-first.machaon` are
 ready-to-plan starters for a two-fact chain, a Chinese/English run and the
 classic GPT-2 path.
@@ -239,7 +241,9 @@ report and reloads the saved checkpoint before reporting success. The program's
 relative paths and the browser's filesystem allowlist are enforced together.
 The panel can prefill from the current checkpoint, open/download `.machaon`
 files, start from one- and two-fact SmolLM2 templates, and keep the last eight
-programs in local browser history.
+programs in local browser history. It can also open a saved report, verify its
+content address, and optionally reload the checkpoint to compare the live facts
+with the recorded verdict.
 
 The **FIRST EDIT** card goes one step further: if no checkpoint is selected, it
 downloads the starter chosen in the card (SmolLM2-135M by default, with
@@ -508,6 +512,9 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - **Portable weight programs** — one reviewable text or JSON file declares the
   model, facts, protected prompts, budget and runtime policy; `machaon program`
   runs the chain and reloads the saved bytes before calling it accepted.
+- **Verifiable program reports** — `machaon program-verify` recomputes the
+  report address, optionally matches the program file, and can recheck every
+  saved fact; the same contract is exposed through Python, MCP and the Web UI.
 - **Unit symmetry alignment** — recover hidden-unit permutations and positive
   scaling across an MLP pair before comparing or merging weights.
 - **Aligned MLP merge** — apply the recovered hidden-unit permutation before
@@ -530,7 +537,7 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
   the WSP evidence hash inside the manifest's `machaon` object.
 - **Binding verification** — confirm the OpenWSP edit address, evidence address
   and manifest payload still agree before trusting either artefact.
-- **An agent interface** — 27 MCP tools over stdio, file-level, portable-program, saved-checkpoint and model-level.
+- **An agent interface** — 28 MCP tools over stdio, file-level, portable-program, report-verification, saved-checkpoint and model-level.
 - **A local browser console** — inspect, propose, apply, evaluate and roll back
   through the same session contract, with SSE job progress and a token-scoped
   checkpoint allowlist.

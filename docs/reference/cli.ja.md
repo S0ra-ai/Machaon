@@ -186,6 +186,29 @@ machaon program ./lesson.json --out ./models/experiment-2
 `2` がプログラム形式またはモデルエラーです。形式とフィールド表は
 [重みプログラム](../guides/weight-programs.md)を参照してください。
 
+## `program-verify`
+
+保存された `program-report.json` を信頼せずに検証します。既定の検査はレポートを読み、
+必須構造を確認し、`report_sha256` 内容アドレスを再計算します。
+
+```bash
+machaon program-verify ./models/hello-weight-space/program-report.json
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --program hello.machaon
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --check-model
+```
+
+`--program PATH` はプログラムファイルの SHA-256 がレポート内のプログラムアドレスと
+一致することも要求します。`--check-model` はレポートが指すチェックポイントを再読み込みし、
+宣言された全事実を再実行して、実測判定と記録済み判定を比較します。チェックポイントを
+移動した場合は `--check-model --checkpoint ./new/path/final` を使います。レポート内の
+パスは来歴であり、現在位置の必須条件ではありません。
+
+`--json` は完全な検証結果を出力します。終了コード `0` はレポートが完全で、要求された
+モデル検査も通過したこと、`1` は要求された保存バイト検査の失敗、`2` はレポート形式または
+アドレス不一致を意味します。SHA-256 は変更の検出であり、署名ではありません。
+
 ## `demo`
 
 合成 rank-one デモを実行。モデルもネットワークも不要。

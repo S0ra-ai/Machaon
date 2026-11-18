@@ -173,6 +173,27 @@ machaon program ./lesson.json --out ./models/experiment-2
 退出码：`0` 表示计划合法或运行通过复验，`1` 表示编辑被拒或复验失败，`2` 表示
 程序格式或模型错误。字段表和完整示例见[权重程序](../guides/weight-programs.md)。
 
+## `program-verify`
+
+不信任报告，也能复核保存的 `program-report.json`。默认检查会读取报告、校验必需结构，
+并重新计算 `report_sha256` 内容地址：
+
+```bash
+machaon program-verify ./models/hello-weight-space/program-report.json
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --program hello.machaon
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --check-model
+```
+
+`--program PATH` 还要求程序文件的 SHA-256 等于报告记录的程序地址。`--check-model`
+会重新加载报告指向的检查点，重跑全部声明事实，并比较实时结论与报告结论。检查点被移动时，
+使用 `--check-model --checkpoint ./new/path/final`；报告里的路径是来源记录，不是必须的
+当前位置。
+
+`--json` 输出完整验证结果。退出码 `0` 表示报告完整且请求的模型检查通过；`1` 表示请求的
+保存字节检查失败；`2` 表示报告格式错误或地址不匹配。SHA-256 只检测修改，不是签名。
+
 ## `demo`
 
 运行合成 rank-one demo。无模型、无网络。

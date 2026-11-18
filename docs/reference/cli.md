@@ -186,6 +186,32 @@ rejected or verification-failed run, and `2` for a malformed program or model
 error. See [Weight programs](../guides/weight-programs.md) for the format and
 field table.
 
+## `program-verify`
+
+Verify a saved `program-report.json` without trusting it. The default check
+reads the report, validates its required structure, and recomputes the
+`report_sha256` content address:
+
+```bash
+machaon program-verify ./models/hello-weight-space/program-report.json
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --program hello.machaon
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --check-model
+```
+
+`--program PATH` additionally requires the program file's SHA-256 to match the
+program address recorded in the report. `--check-model` reloads the reported
+checkpoint, re-runs every declared fact, and compares the live verdict with the
+recorded one. If the checkpoint moved, pass
+`--check-model --checkpoint ./new/path/final`; the report path remains a
+provenance field rather than a required location.
+
+`--json` prints the complete verification result. Exit code `0` means the
+report is intact and any requested model check passed, `1` means a requested
+saved-byte check failed, and `2` means the report is malformed or its address
+does not match. The SHA-256 detects modification; it is not a signature.
+
 ## `demo`
 
 Runs the synthetic rank-one demo. No model, no network.

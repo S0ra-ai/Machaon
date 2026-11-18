@@ -45,6 +45,8 @@ machaon program hello.machaon --plan
 
 ```bash
 machaon program hello.machaon
+# 監査記録をチェックポイント外に置く場合:
+machaon program hello.machaon --report-out ./reports/hello-progress.json
 ```
 
 `model` が存在せず `fetch` が starter を指定している場合だけダウンロードします。
@@ -59,6 +61,8 @@ machaon program hello.machaon
 ローカル Web コンソールの **重みプログラムを実行** パネルも同じ契約を使います。
 プログラムを貼り付け、相対パスの基準フォルダーを設定して、**プログラムを確認** または
 **プログラムを実行** を選びます。ブラウザー経由でも既存のファイル許可リストを通過します。
+パネルから保存済みレポートを開き、`machaon program-verify` と同じ整合性検証または
+保存バイト検証を実行することもできます。
 
 ## フィールド
 
@@ -121,6 +125,37 @@ machaon program hello.machaon --out ./models/experiment-2
 
 どちらの形式も同じ `program-report.json` を生成し、プログラムの SHA-256、
 解決済みポリシー、各教学ステップ、検証結果を含みます。共有・レビュー時の監査記録です。
+
+## レポートを信頼せずに検証する
+
+保存されたレポートは、アドレス欄を除いた正規化文書から計算した `report_sha256` を
+自身に含みます。コピー、コミット、issue への添付、ブラウザからのダウンロードの後でも
+次のように検証できます。
+
+```bash
+machaon program-verify ./models/hello-weight-space/program-report.json
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --program hello.machaon
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --check-model
+```
+
+1 つ目はレポートのアドレスと必須構造を検証します。2 つ目はプログラムファイルのハッシュが
+レポート内のプログラムアドレスと一致することも要求します。3 つ目はレポートが指す保存済み
+チェックポイントを再読み込みし、全事実を再実行して、実測結果が記録された判定と一致するかを
+示します。
+
+チェックポイントを移動した場合は、新しい場所を明示できます。
+
+```bash
+machaon program-verify ./reports/lesson.json \
+  --check-model --checkpoint ./copied/lesson/final
+```
+
+SHA-256 は内容アドレスであり署名ではありません。偶発的または無断の変更を検出しますが、
+バイトを変えた後に誰でも再計算できます。`--check-model` は宣言した事実を保存済みの重みで
+実行するため、より強い検証です。アドレス欄を持たない古いレポートは拒否され、検証済みとして
+扱われません。
 
 ## 主張しないこと
 

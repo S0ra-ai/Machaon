@@ -282,6 +282,26 @@ result.status, result.verification["passed"], result.report_path
 チェックポイントを再読込して検証します。`verify=False` は最後の再検証だけを
 省略し、レポートにはプログラムハッシュと各教学ステップが残ります。
 
+保存済みレポートには正規の内容アドレスがあり、対応するリーダーがあります。
+
+```python
+from machaon import read_program_report, verify_program_report
+
+document = read_program_report("program-report.json")   # 不一致なら例外
+checked = verify_program_report(
+    "program-report.json",
+    program_path="hello.machaon",                       # 任意: プログラムハッシュ照合
+    check_model=True,                                   # 任意: 保存済み事実の再実行
+)
+checked["report_sha256"], checked["model_check"]["passed"]
+```
+
+`program_report_sha256(document)` は自身のハッシュ欄を除いたアドレスを計算します。
+`parse_program_report(text)` は Web API が使うメモリ上の形式です。
+`verify_program_report(..., checkpoint=...)` はレポートを書き換えずに移動後のバイトを
+再検証できます。整合性不一致は `ProgramReportError` を送出し、モデル検証がレポートと
+食い違う場合は `model_check.matches_report == False` を返して呼び出し側に判断を委ねます。
+
 ## ツール · `machaon.tools`
 
 MCP サーバー背後の関数。モデルをロードしません。

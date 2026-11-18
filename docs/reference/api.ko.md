@@ -283,6 +283,26 @@ result.status, result.verification["passed"], result.report_path
 체크포인트를 다시 불러와 검증합니다. `verify=False`는 마지막 재검증만 생략하며,
 보고서에는 프로그램 해시와 각 티칭 단계가 남습니다.
 
+저장된 보고서에는 정규 내용 주소와 대응 리더가 있습니다.
+
+```python
+from machaon import read_program_report, verify_program_report
+
+document = read_program_report("program-report.json")   # 불일치 시 예외
+checked = verify_program_report(
+    "program-report.json",
+    program_path="hello.machaon",                       # 선택: 프로그램 해시 대조
+    check_model=True,                                   # 선택: 저장된 사실 재실행
+)
+checked["report_sha256"], checked["model_check"]["passed"]
+```
+
+`program_report_sha256(document)`는 자체 해시 필드를 제외한 주소를 계산합니다.
+`parse_program_report(text)`는 Web API가 쓰는 메모리 형식입니다.
+`verify_program_report(..., checkpoint=...)`는 보고서를 다시 쓰지 않고 이동한 바이트를
+재검증할 수 있습니다. 무결성 불일치는 `ProgramReportError`를 던지고, 모델 검증이 보고서와
+다르면 `model_check.matches_report == False`를 반환해 호출자가 판단하게 합니다.
+
 ## 도구 · `machaon.tools`
 
 MCP 서버 뒤의 함수. 모델을 로드하지 않습니다.

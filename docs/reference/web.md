@@ -110,6 +110,17 @@ model. **Run program** calls `/api/program/run` as a background job, writes
 `<output>/program-report.json`, and reloads the saved checkpoint before
 reporting the run. The job banner reports each fact's step/total and status as
 the teaching chain advances, then the final outcome and saved-byte verification.
+An optional **Report path** writes the same report somewhere other than
+`<output>/program-report.json`. The run card displays the report's SHA-256.
+
+**Verify report** opens a previously downloaded `program-report.json`, checks
+its content address and structure, and shows the recorded program address,
+status and verdict. **Verify report + checkpoint** also reloads the checkpoint
+and re-runs every fact; the card states whether the live result agrees with the
+report. Select **also match the program currently in the editor** to detect a
+different program file, or **recheck the currently selected checkpoint** when
+the saved bytes were moved. These checks call `/api/program/verify` as a
+background job, so a large checkpoint load never blocks the page.
 
 **Use current checkpoint** fills the editor from the open session or selected
 checkpoint and the current teaching sentence/preserve prompts. **Download
@@ -217,6 +228,7 @@ because the browser's `EventSource` cannot set headers.
 | POST | `/api/check` | evaluate one fact against a saved checkpoint |
 | POST | `/api/program/plan` | parse a pasted weight program without loading a model |
 | POST | `/api/program/run` | run a pasted weight program and verify the saved checkpoint |
+| POST | `/api/program/verify` | verify a report's SHA-256, optional program match, and optional saved-byte facts |
 | POST | `/api/teach_many` | run a multi-fact chain into an output container |
 | POST | `/api/edit/propose_batch` | solve many prompt/value rows into one pending delta |
 | POST | `/api/edit/apply` | write the pending proposal |

@@ -182,6 +182,29 @@ machaon program ./lesson.json --out ./models/experiment-2
 프로그램 형식 또는 모델 오류입니다. 형식과 필드 표는
 [가중치 프로그램](../guides/weight-programs.md)을 참고하세요.
 
+## `program-verify`
+
+저장된 `program-report.json`을 신뢰하지 않고 검증합니다. 기본 검사는 보고서를 읽고
+필수 구조를 확인한 뒤 `report_sha256` 내용 주소를 다시 계산합니다.
+
+```bash
+machaon program-verify ./models/hello-weight-space/program-report.json
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --program hello.machaon
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --check-model
+```
+
+`--program PATH`는 프로그램 파일의 SHA-256이 보고서에 기록된 프로그램 주소와 같을 것도
+요구합니다. `--check-model`은 보고서가 가리키는 체크포인트를 다시 불러와 선언된 모든
+사실을 재실행하고, 실측 판정을 기록된 판정과 비교합니다. 체크포인트를 옮겼다면
+`--check-model --checkpoint ./new/path/final`을 사용하세요. 보고서의 경로는 출처이며
+현재 위치의 필수 조건은 아닙니다.
+
+`--json`은 전체 검증 결과를 출력합니다. 종료 코드 `0`은 보고서가 온전하고 요청한 모델
+검사가 통과했음, `1`은 요청한 저장 바이트 검사 실패, `2`는 보고서 형식 또는 주소가
+맞지 않음을 뜻합니다. SHA-256은 변경 탐지이며 서명이 아닙니다.
+
 ## `demo`
 
 합성 rank-one 데모 실행. 모델도 네트워크도 필요 없음.

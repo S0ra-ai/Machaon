@@ -573,6 +573,26 @@ result.status, result.verification["passed"], result.report_path
 默认用 `check_facts` 重新加载写出的检查点复验。`verify=False` 只跳过最后这一步；
 报告仍记录程序哈希和每一步教学结果。
 
+保存的报告带规范内容地址，并有对应读取器：
+
+```python
+from machaon import read_program_report, verify_program_report
+
+document = read_program_report("program-report.json")   # 地址不匹配会抛错
+checked = verify_program_report(
+    "program-report.json",
+    program_path="hello.machaon",                       # 可选：交叉校验程序哈希
+    check_model=True,                                   # 可选：重新加载并复验事实
+)
+checked["report_sha256"], checked["model_check"]["passed"]
+```
+
+`program_report_sha256(document)` 计算排除自身哈希字段后的地址；
+`parse_program_report(text)` 是 Web API 使用的内存形式。
+`verify_program_report(..., checkpoint=...)` 可以在不重写报告的情况下复验移动后的字节。
+完整性不匹配会抛出 `ProgramReportError`；模型复验与报告不一致时返回
+`model_check.matches_report == False`，由调用方决定如何处理。
+
 ## 工具 · `machaon.tools`
 
 MCP 服务背后的函数。不加载模型。

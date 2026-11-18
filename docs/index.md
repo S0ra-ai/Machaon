@@ -28,7 +28,9 @@ teach, save, a persisted-answer check and the next fact.
 For a repeatable, shareable run, put the model, facts, protected prompts and
 budget in one [weight program](guides/weight-programs.md). `machaon program`
 plans it without loading a model, runs the teaching chain, and reloads the
-saved checkpoint before calling it accepted.
+saved checkpoint before calling it accepted. The report is content-addressed,
+so `machaon program-verify` can later validate the report, the program file and
+the saved facts without trusting the artifact.
 
 ```
               edit spec (DSL)

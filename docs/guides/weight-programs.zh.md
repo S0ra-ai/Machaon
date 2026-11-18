@@ -44,6 +44,8 @@ machaon program hello.machaon --plan
 
 ```bash
 machaon program hello.machaon
+# 或者把审计记录放在检查点目录之外：
+machaon program hello.machaon --report-out ./reports/hello-progress.json
 ```
 
 只有 `model` 不存在且 `fetch` 指定了 starter 时才会下载。每条事实独立搜索并做局部验收；
@@ -55,6 +57,7 @@ machaon program hello.machaon
 
 本地 Web 控制台的 **运行权重程序** 面板使用同一份合同：粘贴程序、设置用于解析相对路径的
 目录，然后选择 **检查程序** 或 **运行程序**。浏览器路径同样受已有的文件系统白名单限制。
+面板还可以打开已保存的报告，执行与 `machaon program-verify` 相同的完整性或保存字节复验。
 
 ## 字段
 
@@ -117,6 +120,33 @@ machaon program hello.machaon --out ./models/experiment-2
 
 两种形式产出相同的 `program-report.json`：包含程序 SHA-256、解析后的策略、
 每一步教学结果和复验结果。分享或审查程序时，这份文件就是审计记录。
+
+## 不信任报告也能复核
+
+保存的报告自带 `report_sha256`，它按规范文档计算，并排除地址字段本身。因此报告可以
+被复制、提交、附在 issue 里或从浏览器下载，之后再检查：
+
+```bash
+machaon program-verify ./models/hello-weight-space/program-report.json
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --program hello.machaon
+machaon program-verify ./models/hello-weight-space/program-report.json \
+  --check-model
+```
+
+第一条命令验证报告地址和必需结构；第二条还要求程序文件的哈希等于报告记录的程序地址；
+第三条重新加载报告指向的检查点，重跑每条事实，并说明实时结果是否与报告结论一致。
+
+如果检查点被移动，可以显式指定新位置：
+
+```bash
+machaon program-verify ./reports/lesson.json \
+  --check-model --checkpoint ./copied/lesson/final
+```
+
+SHA-256 是内容地址，不是签名：它能发现报告被意外或未经授权地修改，但任何人都可以在
+改字节后重新计算地址。`--check-model` 是更强的检查，因为它真的用保存的权重执行声明的事实。
+没有地址字段的旧报告会被拒绝，而不会被当作已验证。
 
 ## 它不声称什么
 

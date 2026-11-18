@@ -27,6 +27,18 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   final checkpoint without retyping its path.
 - `machaon program --report-out PATH` writes the program report to a chosen
   file instead of `<output>/program-report.json`.
+- Program reports now carry `report_format`, `report_format_version` and a
+  canonical `report_sha256`. `machaon program-verify` checks the address and
+  structure, can require the program file to match the recorded program hash,
+  and with `--check-model` reloads the checkpoint and re-runs every fact.
+  `--checkpoint` rechecks moved bytes without rewriting the report.
+- Python exposes `parse_program_report`, `read_program_report`,
+  `write_program_report`, `program_report_sha256` and
+  `verify_program_report`; MCP adds `verify_program_report` (28 tools).
+- The Web program panel has an optional report path, displays the report's
+  SHA-256, and can open a saved report to verify its address and optionally
+  recheck the checkpoint through `/api/program/verify`. It can also match the
+  current editor program or recheck the currently selected checkpoint.
 - `machaon.intent`: a deterministic English/Chinese compiler from plain-language
   teaching requests (`->`, labelled blocks, "when asked ...", and sentence
   forms) into an exact, reviewable prompt/answer contract. Unstructured text is
