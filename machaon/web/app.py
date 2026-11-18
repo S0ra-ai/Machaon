@@ -112,6 +112,15 @@ class TeachRequest(BaseModel):
     out_dir: Optional[str] = None
 
 
+class TeachManyRequest(BaseModel):
+    facts: List[str] = Field(min_length=1, max_length=100)
+    out_dir: str
+    budget: float = Field(default=0.10, gt=0.0, le=1.0)
+    max_rel_norm: float = Field(default=0.02, gt=0.0, le=0.5)
+    keep_steps: bool = False
+    continue_on_reject: bool = False
+
+
 class EvaluateRequest(BaseModel):
     prompts: List[str] = Field(min_length=1)
     targets: List[Union[str, int]] = Field(min_length=1)
@@ -432,6 +441,21 @@ def create_app(
                 max_rel_norm=body.max_rel_norm,
                 dry_run=body.dry_run,
                 out_dir=out,
+            ),
+        )
+
+    @app.post("/api/teach_many")
+    def teach_many(body: TeachManyRequest) -> Dict[str, Any]:
+        out = _path_or_http_error(policy, body.out_dir, must_exist=False)
+        return start_job(
+            "teach_many",
+            lambda: web_service.teach_many(
+                body.facts,
+                out,
+                budget=body.budget,
+                max_rel_norm=body.max_rel_norm,
+                keep_steps=body.keep_steps,
+                continue_on_reject=body.continue_on_reject,
             ),
         )
 

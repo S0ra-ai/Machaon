@@ -46,14 +46,17 @@ class WebService:
         intent_module: Optional[Any] = None,
         recipe: Optional[Any] = None,
         fetch_module: Optional[Any] = None,
+        many_recipe: Optional[Any] = None,
     ) -> None:
         self.policy = policy
         self.tools = tools_module or importlib.import_module("machaon.tools")
         self.session_factory = session_factory or _default_session_factory
         self.intent = intent_module or importlib.import_module("machaon.intent")
         self.recipe = recipe
+        self.many_recipe = many_recipe
         self.fetch = fetch_module or importlib.import_module("machaon.fetch")
         self.session: Optional[Any] = None
+        self._open_options: Optional[Dict[str, Any]] = None
         self._lock = RLock()
 
     # -- checkpoint inspection ------------------------------------------
@@ -232,6 +235,11 @@ class WebService:
                 quantize=quantize,
                 budget=budget,
             )
+            self._open_options = {
+                "dtype": dtype,
+                "device": device,
+                "quantize": quantize,
+            }
             return self.state()
 
     def close_session(self, force: bool = False) -> Dict[str, Any]:
@@ -246,6 +254,7 @@ class WebService:
             if force and state.get("edited"):
                 self.session.rollback()
             self.session = None
+            self._open_options = None
             return {"ready": False}
 
     def state(self) -> Dict[str, Any]:
@@ -422,6 +431,62 @@ class WebService:
             "checkpoint": saved["checkpoint"],
             "state": self.state(),
         }
+
+    def teach_many(
+        self,
+        facts: Sequence[str],
+        out_dir: str,
+        budget: float = 0.10,
+        max_rel_norm: float = 0.02,
+        keep_steps: bool = False,
+        continue_on_reject: bool = False,
+    ) -> Dict[str, Any]:
+        """Run the multi-fact chain on the open checkpoint.
+
+        The current session must be clean.  The original session is left on the
+        base checkpoint; the chain writes a separate output container.
+        """
+        session = self._require_session()
+        state = _session_state(session)
+        if state.get("edited") or state.get("has_pending"):
+            raise RuntimeError(
+                "teach-many needs a clean session; roll back applied edits "
+                "and clear the pending proposal first"
+            )
+        facts = [str(item) for item in facts]
+        if not facts:
+            raise ValueError("teach-many needs at least one fact")
+        out = Path(self.policy.require(out_dir))
+        if out.exists():
+            raise RuntimeError("output already exists: %s" % out)
+        options = dict(self._open_options or {
+            "dtype": "auto", "device": None, "quantize": None,
+        })
+
+        def factory(path, step_budget):
+            return self.session_factory(
+                model_path=str(path),
+                budget=step_budget,
+                **options,
+            )
+
+        from ..recipes import TeachPolicy
+
+        recipe = self.many_recipe
+        if recipe is None:
+            from ..teach_many import teach_many as recipe
+        result = recipe(
+            factory,
+            session.model_id,
+            facts,
+            out,
+            budget=float(budget),
+            policy=TeachPolicy(max_rel_norm=float(max_rel_norm)),
+            keep_steps=bool(keep_steps),
+            continue_on_reject=bool(continue_on_reject),
+        )
+        payload = result.to_dict() if hasattr(result, "to_dict") else dict(result)
+        return {"result": payload, "state": self.state()}
 
     def _require_session(self) -> Any:
         with self._lock:

@@ -21,6 +21,7 @@
     lastGate: null,
     evidence: null,
     lastTeach: null,
+    lastTeachMany: null,
     allowedRoots: [],
     capabilities: {},
     pendingAfterBusy: null,
@@ -48,6 +49,7 @@
     proposalCard: $("#proposalCard"),
     gateCard: $("#gateCard"),
     teachCard: $("#teachCard"),
+    teachManyCard: $("#teachManyCard"),
     stateCard: $("#stateCard"),
     timeline: $("#timeline"),
     eventCount: $("#eventCount"),
@@ -138,6 +140,7 @@
       if (state.lastTeach.result) renderTeachResult(state.lastTeach);
       else renderTeachPreview(state.lastTeach);
     }
+    if (state.lastTeachMany) renderTeachManyResult(state.lastTeachMany);
     updateEventCount();
     if (state.lastJob) {
       el.jobTitle.textContent = t("job.default");
@@ -452,6 +455,51 @@
       command;
   }
 
+  function renderTeachManyResult(payload) {
+    const card = el.teachManyCard;
+    if (!card) return;
+    if (!payload || !payload.result) {
+      card.className = "evidence-card empty-state";
+      card.textContent = t("teachMany.empty");
+      return;
+    }
+    const result = payload.result;
+    const accepted = !!result.accepted;
+    const steps = (result.steps || []).map((step) => {
+      const ok = step.status === "applied" || step.status === "already_true";
+      return '<span class="check-chip ' + (ok ? "ok" : "bad") + '">' +
+        escapeHtml(step.index + " " + step.status) + "</span>";
+    }).join("");
+    const report = result.report_path
+      ? '<p class="mono tiny">' + escapeHtml(result.report_path) + "</p>" : "";
+    const useFinal = result.final
+      ? '<button id="teachManyUseFinal" class="ghost small" type="button">' +
+        escapeHtml(t("teachMany.useFinal")) + "</button>" : "";
+    card.className = "evidence-card teach-result";
+    card.innerHTML =
+      '<div class="teach-status"><strong>' + escapeHtml(teachLabel(result.status)) +
+      '</strong><span class="badge ' + (accepted ? "live" : "quiet") + '">' +
+      escapeHtml(result.status || "") + "</span></div>" +
+      '<p class="teach-summary">' + escapeHtml(result.summary || "") + "</p>" +
+      '<div class="teach-grid">' +
+      "<span>" + escapeHtml(t("teachMany.finalLabel")) + "<br><strong>" +
+      escapeHtml(result.final || "—") + "</strong></span>" +
+      "<span>" + escapeHtml(t("teachMany.cumulative")) + "<br><strong>" +
+      ((result.cumulative_relative_delta || 0) * 100).toFixed(2) + "%</strong></span>" +
+      "</div>" +
+      (steps ? '<div class="check-list">' + steps + "</div>" : "") +
+      report + useFinal;
+    const button = card.querySelector("#teachManyUseFinal");
+    if (button && result.final) {
+      button.addEventListener("click", () => {
+        el.checkpointPath.value = result.final;
+        addTimelineEvent("teach_many", t("teachMany.selectedFinal"),
+          result.final, "ok");
+        $("#openButton").click();
+      });
+    }
+  }
+
   function teachLabel(status) {
     const key = "teach.status." + status;
     const value = t(key);
@@ -706,6 +754,19 @@
       if (result && result.state) state.session = result.state;
       renderSessionState();
       renderMetrics(result.metrics, result.gate);
+    } else if (kind === "teach_many") {
+      if (result && result.state) state.session = result.state;
+      state.lastTeachMany = result;
+      state.proposal = null;
+      renderSessionState();
+      renderProposal(null);
+      renderTeachManyResult(result);
+      $("#teachManyPanel").open = true;
+      if (result && result.result && result.result.out_dir) {
+        $("#teachManyOut").value = result.result.out_dir;
+      }
+      addTimelineEvent("teach_many", t("timeline.teachMany"),
+        (result && result.result && result.result.status) || "", "ok");
     } else if (kind === "teach") {
       if (result && result.state) state.session = result.state;
       state.proposal = null;
@@ -938,6 +999,26 @@
     } catch (err) {
       addTimelineEvent("error", err.message, t("teach.invalid"), "err");
     }
+  });
+  $("#teachManyButton").addEventListener("click", () => {
+    if (!state.session) return addTimelineEvent("error", t("errors.sessionFirst"), "", "err");
+    const facts = $("#teachManyFacts").value.split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#"));
+    if (!facts.length) return addTimelineEvent("error", t("teachMany.factsRequired"), "", "err");
+    let out = $("#teachManyOut").value.trim();
+    if (!out && state.session.model) {
+      out = String(state.session.model).replace(/\/+$/, "") + "-machaon-many";
+    }
+    if (!out) return addTimelineEvent("error", t("errors.outputRequired"), "", "err");
+    startJob("/api/teach_many", {
+      facts,
+      out_dir: out,
+      budget: Number($("#teachManyBudget").value),
+      max_rel_norm: Number($("#teachManyMaxNorm").value),
+      keep_steps: $("#teachManyKeep").checked,
+      continue_on_reject: $("#teachManyContinue").checked,
+    }, "teach_many");
   });
   $("#teachButton").addEventListener("click", () => {
     if (!state.session) return addTimelineEvent("error", t("errors.sessionFirst"), "", "err");

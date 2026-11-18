@@ -212,6 +212,32 @@ class FakeFetch:
         }
 
 
+def many_recipe(factory, base_model, facts, out_dir, **kwargs):
+    path = Path(out_dir)
+    path.mkdir(parents=True, exist_ok=True)
+    (path / "final").mkdir(exist_ok=True)
+    (path / "report.json").write_text("{}")
+    return {
+        "status": "applied",
+        "accepted": True,
+        "base_model": base_model,
+        "out_dir": str(path),
+        "final": str(path / "final"),
+        "facts": len(facts),
+        "budget": kwargs.get("budget", 0.10),
+        "cumulative_relative_delta": 0.02,
+        "panel_size": 8,
+        "global_panel_agreement": 1.0,
+        "global_kl_p95": 0.0,
+        "global_passed": True,
+        "stopped_at": None,
+        "reason": "",
+        "summary": "test chain applied",
+        "steps": [],
+        "report_path": str(path / "report.json"),
+    }
+
+
 def _factories(tmp):
     def session_factory(**kwargs):
         return FakeSession()
@@ -241,6 +267,7 @@ def _factories(tmp):
         session_factory=session_factory,
         recipe=recipe,
         fetch_module=FakeFetch(),
+        many_recipe=many_recipe,
     )
 
 
@@ -423,6 +450,74 @@ class TestWebApp(unittest.TestCase):
             "/api/models/fetch",
             headers=self.headers,
             json={"starter": "smol135m", "dest": "/etc/machaon-model"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_teach_many_runs_on_the_open_session(self):
+        opened = self.client.post(
+            "/api/session/open",
+            headers=self.headers,
+            json={"path": str(self.root), "dtype": "auto"},
+        )
+        _wait_for_job(self.client, opened.json()["job"], self.headers)
+        response = self.client.post(
+            "/api/teach_many",
+            headers=self.headers,
+            json={
+                "facts": [
+                    "The capital is -> Paris",
+                    "The city is -> Rome",
+                ],
+                "out_dir": str(self.root / "many"),
+            },
+        )
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "done")
+        result = job["result"]["result"]
+        self.assertEqual(result["status"], "applied")
+        self.assertEqual(result["facts"], 2)
+        self.assertTrue((self.root / "many" / "final").exists())
+        self.assertTrue(job["result"]["state"]["ready"])
+
+    def test_teach_many_requires_an_open_session(self):
+        response = self.client.post(
+            "/api/teach_many",
+            headers=self.headers,
+            json={
+                "facts": ["The capital is -> Paris"],
+                "out_dir": str(self.root / "many"),
+            },
+        )
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "error")
+        self.assertIn("no model is open", job["error"])
+
+    def test_teach_many_refuses_an_existing_output(self):
+        opened = self.client.post(
+            "/api/session/open",
+            headers=self.headers,
+            json={"path": str(self.root), "dtype": "auto"},
+        )
+        _wait_for_job(self.client, opened.json()["job"], self.headers)
+        out = self.root / "many-exists"
+        out.mkdir()
+        response = self.client.post(
+            "/api/teach_many",
+            headers=self.headers,
+            json={"facts": ["The capital is -> Paris"], "out_dir": str(out)},
+        )
+        job = _wait_for_job(self.client, response.json()["job"], self.headers)
+        self.assertEqual(job["status"], "error")
+        self.assertIn("already exists", job["error"])
+
+    def test_teach_many_path_outside_the_roots_is_refused(self):
+        response = self.client.post(
+            "/api/teach_many",
+            headers=self.headers,
+            json={
+                "facts": ["The capital is -> Paris"],
+                "out_dir": "/etc/machaon-many",
+            },
         )
         self.assertEqual(response.status_code, 403)
 

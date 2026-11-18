@@ -91,6 +91,11 @@ The optional **Also write the edited checkpoint** field saves the accepted edit
 to a new directory below the allowed roots. Leave it blank to keep the edit in
 the session and use the existing **Save** control later.
 
+**Teach a list** in the same box accepts one sentence per line, runs one full
+search per fact, and writes a chain with `<out>/final` and
+`<out>/report.json`. The original session stays on the base checkpoint; **Use
+final checkpoint** opens the last globally safe result.
+
 Long operations run in one worker thread and are streamed as server-sent
 events. The UI stays responsive while a checkpoint loads, a gradient solve runs
 or a baseline is evaluated. One session owns one model at a time.
@@ -120,6 +125,7 @@ because the browser's `EventSource` cannot set headers.
 | POST | `/api/edit/propose` | solve a proposal without writing |
 | POST | `/api/teach/preview` | compile a sentence into a prompt/answer contract |
 | POST | `/api/teach` | run the teaching recipe on the open session |
+| POST | `/api/teach_many` | run a multi-fact chain into an output container |
 | POST | `/api/edit/propose_batch` | solve many prompt/value rows into one pending delta |
 | POST | `/api/edit/apply` | write the pending proposal |
 | POST | `/api/edit/evaluate` | score the applied edit |

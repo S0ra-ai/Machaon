@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-504-2ea44f)
+![tests](https://img.shields.io/badge/tests-508-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-79%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -195,7 +195,9 @@ the roots you name.
 
 The **ONE SENTENCE** box runs the full teaching recipe: preview the parsed
 contract, then let the console choose the layer, apply the edit, verify the
-target and panel, and roll back automatically if a check fails.
+target and panel, and roll back automatically if a check fails. **Teach a
+list** in the same box runs the multi-fact chain, shows every step, and can
+open the final safe checkpoint.
 
 The Checkpoint column also has a **Download starter** control for SmolLM2-135M,
 Qwen2.5-0.5B or GPT-2, with Hugging Face / mirror / ModelScope fallback, so a
