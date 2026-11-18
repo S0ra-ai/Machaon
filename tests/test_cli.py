@@ -265,6 +265,9 @@ class TestCli(unittest.TestCase):
         self.assertEqual(plan["facts"][0]["prompt"],
                          "The Eiffel Tower is in the city of")
         self.assertIn("command", plan)
+        self.assertIn("preflight", plan)
+        self.assertFalse(plan["preflight"]["model_exists"])
+        self.assertEqual(plan["preflight"]["fetch"]["starter"], "smol135m")
 
     def test_program_plan_refuses_run_only_flags(self):
         code, _, err = run(

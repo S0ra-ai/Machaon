@@ -47,6 +47,7 @@ __all__ = [
     "parse_program",
     "program_report_sha256",
     "program_report_checkpoint",
+    "program_preflight",
     "parse_program_report",
     "read_program_report",
     "render_program_text",
@@ -519,6 +520,50 @@ def load_program(path: str | Path) -> WeightProgram:
     except OSError as exc:
         raise ProgramError("%s: %s" % (source, exc)) from exc
     return parse_program(text, source=str(source), base_dir=source.parent)
+
+
+def program_preflight(program: WeightProgram | str | Path) -> Dict[str, Any]:
+    """Describe model/output readiness without loading or downloading anything."""
+    if not isinstance(program, WeightProgram):
+        program = load_program(program)
+    model = Path(program.model)
+    output = Path(program.output)
+    model_exists = model.is_dir()
+    model_is_file = model.exists() and not model.is_dir()
+    output_exists = output.exists()
+    output_is_dir = output.is_dir()
+    output_empty: Optional[bool] = None
+    if output_is_dir:
+        try:
+            output_empty = not any(output.iterdir())
+        except OSError:
+            output_empty = None
+    output_usable = not output_exists or (
+        output_is_dir and output_empty is True
+    )
+    result: Dict[str, Any] = {
+        "model": program.model,
+        "model_exists": model_exists,
+        "model_is_file": model_is_file,
+        "output": program.output,
+        "output_exists": output_exists,
+        "output_is_dir": output_is_dir,
+        "output_empty": output_empty,
+        "output_usable": output_usable,
+        "report_path": str(output / PROGRAM_REPORT_FILENAME),
+    }
+    if not model_exists and program.fetch:
+        from .fetch import RECOMMENDED
+
+        starter = RECOMMENDED.get(program.fetch)
+        if starter is not None:
+            result["fetch"] = {
+                "starter": program.fetch,
+                "name": starter["name"],
+                "size": starter["size"],
+                "repo": starter["repo"],
+            }
+    return result
 
 
 def _one_line(value: Any, name: str, *, required: bool = False) -> str:

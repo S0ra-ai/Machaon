@@ -551,6 +551,7 @@
     }
     const document = payload.program ? payload : null;
     const program = document ? payload.program : payload;
+    const preflight = document ? null : (payload.preflight || null);
     const run = document ? payload.run : null;
     const verification = document ? payload.verification : null;
     const facts = program.facts || [];
@@ -576,6 +577,22 @@
     const verificationLine = verification
       ? (verification.passed ? t("program.verified") : t("program.verifyFailed"))
       : (program.verify ? t("program.verifyNotRun") : t("program.verifyOff"));
+    let preflightLine = "";
+    if (preflight) {
+      if (!preflight.output_usable) {
+        preflightLine = t("program.preflightOutputBlocked");
+      } else if (preflight.output_exists) {
+        preflightLine = t("program.preflightOutputReady");
+      }
+      if (!preflight.model_exists && !preflight.model_is_file && preflight.fetch) {
+        preflightLine += (preflightLine ? " " : "") + t("program.preflightFetch", {
+          name: preflight.fetch.name,
+          size: preflight.fetch.size,
+        });
+      } else if (preflight.model_is_file) {
+        preflightLine += (preflightLine ? " " : "") + t("program.preflightModelBlocked");
+      }
+    }
     card.className = "evidence-card";
     card.innerHTML =
       '<div class="teach-status"><strong>' +
@@ -594,6 +611,7 @@
       "<span>" + escapeHtml(t("program.verify")) + "<br><strong>" +
       escapeHtml(verificationLine) + "</strong></span>" +
       "</div>" + (rows ? '<div class="teach-steps">' + rows + "</div>" : "") +
+      (preflightLine ? '<p class="hint">' + escapeHtml(preflightLine) + "</p>" : "") +
       (program.base_dir ? '<p class="mono tiny">' +
         escapeHtml(t("program.base")) + ": " + escapeHtml(program.base_dir) +
         "</p>" : "") +

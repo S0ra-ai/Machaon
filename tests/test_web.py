@@ -504,6 +504,8 @@ class TestWebApp(unittest.TestCase):
         self.assertEqual(len(plan["facts"]), 1)
         self.assertEqual(plan["facts"][0]["prompt"], "The capital of France is")
         self.assertEqual(plan["base_dir"], str(self.root.resolve()))
+        self.assertFalse(plan["preflight"]["model_exists"])
+        self.assertTrue(plan["preflight"]["output_usable"])
 
     def test_program_plan_refuses_paths_outside_roots(self):
         response = self.client.post(

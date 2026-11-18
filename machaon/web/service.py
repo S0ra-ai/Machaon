@@ -605,12 +605,14 @@ class WebService:
         self, text: str, base_dir: Optional[str] = None
     ) -> Dict[str, Any]:
         """Parse and resolve a program without downloading or loading a model."""
-        from pathlib import Path
+        from ..program import program_preflight
 
         program, base = self._program_from_text(text, base_dir)
         payload = program.to_dict()
+        preflight = program_preflight(program)
         payload["base_dir"] = str(base)
-        payload["model_exists"] = Path(program.model).is_dir()
+        payload["preflight"] = preflight
+        payload["model_exists"] = preflight["model_exists"]
         return payload
 
     def new_program(

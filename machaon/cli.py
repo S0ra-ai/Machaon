@@ -877,18 +877,37 @@ def _cmd_check(args) -> int:
 
 
 def _print_program_plan(program) -> None:
-    from pathlib import Path
+    from .program import program_preflight
 
-    model_state = "exists" if Path(program.model).is_dir() else "missing"
+    preflight = program_preflight(program)
+    model_state = "exists" if preflight["model_exists"] else "missing"
     if model_state == "missing" and program.fetch:
         model_state += "; fetch: %s" % program.fetch
+    if preflight["model_is_file"]:
+        model_state = "blocked: not a directory"
+    output_state = "new"
+    if preflight["output_exists"]:
+        if not preflight["output_is_dir"]:
+            output_state = "blocked: exists and is not a directory"
+        elif preflight["output_empty"] is False:
+            output_state = "blocked: existing directory is not empty"
+        elif preflight["output_empty"] is None:
+            output_state = "blocked: cannot inspect existing directory"
+        else:
+            output_state = "ready: existing empty directory"
     print("Machaon · weight program")
     print("file       : %s" % program.path)
     if program.name:
         print("name       : %s" % program.name)
     print("sha256     : %s" % program.sha256)
     print("model      : %s (%s)" % (program.model, model_state))
-    print("output     : %s" % program.output)
+    print("output     : %s (%s)" % (program.output, output_state))
+    print("report     : %s" % preflight["report_path"])
+    if preflight.get("fetch"):
+        starter = preflight["fetch"]
+        print("download   : %s · %s (only if the model is missing)" % (
+            starter["name"], starter["size"],
+        ))
     print("facts      : %d" % len(program.facts))
     print("protect    : %d prompt(s)" % len(program.protect))
     print("budget     : %.4f total / %.4f per fact" % (
@@ -918,7 +937,12 @@ def _print_program_plan(program) -> None:
 
 
 def _cmd_program(args) -> int:
-    from .program import ProgramError, load_program, run_program
+    from .program import (
+        ProgramError,
+        load_program,
+        program_preflight,
+        run_program,
+    )
 
     try:
         program = load_program(args.path)
@@ -932,6 +956,7 @@ def _cmd_program(args) -> int:
                 "when running a program"
             )
         payload = program.to_dict()
+        payload["preflight"] = program_preflight(program)
         payload["command"] = "machaon program %s" % program.path
         if args.json:
             print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))

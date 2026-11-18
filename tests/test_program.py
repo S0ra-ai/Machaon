@@ -10,6 +10,7 @@ from machaon.program import (
     load_program,
     parse_layers,
     parse_program,
+    program_preflight,
     read_program_report,
     render_program_text,
     run_program,
@@ -182,6 +183,38 @@ class TestProgramParser(unittest.TestCase):
         self.assertEqual(program.min_panel_agreement, 1.0)
         self.assertTrue(program.continue_on_reject)
         self.assertTrue(program.keep_steps)
+
+    def test_preflight_reports_model_and_output_readiness(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "lesson.machaon"
+            path.write_text(
+                "model: ./base\nfetch: smol135m\noutput: ./out\n"
+                "teach: The capital is -> Paris\n",
+                encoding="utf-8",
+            )
+            program = load_program(path)
+            initial = program_preflight(program)
+            self.assertFalse(initial["model_exists"])
+            self.assertEqual(initial["fetch"]["starter"], "smol135m")
+            self.assertIn("MB", initial["fetch"]["size"])
+            self.assertTrue(initial["output_usable"])
+
+            (root / "out").mkdir()
+            (root / "out" / "keep.txt").write_text("x", encoding="utf-8")
+            blocked = program_preflight(program)
+            self.assertTrue(blocked["output_exists"])
+            self.assertFalse(blocked["output_empty"])
+            self.assertFalse(blocked["output_usable"])
+
+            (root / "out" / "keep.txt").unlink()
+            ready = program_preflight(program)
+            self.assertTrue(ready["output_empty"])
+            self.assertTrue(ready["output_usable"])
+
+            (root / "base").write_text("not a directory", encoding="utf-8")
+            model_file = program_preflight(program)
+            self.assertTrue(model_file["model_is_file"])
 
     def test_unknown_field_names_the_line(self):
         with self.assertRaisesRegex(ProgramError, ":2: unknown field"):
