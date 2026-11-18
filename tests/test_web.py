@@ -925,6 +925,8 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="programFile"', page.text)
         self.assertIn('id="programTemplateSmol"', page.text)
         self.assertIn('id="programTemplateTwo"', page.text)
+        self.assertIn('id="programFacts"', page.text)
+        self.assertIn('id="programBuildButton"', page.text)
         self.assertIn('id="programHistory"', page.text)
         self.assertIn('id="programCopyButton"', page.text)
         self.assertIn('id="programReportButton"', page.text)

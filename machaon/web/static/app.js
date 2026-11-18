@@ -69,6 +69,8 @@
     programFile: $("#programFile"),
     programTemplateSmol: $("#programTemplateSmol"),
     programTemplateTwo: $("#programTemplateTwo"),
+    programFacts: $("#programFacts"),
+    programBuildButton: $("#programBuildButton"),
     programHistory: $("#programHistory"),
     programHistoryLoad: $("#programHistoryLoad"),
     programCopyButton: $("#programCopyButton"),
@@ -370,6 +372,7 @@
     if (el.programFileButton) el.programFileButton.disabled = state.busy;
     if (el.programTemplateSmol) el.programTemplateSmol.disabled = state.busy;
     if (el.programTemplateTwo) el.programTemplateTwo.disabled = state.busy;
+    if (el.programBuildButton) el.programBuildButton.disabled = state.busy;
     if (el.programHistoryLoad) el.programHistoryLoad.disabled = state.busy;
     if (el.programCopyButton) el.programCopyButton.disabled = state.busy;
     if (el.programReportButton) {
@@ -1723,6 +1726,32 @@
     addTimelineEvent("program", t("timeline.programTemplate"), kind, "ok");
   }
 
+  function buildProgramFromFacts() {
+    const raw = el.programFacts.value.split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#"));
+    if (!raw.length) throw new Error(t("program.factsRequired"));
+    const model = String((state.session && state.session.model)
+      || el.checkpointPath.value || "").trim();
+    if (!model) throw new Error(t("program.noCheckpoint"));
+    const base = (el.programBase.value.trim() || state.allowedRoots[0] || "")
+      .replace(/\/+$/, "");
+    const output = nextCheckpointPath(model);
+    const name = model.split("/").filter(Boolean).pop() || "weight-space";
+    el.programText.value = [
+      "version: 1",
+      "name: " + name + " facts",
+      "model: " + portableProgramPath(model, base),
+      "output: " + portableProgramPath(output, base),
+      "budget: 0.10",
+      "max_rel_norm: 0.02",
+      "verify: true",
+      "",
+    ].concat(raw.map((line) => "teach: " + line)).join("\n") + "\n";
+    el.programPanel.open = true;
+    addTimelineEvent("program", t("timeline.programBuild"), raw.length + " facts", "ok");
+  }
+
   function preserveLines() {
     return $("#preservePrompts").value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   }
@@ -2099,6 +2128,13 @@
   $("#programFileButton").addEventListener("click", () => el.programFile.click());
   el.programTemplateSmol.addEventListener("click", () => loadProgramTemplate("smol"));
   el.programTemplateTwo.addEventListener("click", () => loadProgramTemplate("two"));
+  el.programBuildButton.addEventListener("click", () => {
+    try {
+      buildProgramFromFacts();
+    } catch (err) {
+      addTimelineEvent("error", err.message, "", "err");
+    }
+  });
   el.programFile.addEventListener("change", async () => {
     const file = el.programFile.files && el.programFile.files[0];
     try {
