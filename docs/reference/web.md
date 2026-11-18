@@ -58,8 +58,10 @@ The first-authenticated page also shows a **FIRST EDIT** card. It chains the
 existing pieces: download SmolLM2-135M if no checkpoint is selected, open it,
 prefill "The Eiffel Tower is in the city of -> Rome", run the teaching recipe
 and report the result. The card disappears once a model session is open; the
-accepted edit stays in the session for **Save**. **Hide** persists the choice in
-`localStorage`.
+accepted edit stays in the session for **Save**. When the recipe applies, the
+card keeps a **Checkpoint output** field prefilled with `<model>-machaon` and a
+**Save checkpoint** button; saving goes through the same `/api/session/save`
+path as the right column. **Hide** persists the choice in `localStorage`.
 
 ## Three-column workflow
 

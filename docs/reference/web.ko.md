@@ -46,7 +46,9 @@ machaon-web --allowed-root /models --port 8765
 첫 인증 화면에는 **FIRST EDIT** 카드도 표시됩니다. 체크포인트를 선택하지 않았다면
 SmolLM2-135M을 받아 열고, "The Eiffel Tower is in the city of -> Rome"을 미리 채운
 뒤 교수 레시피를 실행해 결과를 보여 줍니다. session이 열리면 카드는 사라지고,
-수용된 편집은 **저장**을 위해 session에 남습니다. **숨기기**는 `localStorage`에
+수용된 편집은 **저장**을 위해 session에 남습니다. 교수 적용 후 카드에는
+`<model>-machaon`이 채워진 **체크포인트 출력** 필드와 **체크포인트 저장** 버튼이
+남으며, 오른쪽 열과 같은 `/api/session/save`를 사용합니다. **숨기기**는 `localStorage`에
 저장됩니다.
 
 ## 세 열 작업 흐름

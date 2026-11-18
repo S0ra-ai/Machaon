@@ -48,7 +48,9 @@ machaon-web --allowed-root /models --port 8765
 SmolLM2-135M を取得し、開いて
 "The Eiffel Tower is in the city of -> Rome" をプリフィルし、教学レシピを実行して
 結果を表示します。session が開くとカードは消え、受け入れられた編集は **保存** 用に
-session に残ります。**隠す** は `localStorage` に保存されます。
+session に残ります。教学が適用されると、カードには `<model>-machaon` が入った
+**チェックポイント出力** 欄と **チェックポイントを保存** ボタンが残り、右列と同じ
+`/api/session/save` を使います。**隠す** は `localStorage` に保存されます。
 
 ## 三列のワークフロー
 

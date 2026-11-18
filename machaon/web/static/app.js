@@ -59,6 +59,8 @@
     firstEditSentence: $("#firstEditSentence"),
     firstEditButton: $("#firstEditButton"),
     firstEditDismiss: $("#firstEditDismiss"),
+    firstEditOut: $("#firstEditOut"),
+    firstEditSave: $("#firstEditSave"),
     firstEditStatus: $("#firstEditStatus"),
     stateCard: $("#stateCard"),
     timeline: $("#timeline"),
@@ -318,6 +320,10 @@
     el.rollback.disabled = !ready || state.busy;
     el.save.disabled = !ready || !(state.session.edited || []).length || state.busy;
     if (el.firstEditButton) el.firstEditButton.disabled = state.busy;
+    if (el.firstEditSave) {
+      el.firstEditSave.disabled = state.busy || !ready || !state.firstEdit
+        || state.firstEdit.phase !== "done";
+    }
   }
 
   function setConnection(kind, text, key = null) {
@@ -463,8 +469,17 @@
 
   function renderFirstEdit() {
     if (!el.firstEditCard) return;
-    const visible = !state.session && !state.firstEditDismissed;
+    const active = !!state.firstEdit;
+    const visible = (!state.session || active) && !state.firstEditDismissed;
     el.firstEditCard.classList.toggle("hidden", !visible);
+    if (el.firstEditSave) {
+      el.firstEditSave.disabled = state.busy || !state.session || !active
+        || state.firstEdit.phase !== "done";
+    }
+    if (el.firstEditOut && state.session && !el.firstEditOut.value) {
+      const model = String(state.session.model || "").replace(/\/+$/, "");
+      if (model) el.firstEditOut.value = model + "-machaon";
+    }
     if (state.firstEditStatusKey) {
       setFirstEditStatus(
         state.firstEditStatusKey,
@@ -797,7 +812,8 @@
     } else if (event.type === "error") {
       if (state.firstEdit) {
         setFirstEditStatus("firstEdit.error", { error: data.error || "" }, "err");
-        state.firstEdit = null;
+        if (state.firstEdit.phase !== "done") state.firstEdit = null;
+        renderFirstEdit();
       }
       addTimelineEvent("error", data.error || t("timeline.failed"),
         data.error_type || "", "err");
@@ -817,7 +833,11 @@
       state.session = result && result.ready ? result : null;
       state.proposal = null;
       state.lastTeach = null;
-      if (kind === "close_session") setFirstEditStatus("firstEdit.ready");
+      if (kind === "close_session") {
+        setFirstEditStatus("firstEdit.ready");
+        state.firstEdit = null;
+        if (el.firstEditOut) el.firstEditOut.value = "";
+      }
       renderProposal(null);
       renderTeachPreview(null);
       renderSessionState();
@@ -828,6 +848,10 @@
       if (state.firstEdit && state.firstEdit.phase === "open" && result && result.ready) {
         state.firstEdit.phase = "teach";
         $("#teachSentence").value = state.firstEdit.sentence;
+        if (el.firstEditOut && !el.firstEditOut.value) {
+          const model = String(state.session.model || "").replace(/\/+$/, "");
+          if (model) el.firstEditOut.value = model + "-machaon";
+        }
         setFirstEditStatus("firstEdit.teaching");
         const payload = {
           sentence: state.firstEdit.sentence,
@@ -898,7 +922,12 @@
           : "firstEdit.error";
         setFirstEditStatus(key, { summary: result && result.result ? result.result.summary : "" });
         addTimelineEvent("first", t("timeline.firstEdit"), status, "ok");
-        state.firstEdit = null;
+        if (status === "applied") {
+          state.firstEdit.phase = "done";
+        } else {
+          state.firstEdit = null;
+        }
+        renderFirstEdit();
       }
     } else if (kind === "rollback") {
       state.session = result && result.state ? result.state : null;
@@ -910,6 +939,14 @@
       addTimelineEvent("rollback", t("timeline.rollback"), t("timeline.restored"), "ok");
     } else if (kind === "save_checkpoint") {
       addTimelineEvent("save", t("timeline.save"), (result && result.output) || "", "ok");
+      if (state.firstEdit && state.firstEdit.phase === "done") {
+        setFirstEditStatus("firstEdit.saved", {
+          path: (result && result.output) || "",
+        }, "ok");
+        addTimelineEvent("first", t("timeline.firstEdit"), "saved", "ok");
+        state.firstEdit = null;
+        renderFirstEdit();
+      }
     } else if (kind === "wsp_audit") {
       renderWsp(result);
       addTimelineEvent("wsp", t("timeline.wsp"), (result && result.label) || "", "ok");
@@ -1153,6 +1190,23 @@
 
   if (el.firstEditButton) {
     el.firstEditButton.addEventListener("click", startFirstEdit);
+  }
+  if (el.firstEditSave) {
+    el.firstEditSave.addEventListener("click", () => {
+      if (!state.session || !state.firstEdit || state.firstEdit.phase !== "done") return;
+      if (state.busy) return;
+      let out = (el.firstEditOut.value || "").trim();
+      if (!out) {
+        const model = String(state.session.model || "").replace(/\/+$/, "");
+        out = model ? model + "-machaon" : "";
+      }
+      if (!out) {
+        setFirstEditStatus("firstEdit.error", { error: t("errors.outputRequired") }, "err");
+        return;
+      }
+      setFirstEditStatus("firstEdit.saving");
+      startJob("/api/session/save", { out_dir: out }, "save_checkpoint");
+    });
   }
   if (el.firstEditDismiss) {
     el.firstEditDismiss.addEventListener("click", () => {
