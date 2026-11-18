@@ -16,6 +16,11 @@ except ImportError:
     HAVE_HF = False
 
 requires_hf = unittest.skipUnless(HAVE_HF, "torch + transformers not installed")
+MPS_AVAILABLE = bool(
+    HAVE_HF
+    and getattr(getattr(torch, "backends", None), "mps", None)
+    and torch.backends.mps.is_available()
+)
 
 GATES = {"rewrite_acc": (">=", 0.99), "kl_p95": ("<=", 0.05), "ppl_ratio": ("<=", 1.05)}
 
@@ -107,11 +112,7 @@ class TestRuntime(unittest.TestCase):
 
 
 @requires_hf
-@unittest.skipUnless(
-    getattr(getattr(torch, "backends", None), "mps", None)
-    and torch.backends.mps.is_available(),
-    "MPS is not available",
-)
+@unittest.skipUnless(MPS_AVAILABLE, "MPS is not available")
 class TestMpsRuntime(unittest.TestCase):
     def test_mps_tensor_inputs_do_not_require_cpu_conversion(self):
         model = build().to("mps")
