@@ -541,6 +541,8 @@ def program_preflight(program: WeightProgram | str | Path) -> Dict[str, Any]:
     output_usable = not output_exists or (
         output_is_dir and output_empty is True
     )
+    device = program.device
+    device_status = _device_status(device)
     result: Dict[str, Any] = {
         "model": program.model,
         "model_exists": model_exists,
@@ -551,6 +553,7 @@ def program_preflight(program: WeightProgram | str | Path) -> Dict[str, Any]:
         "output_empty": output_empty,
         "output_usable": output_usable,
         "report_path": str(output / PROGRAM_REPORT_FILENAME),
+        "device": device_status,
     }
     if not model_exists and program.fetch:
         from .fetch import RECOMMENDED
@@ -563,6 +566,49 @@ def program_preflight(program: WeightProgram | str | Path) -> Dict[str, Any]:
                 "size": starter["size"],
                 "repo": starter["repo"],
             }
+    return result
+
+
+def _device_status(device: Optional[str]) -> Dict[str, Any]:
+    """Probe an optional compute device without making it a hard dependency."""
+    requested = None if device in (None, "") else str(device)
+    effective = requested or "cpu"
+    result: Dict[str, Any] = {
+        "requested": requested,
+        "effective": effective,
+        "available": True,
+        "reason": "CPU is always available",
+    }
+    if effective == "cpu":
+        return result
+    if effective == "auto":
+        result["available"] = None
+        result["reason"] = "the runtime chooses a device"
+        return result
+    try:
+        import torch
+    except ImportError:
+        result["available"] = None
+        result["reason"] = "torch is not installed; availability is unknown"
+        return result
+    if effective.startswith("cuda"):
+        available = bool(torch.cuda.is_available())
+        result["available"] = available
+        result["reason"] = (
+            "CUDA is available" if available
+            else "CUDA is not visible to torch"
+        )
+    elif effective.startswith("mps"):
+        backend = getattr(torch.backends, "mps", None)
+        available = bool(backend is not None and backend.is_available())
+        result["available"] = available
+        result["reason"] = (
+            "MPS is available" if available
+            else "MPS is not available"
+        )
+    else:
+        result["available"] = None
+        result["reason"] = "custom device; availability is unknown"
     return result
 
 

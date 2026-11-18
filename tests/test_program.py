@@ -211,6 +211,8 @@ class TestProgramParser(unittest.TestCase):
             ready = program_preflight(program)
             self.assertTrue(ready["output_empty"])
             self.assertTrue(ready["output_usable"])
+            self.assertEqual(ready["device"]["effective"], "cpu")
+            self.assertTrue(ready["device"]["available"])
 
             (root / "base").write_text("not a directory", encoding="utf-8")
             model_file = program_preflight(program)

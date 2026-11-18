@@ -1022,6 +1022,13 @@ def _print_program_plan(program) -> None:
         program.dtype,
         "" if not program.quantize else ", quantize %s" % program.quantize,
     ))
+    device = preflight["device"]
+    if device["requested"] is None:
+        print("device     : runtime default (cpu)")
+    else:
+        print("device     : %s (%s)" % (
+            device["effective"], device["reason"],
+        ))
     print("verify     : %s" % (
         "yes (reload the saved bytes)" if program.verify else "no"
     ))

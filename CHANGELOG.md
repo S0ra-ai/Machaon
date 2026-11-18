@@ -76,6 +76,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   CPU-only `np.asarray` conversion; value vectors and NLL weights are converted
   to CPU before float64 promotion, so the Apple MPS teaching path works.
 - `machaon doctor` reports default, CUDA and MPS device availability.
+- Program plans now probe the requested runtime device and report whether
+  CUDA/MPS is visible before a model load; the Web plan card shows the same
+  blocker.
 - The Web program templates now include a **Bilingual Qwen** starter that
   teaches one Chinese and one English fact on Qwen2.5-0.5B.
 - `machaon program --plan` and `/api/program/plan` now include a side-effect-free

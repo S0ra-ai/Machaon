@@ -627,6 +627,13 @@
       } else if (preflight.model_is_file) {
         preflightLine += (preflightLine ? " " : "") + t("program.preflightModelBlocked");
       }
+      if (preflight.device && preflight.device.available === false) {
+        preflightLine += (preflightLine ? " " : "") +
+          t("program.preflightDeviceBlocked", {
+            device: preflight.device.effective,
+            reason: preflight.device.reason,
+          });
+      }
     }
     card.className = "evidence-card";
     card.innerHTML =

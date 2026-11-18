@@ -209,7 +209,8 @@ machaon program ./lesson.json --out ./models/experiment-2
 
 `--plan` parses and prints the exact contract without downloading or loading a
 model. It also reports whether the output is new, empty and usable or already
-blocked, the report path, and the starter name/size that would be downloaded.
+blocked, the report path, the starter name/size that would be downloaded, and
+whether a requested CUDA/MPS device is visible (CPU is the default).
 A run delegates the edits to `teach-many`, writes
 `<output>/program-report.json`, and by default reloads the saved checkpoint and
 checks every fact. `--no-verify` skips that final reload; `--json` prints the

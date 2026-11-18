@@ -206,7 +206,8 @@ machaon program ./lesson.json --out ./models/experiment-2
 
 `--plan` はモデルをダウンロード・ロードせず、解決済みの契約だけを表示します。
 出力先が新規・空・使用可能か、既にブロックされているか、レポートパス、モデル欠損時に
-ダウンロードする starter の名前とサイズも表示します。実行は編集を `teach-many` に委譲し、
+ダウンロードする starter の名前とサイズ、指定した CUDA/MPS デバイスが見えるか
+（既定は CPU）も表示します。実行は編集を `teach-many` に委譲し、
 `<output>/program-report.json` を書き、
 既定で保存済みチェックポイントを再読み込みして全事実を再検証します。
 `--no-verify` は最後の再検証を省略し、`--json` は計画または実行結果全体を出力します。
