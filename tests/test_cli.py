@@ -222,6 +222,48 @@ class TestCli(unittest.TestCase):
         self.assertIn("error:", err)
         self.assertIn("Try one of", err)
 
+    def test_program_plan_resolves_without_a_model(self):
+        code, out, _ = run(
+            "program", os.path.join(ROOT, "examples/hello.machaon"), "--plan"
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("weight program", out)
+        self.assertIn("The Eiffel Tower is in the city of", out)
+        self.assertIn("verify", out.lower())
+
+    def test_program_plan_json_is_reviewable(self):
+        code, out, _ = run(
+            "program", os.path.join(ROOT, "examples/hello.machaon"),
+            "--plan", "--json",
+        )
+        self.assertEqual(code, 0)
+        plan = json.loads(out)
+        self.assertEqual(plan["format"], "machaon.program/1")
+        self.assertEqual(len(plan["facts"]), 2)
+        self.assertEqual(plan["facts"][0]["prompt"],
+                         "The Eiffel Tower is in the city of")
+        self.assertIn("command", plan)
+
+    def test_program_plan_refuses_run_only_flags(self):
+        code, _, err = run(
+            "program", os.path.join(ROOT, "examples/hello.machaon"),
+            "--plan", "--no-verify",
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("only be used when running", err)
+
+    def test_program_reports_parse_errors_without_a_traceback(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".machaon", delete=False) as handle:
+            handle.write("model: base\noutput: out\nmagic: yes\n")
+            path = handle.name
+        try:
+            code, _, err = run("program", path, "--plan")
+        finally:
+            os.unlink(path)
+        self.assertEqual(code, 2)
+        self.assertIn("unknown field", err)
+        self.assertNotIn("Traceback", err)
+
     def test_teach_refuses_conflicting_inputs_before_loading(self):
         code, _, err = run(
             "teach", "--model", "/tmp/none",

@@ -268,6 +268,20 @@ result.status, result.final, result.model_fetched
 `first_edit` はゼロからのオーケストレーションです。モデルがなければ starter を
 取得し、開いて `teach_fact` を実行し、受け入れられた編集を保存します。
 
+```python
+from machaon import load_program, run_program
+
+program = load_program("hello.machaon")       # モデルを読み込まず解析
+result = run_program(program)                 # 教学、保存、再読込、検証
+result.status, result.verification["passed"], result.report_path
+```
+
+`load_program` は行指向テキストまたは JSON を受け取り、相対パスをプログラム
+ファイルから解決します。`run_program` は編集を `teach_many` に委譲し、
+`<output>/program-report.json` を書き、既定で `check_facts` により保存済み
+チェックポイントを再読込して検証します。`verify=False` は最後の再検証だけを
+省略し、レポートにはプログラムハッシュと各教学ステップが残ります。
+
 ## ツール · `machaon.tools`
 
 MCP サーバー背後の関数。モデルをロードしません。

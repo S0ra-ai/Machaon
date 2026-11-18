@@ -1,0 +1,24 @@
+# A small, portable weight-space program.
+#
+# Check the resolved contract without downloading or loading anything:
+#   machaon program examples/hello.machaon --plan
+#
+# Run it (the starter is fetched only when the model directory is missing):
+#   machaon program examples/hello.machaon
+
+version: 1
+name: Hello, weight space
+model: ../models/SmolLM2-135M
+fetch: smol135m
+output: ../models/hello-weight-space
+
+budget: 0.10
+max_rel_norm: 0.02
+verify: true
+
+teach: The Eiffel Tower is in the city of -> Rome
+teach: The capital of France is -> Paris
+
+protect: The capital of Germany is
+protect: Water freezes at a temperature of
+protect: Two plus two equals

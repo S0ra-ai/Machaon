@@ -149,6 +149,28 @@ machaon teach-many --model ./models/Qwen2.5-0.5B \
 この場合の final は `<out>/final` ではなく最後の `step-NNN` ディレクトリです。
 累積 `--budget` は事実ごとではなく連鎖全体に適用されます。
 
+## `program`
+
+可搬な重みプログラムを計画または実行します。プログラムファイル（テキストまたは
+JSON）はモデル、事実、保護プロンプト、予算、実行ポリシーを宣言します。相対的な
+モデル／出力パスはプログラムファイルから解決されるため、同じファイルを共有して
+レビューできます。
+
+```bash
+machaon program examples/hello.machaon --plan
+machaon program examples/hello.machaon
+machaon program ./lesson.json --out ./models/experiment-2
+```
+
+`--plan` はモデルをダウンロード・ロードせず、解決済みの契約だけを表示します。
+実行は編集を `teach-many` に委譲し、`<output>/program-report.json` を書き、
+既定で保存済みチェックポイントを再読み込みして全事実を再検証します。
+`--no-verify` は最後の再検証を省略し、`--json` は計画または実行結果全体を出力します。
+
+終了コードは、`0` が有効な計画または検証済みの実行、`1` が拒否／検証失敗、
+`2` がプログラム形式またはモデルエラーです。形式とフィールド表は
+[重みプログラム](../guides/weight-programs.md)を参照してください。
+
 ## `demo`
 
 合成 rank-one デモを実行。モデルもネットワークも不要。

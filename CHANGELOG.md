@@ -8,6 +8,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `machaon.program` and `machaon program`: a portable text or JSON weight
+  program. One file declares the model, facts, protected prompts, cumulative
+  budget and runtime policy; `--plan` resolves the contract without loading a
+  model, and a run delegates to `teach-many`, writes
+  `<output>/program-report.json`, then reloads the saved checkpoint and checks
+  every fact before accepting the run. Relative paths resolve from the program
+  file.
 - `machaon.intent`: a deterministic English/Chinese compiler from plain-language
   teaching requests (`->`, labelled blocks, "when asked ...", and sentence
   forms) into an exact, reviewable prompt/answer contract. Unstructured text is

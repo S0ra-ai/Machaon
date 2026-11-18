@@ -25,6 +25,11 @@ browser console has the same flow as a **ONE SENTENCE** box, plus a **FIRST
 EDIT** card that takes a machine with no checkpoint through download, open,
 teach, save, a persisted-answer check and the next fact.
 
+For a repeatable, shareable run, put the model, facts, protected prompts and
+budget in one [weight program](guides/weight-programs.md). `machaon program`
+plans it without loading a model, runs the teaching chain, and reloads the
+saved checkpoint before calling it accepted.
+
 ```
               edit spec (DSL)
                     │

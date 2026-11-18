@@ -141,6 +141,25 @@ JSON / JSONL 的 `{"say": ...}` 或 `{"prompt": ..., "answer": ...}` 列表。
 只保留最后一条安全步骤，此时 final 是最后一个 `step-NNN` 目录而不是
 `<out>/final`。累计 `--budget` 作用于整条链，而不是每条事实。
 
+## `program`
+
+规划或运行一份可携带的权重程序。一个程序文件（文本或 JSON）声明模型、事实、
+受保护提示、预算与运行策略。相对模型路径和输出路径都相对于程序文件解析，
+因此同一份文件可以直接分享和审查。
+
+```bash
+machaon program examples/hello.machaon --plan
+machaon program examples/hello.machaon
+machaon program ./lesson.json --out ./models/experiment-2
+```
+
+`--plan` 只解析并打印合同，不下载、不加载模型。运行会把编辑交给
+`teach-many`，写入 `<output>/program-report.json`，并默认重新加载保存后的
+检查点逐条复验。`--no-verify` 跳过最后这一步；`--json` 输出完整计划或运行结果。
+
+退出码：`0` 表示计划合法或运行通过复验，`1` 表示编辑被拒或复验失败，`2` 表示
+程序格式或模型错误。字段表和完整示例见[权重程序](../guides/weight-programs.md)。
+
 ## `demo`
 
 运行合成 rank-one demo。无模型、无网络。

@@ -41,6 +41,9 @@ ship. Every completed item has a test or a measured run behind it.
 - [x] One-sentence intent compiler and one-call teaching recipe: automatic
       baseline, depth-window search, target/panel/KL checks and bit-exact
       rollback
+- [x] Portable weight programs: one reviewable text or JSON file for model,
+      facts, protected prompts, budget and runtime policy, with a saved-byte
+      verification pass
 - [x] Multi-fact teaching chain: one search per fact, cumulative budget,
       original-panel drift checks and last-safe-checkpoint promotion
 - [x] Agent-callable ROME layer search over MCP with automatic rollback

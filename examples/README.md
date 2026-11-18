@@ -22,6 +22,7 @@ model-level evidence.
 | `wsp_measured_smoke.json` | measured threshold-classifier reference case | `python -m machaon.cli wsp-bench examples/wsp_measured_smoke.json --require-measured` |
 | `plan_obstruction.json` | select an edit site from labelled layer scores | `python -m machaon.cli plan examples/plan_obstruction.json` |
 | `diagnose_obstruction.json` | classify failure evidence and produce a plan | `python -m machaon.cli diagnose examples/diagnose_obstruction.json` |
+| `hello.machaon` | portable model + facts + budget program; plan without a model | `machaon program examples/hello.machaon --plan` |
 
 ## Real checkpoints
 

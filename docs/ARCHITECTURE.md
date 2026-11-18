@@ -31,6 +31,12 @@ applies the winner, checks the target, panel and KL, and rolls back on failure.
 The CLI, the MCP `teach` tool and the Web **ONE SENTENCE** box all call this one
 function; none of them reimplement the contract.
 
+`machaon.program` is the shareable form of the same loop. A small text or JSON
+file declares the model, facts, protected prompts, budget and runtime options;
+the runner resolves relative paths, calls `teach_many`, writes a program
+report, and reloads the saved checkpoint through `check_facts` before it is
+accepted. The program is an orchestration record, not a second edit engine.
+
 ## The two contracts
 
 **Runtime.** `next_logits(items) -> (n, vocab)` and `nll(items) -> (n,)`.

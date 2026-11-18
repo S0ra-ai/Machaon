@@ -148,6 +148,30 @@ drift check fails. `--continue-on-reject` records the failure and continues;
 mode the final is the last `step-NNN` directory instead of `<out>/final`. The
 cumulative `--budget` is enforced across the chain, not per fact.
 
+## `program`
+
+Plan or run a portable weight program. A program is a single text or JSON
+file that declares the model, facts, protected prompts, budget and runtime
+policy. Relative model and output paths resolve from the program file, so the
+same file can be shared and reviewed.
+
+```bash
+machaon program examples/hello.machaon --plan
+machaon program examples/hello.machaon
+machaon program ./lesson.json --out ./models/experiment-2
+```
+
+`--plan` parses and prints the exact contract without downloading or loading a
+model. A run delegates the edits to `teach-many`, writes
+`<output>/program-report.json`, and by default reloads the saved checkpoint and
+checks every fact. `--no-verify` skips that final reload; `--json` prints the
+whole plan or run for another tool.
+
+Exit codes are `0` for a verified/applied program (or a valid plan), `1` for a
+rejected or verification-failed run, and `2` for a malformed program or model
+error. See [Weight programs](../guides/weight-programs.md) for the format and
+field table.
+
 ## `demo`
 
 Runs the synthetic rank-one demo. No model, no network.

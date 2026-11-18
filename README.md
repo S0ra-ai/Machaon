@@ -12,8 +12,8 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-527-2ea44f)
-![coverage](https://img.shields.io/badge/coverage-79%25-2ea44f)
+![tests](https://img.shields.io/badge/tests-551-2ea44f)
+![coverage](https://img.shields.io/badge/coverage-78%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
 [Quickstart](#quickstart) · [Benchmarks](#benchmarks) · [**Documentation**](https://s0ra-ai.github.io/Machaon/) · [Roadmap](docs/roadmap.md) · [中文](https://s0ra-ai.github.io/Machaon/zh/) · [日本語](https://s0ra-ai.github.io/Machaon/ja/) · [한국어](https://s0ra-ai.github.io/Machaon/ko/)
@@ -73,6 +73,20 @@ For a small list, `machaon teach-many --model ... --facts facts.txt --out ...`
 runs one full search per fact, keeps a cumulative budget, checks drift against
 the original panel, and promotes the last globally safe checkpoint to
 `<out>/final`.
+
+For a shareable run, one reviewable text file carries the model, facts,
+protected prompts, budget and runtime policy. `machaon program` resolves the
+contract, runs the chain, writes the saved checkpoint and then reloads those
+bytes to check every fact:
+
+```bash
+machaon program examples/hello.machaon --plan
+machaon program examples/hello.machaon
+```
+
+Relative paths resolve from the program file, and the resulting
+`<output>/program-report.json` records the program hash, every step and the
+verification result.
 
 ## Why Machaon
 
@@ -478,6 +492,9 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - **Multi-fact teaching** — `machaon teach-many` runs one honest search per
   fact, tracks the cumulative budget and original-panel drift, and keeps the
   last globally safe checkpoint when a fact is rejected.
+- **Portable weight programs** — one reviewable text or JSON file declares the
+  model, facts, protected prompts, budget and runtime policy; `machaon program`
+  runs the chain and reloads the saved bytes before calling it accepted.
 - **Unit symmetry alignment** — recover hidden-unit permutations and positive
   scaling across an MLP pair before comparing or merging weights.
 - **Aligned MLP merge** — apply the recovered hidden-unit permutation before
@@ -534,7 +551,7 @@ Every user-visible claim in this repository has a check behind it.
 |---|---|
 | `lint` | ruff over the package, tests, examples and scripts |
 | `test` (3.9–3.13) | the suite, demo, CLI entry points and fail-closed gate |
-| `extras` | safetensors, HF runtime, evaluation and **79% branch coverage** |
+| `extras` | safetensors, HF runtime, evaluation and **78% branch coverage** |
 | `mcp` | a real stdio client calls the real server |
 | `web` | FastAPI job lifecycle, token refusal and SSE, on Python 3.12 |
 | `docs` | `mkdocs build --strict`, English / Chinese / Japanese / Korean |
@@ -560,6 +577,7 @@ The same documentation ships in four languages:
 | [Getting started](docs/getting-started/installation.md) | install, first edit in five minutes |
 | [Concepts](docs/concepts/weight-editing.md) | why null-space, why transactions, why gates |
 | [Guides](docs/guides/edit-a-fact.md) | edit a fact, evaluate it, save a checkpoint |
+| [Weight programs](docs/guides/weight-programs.md) | one shareable file for the whole loop |
 | [Reference](docs/reference/api.md) | every public function and the CLI |
 | [Benchmarks](docs/reference/benchmarks.md) | datasets, licences, protocols, numbers |
 | [Results](docs/RESULTS.md) | every measured run, with its configuration |
@@ -580,6 +598,7 @@ machaon/
 ├─ planning.py          evidence → edit / diagnose / do-not-edit route
 │                       live apply/evaluate/rollback layer search
 ├─ intent.py            plain-language request → exact prompt/answer contract
+├─ program.py           portable text/JSON program → teach-many + saved-byte check
 ├─ recipes.py           one-call teach: baseline, search, apply, verify, rollback
 ├─ teach_many.py        multi-fact chain with cumulative budget and global drift
 ├─ checkpointing.py     shared session → loadable checkpoint writer

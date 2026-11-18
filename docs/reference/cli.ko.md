@@ -148,6 +148,27 @@ JSON / JSONL의 `{"say": ...}` 또는 `{"prompt": ..., "answer": ...}` 목록입
 final은 `<out>/final`이 아니라 마지막 `step-NNN` 디렉터리입니다. 누적
 `--budget`은 사실별이 아니라 체인 전체에 적용됩니다.
 
+## `program`
+
+이식 가능한 가중치 프로그램을 계획하거나 실행합니다. 프로그램 파일(텍스트 또는
+JSON)은 모델, 사실, 보호 프롬프트, 예산, 런타임 정책을 선언합니다. 상대 모델/출력
+경로는 프로그램 파일 기준으로 해석되므로 같은 파일을 공유하고 검토할 수 있습니다.
+
+```bash
+machaon program examples/hello.machaon --plan
+machaon program examples/hello.machaon
+machaon program ./lesson.json --out ./models/experiment-2
+```
+
+`--plan`은 모델을 다운로드하거나 로드하지 않고 해석된 계약만 출력합니다. 실행은
+편집을 `teach-many`에 맡기고 `<output>/program-report.json`을 쓰며, 기본적으로
+저장된 체크포인트를 다시 로드해 모든 사실을 재검증합니다. `--no-verify`는 마지막
+재검증을 생략하고, `--json`은 계획 또는 실행 결과 전체를 출력합니다.
+
+종료 코드는 `0`이 유효한 계획 또는 검증된 실행, `1`이 거부/검증 실패, `2`가
+프로그램 형식 또는 모델 오류입니다. 형식과 필드 표는
+[가중치 프로그램](../guides/weight-programs.md)을 참고하세요.
+
 ## `demo`
 
 합성 rank-one 데모 실행. 모델도 네트워크도 필요 없음.

@@ -560,6 +560,19 @@ result.status, result.final, result.model_fetched
 `first_edit` 是从零到一的编排：模型不存在时先下载 starter，打开模型，运行
 `teach_fact`，并保存通过的编辑。
 
+```python
+from machaon import load_program, run_program
+
+program = load_program("hello.machaon")       # 只解析，不加载模型
+result = run_program(program)                 # 教学、保存、重新加载、复验
+result.status, result.verification["passed"], result.report_path
+```
+
+`load_program` 接受行式文本或 JSON，并从程序文件所在目录解析相对路径。
+`run_program` 把编辑交给 `teach_many`，写入 `<output>/program-report.json`，
+默认用 `check_facts` 重新加载写出的检查点复验。`verify=False` 只跳过最后这一步；
+报告仍记录程序哈希和每一步教学结果。
+
 ## 工具 · `machaon.tools`
 
 MCP 服务背后的函数。不加载模型。

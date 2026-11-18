@@ -73,6 +73,14 @@ from .planning import (
     scores_from_patch_report,
     search_layers,
 )
+from .program import (
+    ProgramError,
+    ProgramRun,
+    WeightProgram,
+    load_program,
+    parse_program,
+    run_program,
+)
 from .recipes import (
     DEFAULT_BASELINE_PROMPTS,
     TeachPolicy,
@@ -170,6 +178,12 @@ __all__ = [
     "plan_surgery",
     "scores_from_patch_report",
     "search_layers",
+    "ProgramError",
+    "ProgramRun",
+    "WeightProgram",
+    "load_program",
+    "parse_program",
+    "run_program",
     "DEFAULT_BASELINE_PROMPTS",
     "TeachPolicy",
     "TeachResult",

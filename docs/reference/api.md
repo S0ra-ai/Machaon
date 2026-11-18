@@ -636,6 +636,20 @@ result.status, result.final, result.model_fetched
 `first_edit` is the zero-to-one orchestration: fetch the starter when the model
 is absent, open it, run `teach_fact`, and save the accepted edit.
 
+```python
+from machaon import load_program, run_program
+
+program = load_program("hello.machaon")       # parse without a model
+result = run_program(program)                 # teach, save, reload, check
+result.status, result.verification["passed"], result.report_path
+```
+
+`load_program` accepts the line-oriented text format or JSON and resolves
+relative paths from the program file. `run_program` delegates edits to
+`teach_many`, writes `<output>/program-report.json`, and by default reloads the
+written checkpoint with `check_facts`. Pass `verify=False` to skip only that
+last reload; the report still records the program hash and every teaching step.
+
 ## Tools · `machaon.tools`
 
 The functions behind the MCP server. No model is loaded.

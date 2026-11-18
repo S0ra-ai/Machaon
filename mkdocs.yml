@@ -54,6 +54,7 @@ plugins:
             Getting started: 入门
             Installation: 安装
             Quickstart: 快速开始
+            Weight programs: 权重程序
             Concepts: 核心概念
             Weight editing: 权重编辑
             Null-space projection: 零空间投影
@@ -86,6 +87,7 @@ plugins:
             Getting started: はじめに
             Installation: インストール
             Quickstart: クイックスタート
+            Weight programs: 重みプログラム
             Concepts: コンセプト
             Weight editing: 重み編集
             Null-space projection: 零空間投影
@@ -118,6 +120,7 @@ plugins:
             Getting started: 시작하기
             Installation: 설치
             Quickstart: 빠른 시작
+            Weight programs: 가중치 프로그램
             Concepts: 핵심 개념
             Weight editing: 가중치 편집
             Null-space projection: 영공간 투영
@@ -166,6 +169,7 @@ nav:
   - Getting started:
       - Installation: getting-started/installation.md
       - Quickstart: getting-started/quickstart.md
+      - Weight programs: guides/weight-programs.md
   - Concepts:
       - Weight editing: concepts/weight-editing.md
       - Null-space projection: concepts/null-space.md

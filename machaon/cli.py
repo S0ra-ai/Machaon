@@ -767,6 +767,10 @@ def _cmd_start(args) -> int:
     print("5. Use the local browser console:")
     print("   machaon-web --allowed-root ./models")
     print()
+    print("6. Save a whole run as a reviewable text program:")
+    print("   machaon program examples/hello.machaon --plan")
+    print("   machaon program examples/hello.machaon")
+    print()
     print("capabilities")
     print("  python      %s" % platform.python_version())
     print("  numpy       %s" % np.__version__)
@@ -835,6 +839,117 @@ def _cmd_check(args) -> int:
         print("answer   : %s" % payload["answer_text"])
         print("accuracy : %.3f" % payload["accuracy"])
     return 0 if passed else 1
+
+
+def _print_program_plan(program) -> None:
+    from pathlib import Path
+
+    model_state = "exists" if Path(program.model).is_dir() else "missing"
+    if model_state == "missing" and program.fetch:
+        model_state += "; fetch: %s" % program.fetch
+    print("Machaon · weight program")
+    print("file       : %s" % program.path)
+    if program.name:
+        print("name       : %s" % program.name)
+    print("sha256     : %s" % program.sha256)
+    print("model      : %s (%s)" % (program.model, model_state))
+    print("output     : %s" % program.output)
+    print("facts      : %d" % len(program.facts))
+    print("protect    : %d prompt(s)" % len(program.protect))
+    print("budget     : %.4f total / %.4f per fact" % (
+        program.budget, program.max_rel_norm,
+    ))
+    print("policy     : KL p95 <= %.3g, panel >= %.3g" % (
+        program.max_kl, program.min_panel_agreement,
+    ))
+    print("runtime    : %s solver, dtype %s%s" % (
+        program.solver,
+        program.dtype,
+        "" if not program.quantize else ", quantize %s" % program.quantize,
+    ))
+    print("verify     : %s" % (
+        "yes (reload the saved bytes)" if program.verify else "no"
+    ))
+    print("\nfacts")
+    for index, fact in enumerate(program.facts, 1):
+        print("%3d. %s -> %r  [%s]" % (
+            index, fact["prompt"], fact["answer"], fact["confidence"],
+        ))
+    if program.protect:
+        print("\nprotected prompts")
+        for prompt in program.protect:
+            print("     %s" % prompt)
+    print("\nrun: machaon program %s" % program.path)
+
+
+def _cmd_program(args) -> int:
+    from .program import ProgramError, load_program, run_program
+
+    try:
+        program = load_program(args.path)
+    except (OSError, ValueError, TypeError, ProgramError) as exc:
+        return _error(str(exc))
+
+    if args.plan:
+        if args.out or args.no_verify:
+            return _error(
+                "--out and --no-verify can only be used when running a program"
+            )
+        payload = program.to_dict()
+        payload["command"] = "machaon program %s" % program.path
+        if args.json:
+            print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+        else:
+            _print_program_plan(program)
+        return 0
+
+    try:
+        result = run_program(
+            program,
+            out_override=args.out,
+            verify=False if args.no_verify else None,
+        )
+    except (OSError, ValueError, TypeError, RuntimeError, ProgramError) as exc:
+        return _error(str(exc))
+
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+        return 0 if result.accepted else 1
+
+    run = result.run
+    print("Machaon · weight program")
+    print("file       : %s" % program.path)
+    print("status     : %s" % result.status.upper())
+    print("summary    : %s" % result.summary)
+    print("model      : %s%s" % (
+        program.model, " (downloaded)" if result.model_fetched else "",
+    ))
+    print("output     : %s" % (run.get("out_dir") or program.output))
+    if run.get("final"):
+        print("final      : %s" % run["final"])
+    print("facts      : %s applied, %s rejected, %s already true" % (
+        run.get("applied", "?"), run.get("rejected", "?"),
+        run.get("already_true", "?"),
+    ))
+    if result.verification is not None:
+        facts = result.verification.get("facts", [])
+        passed = sum(1 for item in facts if item.get("passed"))
+        print("verified   : %s (%d/%d saved facts)" % (
+            "PASS" if result.verification.get("passed") else "FAIL",
+            passed,
+            len(facts),
+        ))
+        failures = [item for item in facts if not item.get("passed")]
+        for item in failures:
+            print("             [%d] %s -> %r" % (
+                item.get("index", 0), item.get("prompt", ""),
+                item.get("answer", ""),
+            ))
+    elif result.status != "verification_skipped":
+        print("verified   : not run")
+    print("report     : %s" % (result.report_path or "not written"))
+    return 0 if result.accepted else 1
 
 
 def _optional_version(module: str) -> str:
@@ -1108,6 +1223,23 @@ def main(argv=None) -> int:
     p_check.add_argument("--device", default=None)
     p_check.add_argument("--quantize", choices=("int4", "int8"), default=None)
     p_check.add_argument("--json", action="store_true")
+    p_program = sub.add_parser(
+        "program",
+        help="plan or run a portable weight-space program",
+    )
+    p_program.add_argument("path", help="program file (.machaon text or JSON)")
+    p_program.add_argument(
+        "--plan", action="store_true",
+        help="parse and print the resolved contract without loading a model",
+    )
+    p_program.add_argument(
+        "--out", default=None, help="override the program's output directory"
+    )
+    p_program.add_argument(
+        "--no-verify", action="store_true",
+        help="skip reloading the saved checkpoint for a fact check",
+    )
+    p_program.add_argument("--json", action="store_true")
     p_start = sub.add_parser("start", help="print the shortest path to a first edit")
     p_start.add_argument("--demo", action="store_true", help="also run the synthetic demo")
 
@@ -1144,6 +1276,8 @@ def main(argv=None) -> int:
         return _cmd_first(args)
     if args.command == "check":
         return _cmd_check(args)
+    if args.command == "program":
+        return _cmd_program(args)
     if args.command == "fetch":
         return _cmd_fetch(args)
     if args.command == "start":
