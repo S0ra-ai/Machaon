@@ -82,8 +82,8 @@ bytes to check every fact:
 ```bash
 machaon program-new ./hello.machaon \
   --teach "The Eiffel Tower is in the city of -> Rome"
-machaon program examples/hello.machaon --plan
-machaon program examples/hello.machaon
+machaon program ./hello.machaon --plan
+machaon program ./hello.machaon
 ```
 
 `machaon program-new` writes the same format from your own sentences and uses
