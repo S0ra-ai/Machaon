@@ -61,7 +61,10 @@ and report the result. The card disappears once a model session is open; the
 accepted edit stays in the session for **Save**. When the recipe applies, the
 card keeps a **Checkpoint output** field prefilled with `<model>-machaon` and a
 **Save checkpoint** button; saving goes through the same `/api/session/save`
-path as the right column. **Hide** persists the choice in `localStorage`.
+path as the right column. After saving, **Open saved checkpoint** closes the
+edited session (rolling back its in-memory bytes), opens the saved checkpoint
+and leaves a clean session for the next fact; **Done** keeps the current
+session. **Hide** persists the choice in `localStorage`.
 
 ## Three-column workflow
 

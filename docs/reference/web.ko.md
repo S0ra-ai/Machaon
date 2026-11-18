@@ -48,7 +48,10 @@ SmolLM2-135M을 받아 열고, "The Eiffel Tower is in the city of -> Rome"을 �
 뒤 교수 레시피를 실행해 결과를 보여 줍니다. session이 열리면 카드는 사라지고,
 수용된 편집은 **저장**을 위해 session에 남습니다. 교수 적용 후 카드에는
 `<model>-machaon`이 채워진 **체크포인트 출력** 필드와 **체크포인트 저장** 버튼이
-남으며, 오른쪽 열과 같은 `/api/session/save`를 사용합니다. **숨기기**는 `localStorage`에
+남으며, 오른쪽 열과 같은 `/api/session/save`를 사용합니다. 저장 후
+**저장된 체크포인트 열기**는 편집된 session을 닫고(메모리 바이트 롤백) 저장된
+체크포인트를 열어 다음 사실을 위한 깨끗한 session을 남깁니다. **완료**는 현재
+session을 유지합니다. **숨기기**는 `localStorage`에
 저장됩니다.
 
 ## 세 열 작업 흐름

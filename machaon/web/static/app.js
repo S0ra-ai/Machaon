@@ -62,6 +62,9 @@
     firstEditOut: $("#firstEditOut"),
     firstEditSave: $("#firstEditSave"),
     firstEditStatus: $("#firstEditStatus"),
+    firstEditNext: $("#firstEditNext"),
+    firstEditOpen: $("#firstEditOpen"),
+    firstEditDone: $("#firstEditDone"),
     stateCard: $("#stateCard"),
     timeline: $("#timeline"),
     eventCount: $("#eventCount"),
@@ -324,6 +327,8 @@
       el.firstEditSave.disabled = state.busy || !ready || !state.firstEdit
         || state.firstEdit.phase !== "done";
     }
+    if (el.firstEditOpen) el.firstEditOpen.disabled = state.busy;
+    if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
   }
 
   function setConnection(kind, text, key = null) {
@@ -476,6 +481,13 @@
       el.firstEditSave.disabled = state.busy || !state.session || !active
         || state.firstEdit.phase !== "done";
     }
+    if (el.firstEditNext) {
+      el.firstEditNext.classList.toggle(
+        "hidden", !(active && state.firstEdit.phase === "saved")
+      );
+    }
+    if (el.firstEditOpen) el.firstEditOpen.disabled = state.busy;
+    if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
     if (el.firstEditOut && state.session && !el.firstEditOut.value) {
       const model = String(state.session.model || "").replace(/\/+$/, "");
       if (model) el.firstEditOut.value = model + "-machaon";
@@ -833,7 +845,7 @@
       state.session = result && result.ready ? result : null;
       state.proposal = null;
       state.lastTeach = null;
-      if (kind === "close_session") {
+      if (kind === "close_session" && !(state.firstEdit && state.firstEdit.phase === "closing")) {
         setFirstEditStatus("firstEdit.ready");
         state.firstEdit = null;
         if (el.firstEditOut) el.firstEditOut.value = "";
@@ -864,6 +876,24 @@
         };
         return;
       }
+      if (state.firstEdit && state.firstEdit.phase === "opening" && result && result.ready) {
+        state.firstEdit = null;
+        setFirstEditStatus("firstEdit.ready");
+        renderFirstEdit();
+        return;
+      }
+      if (kind === "close_session" && state.firstEdit && state.firstEdit.phase === "closing") {
+        const path = state.firstEdit.savedPath;
+        state.firstEdit.phase = "opening";
+        el.checkpointPath.value = path;
+        setFirstEditStatus("firstEdit.opening");
+        state.pendingAfterBusy = () => {
+          if (state.firstEdit && state.firstEdit.phase === "opening") {
+            startJob("/api/session/open", openSessionRequest(path), "open_session");
+          }
+        };
+        return;
+      }
     } else if (kind === "baseline") {
       if (result && result.state) state.session = result.state;
       renderSessionState();
@@ -881,6 +911,10 @@
       if (result && result.state) state.session = result.state;
       state.proposal = null;
       state.lastTeach = null;
+      if (state.firstEdit) {
+        state.firstEdit = null;
+        setFirstEditStatus("firstEdit.ready");
+      }
       renderTeachPreview(null);
       renderSessionState();
       renderProposal(null);
@@ -933,6 +967,10 @@
       state.session = result && result.state ? result.state : null;
       state.proposal = null;
       state.lastTeach = null;
+      if (state.firstEdit) {
+        state.firstEdit = null;
+        setFirstEditStatus("firstEdit.ready");
+      }
       renderTeachPreview(null);
       renderSessionState();
       renderProposal(null);
@@ -940,11 +978,18 @@
     } else if (kind === "save_checkpoint") {
       addTimelineEvent("save", t("timeline.save"), (result && result.output) || "", "ok");
       if (state.firstEdit && state.firstEdit.phase === "done") {
+        state.firstEdit.phase = "saved";
+        state.firstEdit.savedPath = (result && result.output) || "";
         setFirstEditStatus("firstEdit.saved", {
           path: (result && result.output) || "",
         }, "ok");
         addTimelineEvent("first", t("timeline.firstEdit"), "saved", "ok");
-        state.firstEdit = null;
+        renderFirstEdit();
+      } else if (state.firstEdit && state.firstEdit.phase === "saved") {
+        state.firstEdit.savedPath = (result && result.output) || "";
+        setFirstEditStatus("firstEdit.saved", {
+          path: (result && result.output) || "",
+        }, "ok");
         renderFirstEdit();
       }
     } else if (kind === "wsp_audit") {
@@ -1212,6 +1257,22 @@
     el.firstEditDismiss.addEventListener("click", () => {
       state.firstEditDismissed = true;
       localStorage.setItem("machaon-first-dismissed", "1");
+      renderFirstEdit();
+    });
+  }
+  if (el.firstEditOpen) {
+    el.firstEditOpen.addEventListener("click", () => {
+      if (state.busy || !state.firstEdit || state.firstEdit.phase !== "saved") return;
+      state.firstEdit.phase = "closing";
+      setFirstEditStatus("firstEdit.closing");
+      startJob("/api/session/close", { force: true }, "close_session");
+    });
+  }
+  if (el.firstEditDone) {
+    el.firstEditDone.addEventListener("click", () => {
+      if (state.busy) return;
+      state.firstEdit = null;
+      setFirstEditStatus("firstEdit.ready");
       renderFirstEdit();
     });
   }

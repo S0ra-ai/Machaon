@@ -785,6 +785,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="firstEditCard"', page.text)
         self.assertIn('id="firstEditButton"', page.text)
         self.assertIn('id="firstEditSave"', page.text)
+        self.assertIn('id="firstEditOpen"', page.text)
         self.assertIn('data-i18n="onboarding.title"', page.text)
         self.assertIn('src="/static/locales.js"', page.text)
         locales = self.client.get("/static/locales.js")
@@ -794,6 +795,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"ko": {', locales.text)
         self.assertIn('"firstEdit.title"', locales.text)
         self.assertIn('"firstEdit.save"', locales.text)
+        self.assertIn('"firstEdit.openSaved"', locales.text)
 
     def test_save_checkpoint_uses_the_checkpoint_writer(self):
         opened = self.client.post(
