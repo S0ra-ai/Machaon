@@ -10,6 +10,7 @@ echo "== entry points =="
 python3 -m machaon --version
 python3 -m machaon doctor > /dev/null && echo "doctor ok"
 python3 -m machaon.cli start > /dev/null && echo "start ok"
+python3 -m machaon.cli web --help > /dev/null && echo "web launch help ok"
 python3 -m machaon.cli intent "The Eiffel Tower is in the city of -> Rome" > /dev/null && echo "intent ok"
 python3 -m machaon.cli fetch --list > /dev/null && echo "fetch list ok"
 python3 -m machaon.cli teach-many --help > /dev/null && echo "teach-many help ok"

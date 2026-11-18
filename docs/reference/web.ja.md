@@ -17,7 +17,8 @@
 
 ```bash
 pip install "machaon[web]"
-machaon-web --allowed-root /models --port 8765
+machaon web --allowed-root /models --port 8765
+# machaon-web も同じランチャーです
 ```
 
 起動時に一度だけ使う token を含む URL が表示されます。サーバーは既定で

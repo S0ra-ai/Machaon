@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-555-2ea44f)
+![tests](https://img.shields.io/badge/tests-556-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-78%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -207,7 +207,8 @@ The same session contract is available as a local three-column console:
 
 ```bash
 uv pip install -e ".[web]"
-machaon-web --allowed-root ./models
+machaon web --allowed-root ./models
+# or: machaon-web --allowed-root ./models
 ```
 
 Open the printed `127.0.0.1` URL. The console inspects checkpoint headers,

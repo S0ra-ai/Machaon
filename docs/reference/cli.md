@@ -73,6 +73,18 @@ python -m machaon.cli start
 python -m machaon.cli start --demo
 ```
 
+## `web`
+
+Launch the optional local browser console from the main CLI. It forwards the
+same host, port, allowed-root, token and loopback safeguards as `machaon-web`;
+install the `web` extra first.
+
+```bash
+pip install "machaon[web]"
+machaon web --allowed-root ./models
+machaon web --allowed-root ./models --port 8770 --no-browser
+```
+
 ## `intent`
 
 Compiles a plain-language teaching request into an exact `prompt` / `answer`

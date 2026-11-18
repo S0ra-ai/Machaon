@@ -16,7 +16,8 @@
 
 ```bash
 pip install "machaon[web]"
-machaon-web --allowed-root /models --port 8765
+machaon web --allowed-root /models --port 8765
+# machaon-web 是同一个启动器
 ```
 
 启动后会打印带一次性 token 的本地 URL。服务默认只绑定 `127.0.0.1`；

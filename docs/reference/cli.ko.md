@@ -75,6 +75,17 @@ python -m machaon.cli start
 python -m machaon.cli start --demo
 ```
 
+## `web`
+
+메인 CLI에서 선택적 로컬 브라우저 콘솔을 실행합니다. host, port, 허용 루트,
+token, loopback 보호는 `machaon-web`과 같습니다. 먼저 `web` extra를 설치하세요.
+
+```bash
+pip install "machaon[web]"
+machaon web --allowed-root ./models
+machaon web --allowed-root ./models --port 8770 --no-browser
+```
+
 ## `intent`
 
 자연어 교수 요청을 모델을 읽지 않고 정확한 `prompt` / `answer` 계약으로

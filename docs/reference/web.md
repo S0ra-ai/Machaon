@@ -22,7 +22,8 @@ console:
 
 ```bash
 pip install "machaon[web]"
-machaon-web --allowed-root /models --port 8765
+machaon web --allowed-root /models --port 8765
+# machaon-web is the same launcher
 ```
 
 The same launcher is available as `python -m machaon.web`.

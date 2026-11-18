@@ -76,6 +76,18 @@ python -m machaon.cli start
 python -m machaon.cli start --demo
 ```
 
+## `web`
+
+メイン CLI から任意のローカルブラウザーコンソールを起動します。host、port、
+許可ルート、token、loopback 保護は `machaon-web` と同じです。先に `web` extra を
+インストールしてください。
+
+```bash
+pip install "machaon[web]"
+machaon web --allowed-root ./models
+machaon web --allowed-root ./models --port 8770 --no-browser
+```
+
 ## `intent`
 
 自然言語の教学リクエストを、モデルを読み込まずに正確な `prompt` / `answer`

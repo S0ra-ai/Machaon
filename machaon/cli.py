@@ -765,7 +765,8 @@ def _cmd_start(args) -> int:
     print('     --say "The Eiffel Tower is in the city of -> Rome"')
     print()
     print("5. Use the local browser console:")
-    print("   machaon-web --allowed-root ./models")
+    print("   machaon web --allowed-root ./models")
+    print("   (machaon-web is the same launcher)")
     print()
     print("6. Save a whole run as a reviewable text program:")
     print("   machaon program examples/hello.machaon --plan")
@@ -787,6 +788,34 @@ def _cmd_start(args) -> int:
         print()
         demo_main()
     return 0
+
+
+def _cmd_web(args) -> int:
+    """Launch the optional browser console from the main CLI."""
+    try:
+        from .web.app import main as web_main
+    except ImportError as exc:
+        return _error(
+            '%s; install the browser console with: pip install "machaon[web]"'
+            % exc
+        )
+    argv = []
+    if args.host:
+        argv.extend(["--host", args.host])
+    if args.port is not None:
+        argv.extend(["--port", str(args.port)])
+    for root in args.allowed_root or []:
+        argv.extend(["--allowed-root", root])
+    if args.token:
+        argv.extend(["--token", args.token])
+    if args.no_browser:
+        argv.append("--no-browser")
+    if args.allow_remote:
+        argv.append("--allow-remote")
+    try:
+        return int(web_main(argv) or 0)
+    except SystemExit as exc:
+        return int(exc.code or 0)
 
 
 def _cmd_check(args) -> int:
@@ -1242,6 +1271,16 @@ def main(argv=None) -> int:
     p_program.add_argument("--json", action="store_true")
     p_start = sub.add_parser("start", help="print the shortest path to a first edit")
     p_start.add_argument("--demo", action="store_true", help="also run the synthetic demo")
+    p_web = sub.add_parser("web", help="launch the optional local browser console")
+    p_web.add_argument("--host", default=None, help="bind host (default: 127.0.0.1)")
+    p_web.add_argument("--port", type=int, default=None, help="bind port (default: 8765)")
+    p_web.add_argument(
+        "--allowed-root", action="append", default=None,
+        help="checkpoint directory the UI may read; repeat for multiple roots",
+    )
+    p_web.add_argument("--token", default=None, help="reuse a fixed local token")
+    p_web.add_argument("--no-browser", action="store_true")
+    p_web.add_argument("--allow-remote", action="store_true")
 
     args = parser.parse_args(argv)
     if args.command == "demo":
@@ -1282,6 +1321,8 @@ def main(argv=None) -> int:
         return _cmd_fetch(args)
     if args.command == "start":
         return _cmd_start(args)
+    if args.command == "web":
+        return _cmd_web(args)
     parser.print_help()
     return 0
 

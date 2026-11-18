@@ -17,7 +17,8 @@
 
 ```bash
 pip install "machaon[web]"
-machaon-web --allowed-root /models --port 8765
+machaon web --allowed-root /models --port 8765
+# machaon-web도 같은 실행기입니다
 ```
 
 실행하면 일회용 token이 포함된 로컬 URL을 출력합니다. 서버는 기본적으로

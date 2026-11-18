@@ -196,6 +196,28 @@ class TestCli(unittest.TestCase):
         self.assertTrue(all(report["core"].values()))
         self.assertIn("torch", report["packages"])
 
+    def test_web_forwards_launch_controls(self):
+        import types
+
+        fake = types.ModuleType("machaon.web.app")
+        captured = []
+
+        def web_main(argv):
+            captured.append(argv)
+            return 0
+
+        fake.main = web_main
+        with mock.patch.dict(sys.modules, {"machaon.web.app": fake}):
+            code, _, err = run(
+                "web", "--allowed-root", "models",
+                "--port", "8770", "--no-browser",
+            )
+        self.assertEqual(code, 0)
+        self.assertEqual(err, "")
+        self.assertIn("--allowed-root", captured[0])
+        self.assertIn("--port", captured[0])
+        self.assertIn("--no-browser", captured[0])
+
     def test_intent_prints_a_reviewable_contract(self):
         code, out, _ = run(
             "intent", "The Eiffel Tower is in the city of -> Rome"

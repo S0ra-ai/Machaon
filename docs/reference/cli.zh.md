@@ -73,6 +73,17 @@ python -m machaon.cli start
 python -m machaon.cli start --demo
 ```
 
+## `web`
+
+从主 CLI 启动可选的本地浏览器控制台。参数和 `machaon-web` 一致，包括
+host、port、允许根目录、token 和 loopback 保护；需要先安装 `web` extra。
+
+```bash
+pip install "machaon[web]"
+machaon web --allowed-root ./models
+machaon web --allowed-root ./models --port 8770 --no-browser
+```
+
 ## `intent`
 
 把一句自然语言教学请求编译成精确的 `prompt` / `answer` 合同，不加载模型。
