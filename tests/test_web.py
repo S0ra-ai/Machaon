@@ -1070,6 +1070,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="programFile"', page.text)
         self.assertIn('id="programTemplateSmol"', page.text)
         self.assertIn('id="programTemplateTwo"', page.text)
+        self.assertIn('id="programTemplateBilingual"', page.text)
         self.assertIn('id="programFacts"', page.text)
         self.assertIn('id="programBuildButton"', page.text)
         self.assertIn('id="programHistory"', page.text)
@@ -1116,6 +1117,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"check.summary"', locales.text)
         self.assertIn('"program.summary"', locales.text)
         self.assertIn('"program.run"', locales.text)
+        self.assertIn('"program.templateBilingual"', locales.text)
         self.assertIn('"program.verifyReport"', locales.text)
         self.assertIn('"program.integrityValid"', locales.text)
 

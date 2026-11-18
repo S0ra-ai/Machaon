@@ -247,7 +247,8 @@ report and reloads the saved checkpoint before reporting success. The program's
 relative paths and the browser's filesystem allowlist are enforced together.
 The panel can prefill from the current checkpoint, open/download `.machaon`
 files, start from one- and two-fact SmolLM2 templates, and keep the last eight
-programs in local browser history. It can also open a saved report, verify its
+programs in local browser history; a third template starts from Qwen2.5-0.5B
+with English and Chinese facts. It can also open a saved report, verify its
 content address, and optionally reload the checkpoint to compare the live facts
 with the recorded verdict.
 

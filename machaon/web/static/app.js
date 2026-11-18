@@ -75,6 +75,7 @@
     programFile: $("#programFile"),
     programTemplateSmol: $("#programTemplateSmol"),
     programTemplateTwo: $("#programTemplateTwo"),
+    programTemplateBilingual: $("#programTemplateBilingual"),
     programFacts: $("#programFacts"),
     programBuildButton: $("#programBuildButton"),
     programHistory: $("#programHistory"),
@@ -390,6 +391,9 @@
     if (el.programFileButton) el.programFileButton.disabled = state.busy;
     if (el.programTemplateSmol) el.programTemplateSmol.disabled = state.busy;
     if (el.programTemplateTwo) el.programTemplateTwo.disabled = state.busy;
+    if (el.programTemplateBilingual) {
+      el.programTemplateBilingual.disabled = state.busy;
+    }
     if (el.programBuildButton) el.programBuildButton.disabled = state.busy;
     if (el.programHistoryLoad) el.programHistoryLoad.disabled = state.busy;
     if (el.programRunHistoryLoad) el.programRunHistoryLoad.disabled = state.busy;
@@ -1913,6 +1917,23 @@
         "protect: The capital of Germany is",
         "protect: Water freezes at a temperature of",
       ],
+      bilingual: [
+        "version: 1",
+        "name: Bilingual Qwen lesson",
+        "model: ./Qwen2.5-0.5B",
+        "fetch: qwen05b",
+        "output: ./qwen-bilingual-weight-space",
+        "budget: 0.12",
+        "max_rel_norm: 0.02",
+        "verify: true",
+        "",
+        "teach: 北京的首都是 -> 北京",
+        "teach: The capital of France is -> Paris",
+        "",
+        "protect: 水在摄氏零度会",
+        "protect: 太阳从东方升起，从西方",
+        "protect: The capital of Germany is",
+      ],
     };
     const lines = templates[kind];
     if (!lines) throw new Error(t("program.templateUnknown"));
@@ -2354,6 +2375,11 @@
   $("#programFileButton").addEventListener("click", () => el.programFile.click());
   el.programTemplateSmol.addEventListener("click", () => loadProgramTemplate("smol"));
   el.programTemplateTwo.addEventListener("click", () => loadProgramTemplate("two"));
+  if (el.programTemplateBilingual) {
+    el.programTemplateBilingual.addEventListener(
+      "click", () => loadProgramTemplate("bilingual")
+    );
+  }
   el.programBuildButton.addEventListener("click", async () => {
     try {
       await buildProgramFromFacts();
