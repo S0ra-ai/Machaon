@@ -64,6 +64,8 @@
     programDownloadButton: $("#programDownloadButton"),
     programFileButton: $("#programFileButton"),
     programFile: $("#programFile"),
+    programTemplateSmol: $("#programTemplateSmol"),
+    programTemplateTwo: $("#programTemplateTwo"),
     programCard: $("#programCard"),
     checkpointBadge: $("#checkpointBadge"),
     tensorRows: $("#tensorRows"),
@@ -358,6 +360,8 @@
     if (el.programPrefillButton) el.programPrefillButton.disabled = state.busy;
     if (el.programDownloadButton) el.programDownloadButton.disabled = state.busy;
     if (el.programFileButton) el.programFileButton.disabled = state.busy;
+    if (el.programTemplateSmol) el.programTemplateSmol.disabled = state.busy;
+    if (el.programTemplateTwo) el.programTemplateTwo.disabled = state.busy;
     if (el.firstEditButton) {
       el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
         ? t("firstEdit.again") : t("firstEdit.run");
@@ -1532,6 +1536,48 @@
     addTimelineEvent("program", t("timeline.programOpen"), file.name, "ok");
   }
 
+  function loadProgramTemplate(kind) {
+    const templates = {
+      smol: [
+        "version: 1",
+        "name: First SmolLM2 edit",
+        "model: ./SmolLM2-135M",
+        "fetch: smol135m",
+        "output: ./hello-weight-space",
+        "budget: 0.10",
+        "max_rel_norm: 0.02",
+        "verify: true",
+        "",
+        "teach: The Eiffel Tower is in the city of -> Rome",
+        "",
+        "protect: The capital of Germany is",
+        "protect: Water freezes at a temperature of",
+        "protect: Two plus two equals",
+      ],
+      two: [
+        "version: 1",
+        "name: Two-fact lesson",
+        "model: ./SmolLM2-135M",
+        "fetch: smol135m",
+        "output: ./two-fact-weight-space",
+        "budget: 0.12",
+        "max_rel_norm: 0.02",
+        "verify: true",
+        "",
+        "teach: The Eiffel Tower is in the city of -> Rome",
+        "teach: The capital of France is -> Paris",
+        "",
+        "protect: The capital of Germany is",
+        "protect: Water freezes at a temperature of",
+      ],
+    };
+    const lines = templates[kind];
+    if (!lines) throw new Error(t("program.templateUnknown"));
+    el.programText.value = lines.join("\n") + "\n";
+    el.programPanel.open = true;
+    addTimelineEvent("program", t("timeline.programTemplate"), kind, "ok");
+  }
+
   function preserveLines() {
     return $("#preservePrompts").value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   }
@@ -1880,6 +1926,8 @@
     }
   });
   $("#programFileButton").addEventListener("click", () => el.programFile.click());
+  el.programTemplateSmol.addEventListener("click", () => loadProgramTemplate("smol"));
+  el.programTemplateTwo.addEventListener("click", () => loadProgramTemplate("two"));
   el.programFile.addEventListener("change", async () => {
     const file = el.programFile.files && el.programFile.files[0];
     try {

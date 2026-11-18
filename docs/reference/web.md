@@ -115,6 +115,9 @@ checkpoint and the current teaching sentence/preserve prompts. **Download
 recipe can be committed or shared without copying from the page. **Open
 .machaon** loads a local text/JSON file into the editor; the browser reads it
 locally and the same allowlist is applied when the program is checked or run.
+Two built-in templates start from SmolLM2 and require no existing checkpoint:
+**SmolLM2 first edit** teaches one fact, while **Two facts** runs a two-fact
+chain with the same budget and verification policy.
 
 Both routes enforce the same filesystem allowlist as every other console
 operation. A program cannot reach a model or output outside the configured
