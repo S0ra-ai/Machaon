@@ -604,6 +604,24 @@ retains every trial, ranking, check, warning and unmeasured metric. The result
 is JSON-safe and is the same object returned by the CLI, MCP and Web entry
 points.
 
+```python
+from machaon.teach_many import load_facts, teach_many
+
+facts = load_facts("facts.txt")
+result = teach_many(
+    session_factory, "./models/qwen", facts, "./models/qwen-many",
+    budget=0.10, policy=TeachPolicy(max_rel_norm=0.02),
+)
+result.final, result.cumulative_relative_delta, result.global_panel_agreement
+```
+
+`teach_many` runs the full recipe for each fact on a fresh session loaded from
+the previous accepted checkpoint. It enforces the cumulative budget, checks
+top-1/KL against the original panel, keeps the last globally safe checkpoint,
+and writes a per-step report. `save_session(session, out_dir)` is the shared
+writer used by the CLI, Web and chain; it applies the runtime's stored
+orientation and removes a partial directory on failure.
+
 ## Tools · `machaon.tools`
 
 The functions behind the MCP server. No model is loaded.

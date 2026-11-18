@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-485-2ea44f)
+![tests](https://img.shields.io/badge/tests-504-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-79%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -57,6 +57,11 @@ plain sentences are marked medium confidence because the split point is an
 assumption. The same contract is available as
 `machaon.recipes.teach_fact`, the MCP `teach` tool, and the browser console's
 **ONE SENTENCE** box.
+
+For a small list, `machaon teach-many --model ... --facts facts.txt --out ...`
+runs one full search per fact, keeps a cumulative budget, checks drift against
+the original panel, and promotes the last globally safe checkpoint to
+`<out>/final`.
 
 ## Why Machaon
 
@@ -433,6 +438,9 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 - **A starter downloader** — `machaon fetch` uses the standard library only,
   falls back across Hugging Face / hf-mirror / ModelScope, validates safetensors
   headers, and is also a button in the browser console.
+- **Multi-fact teaching** — `machaon teach-many` runs one honest search per
+  fact, tracks the cumulative budget and original-panel drift, and keeps the
+  last globally safe checkpoint when a fact is rejected.
 - **Unit symmetry alignment** — recover hidden-unit permutations and positive
   scaling across an MLP pair before comparing or merging weights.
 - **Aligned MLP merge** — apply the recovered hidden-unit permutation before
@@ -536,6 +544,8 @@ machaon/
 │                       live apply/evaluate/rollback layer search
 ├─ intent.py            plain-language request → exact prompt/answer contract
 ├─ recipes.py           one-call teach: baseline, search, apply, verify, rollback
+├─ teach_many.py        multi-fact chain with cumulative budget and global drift
+├─ checkpointing.py     shared session → loadable checkpoint writer
 ├─ fetch.py             stdlib starter downloader with endpoint fallback
 ├─ symmetry.py          hidden-unit permutation / positive-scaling alignment
 ├─ task_arithmetic.py   signed task-vector combinations with budget checks

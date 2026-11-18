@@ -57,6 +57,22 @@ when asked "the Eiffel Tower is", answer " in Paris"
 
 교수는 답의 **첫 token**을 고정합니다. 여러 token 답은 경고로 표시되며, 나머지
 연속은 벤치마크 질문이지 이 로컬 검사의 보장이 아닙니다.
+### 여러 사실 가르치기
+
+```bash
+cat > facts.txt <<'EOF'
+에펠탑은 -> 로마
+프랑스의 수도는 -> 파리
+EOF
+
+machaon teach-many --model ./models/Qwen2.5-0.5B --facts facts.txt --out ./models/qwen-many
+```
+
+각 사실은 자체 layer 검색과 로컬 검사를 수행합니다. 체인은 마지막 전역 안전
+체크포인트를 `<out>/final`에 두고 각 단계를 `<out>/report.json`에 기록합니다.
+한 사실이 거부되면 이전 사실을 유지한 채 중지합니다.
+`--continue-on-reject`는 실패를 건너뛰고, `--keep-steps`는 체인 전체를 보존합니다.
+
 
 행렬, key, 보호 집합을 직접 고르고 싶다면 아래의 수동 단계를 사용하세요.
 

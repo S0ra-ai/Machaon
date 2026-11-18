@@ -245,6 +245,20 @@ TeachPolicy(...) -> policy
 `TeachResult.to_dict()`는 모든 trial, 순위, 검사, 경고, 미측정 지표를
 JSON 안전한 형태로 유지합니다.
 
+```python
+from machaon.teach_many import load_facts, teach_many
+
+facts = load_facts("facts.txt")
+result = teach_many(session_factory, "./models/qwen", facts, "./models/qwen-many",
+                    budget=0.10, policy=TeachPolicy(max_rel_norm=0.02))
+result.final, result.cumulative_relative_delta, result.global_panel_agreement
+```
+
+`teach_many`는 각 사실에 대해 직전 수용 체크포인트에서 연 새 session으로 전체
+레시피를 실행합니다. 누적 예산, 원래 panel 대비 top-1/KL 드리프트, 마지막 전역
+안전 체크포인트 유지, 단계별 보고서 작성을 수행합니다.
+`save_session(session, out_dir)`은 CLI, Web, 체인이 공유하는 writer입니다.
+
 ## 도구 · `machaon.tools`
 
 MCP 서버 뒤의 함수. 모델을 로드하지 않습니다.

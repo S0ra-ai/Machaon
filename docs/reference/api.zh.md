@@ -536,6 +536,20 @@ intent.to_command("./models/qwen") # 精确的 CLI 调用
 和 `min_panel_agreement=0.875`。`TeachResult.to_dict()` 保留每次试验、排序、
 检查、警告和未测量指标，可直接序列化为 JSON。
 
+```python
+from machaon.teach_many import load_facts, teach_many
+
+facts = load_facts("facts.txt")
+result = teach_many(session_factory, "./models/qwen", facts, "./models/qwen-many",
+                    budget=0.10, policy=TeachPolicy(max_rel_norm=0.02))
+result.final, result.cumulative_relative_delta, result.global_panel_agreement
+```
+
+`teach_many` 对每条事实在从上一个已接受检查点加载的干净 session 上运行完整配方。
+它执行累计预算、对原始面板做 top-1/KL 漂移检查，保留最后一条全局安全检查点，
+并写出逐步报告。`save_session(session, out_dir)` 是 CLI、Web 和链条共用的写入器，
+会应用运行时的存储方向，并在失败时删除半成品目录。
+
 ## 工具 · `machaon.tools`
 
 MCP 服务背后的函数。不加载模型。

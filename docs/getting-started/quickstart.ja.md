@@ -58,6 +58,22 @@ when asked "the Eiffel Tower is", answer " in Paris"
 教学が固定するのは答えの**最初の token** です。複数 token の答えは警告として
 表示され、続きはベンチマークの問いであって、このローカルチェックの保証では
 ありません。
+### 複数の事実を教える
+
+```bash
+cat > facts.txt <<'EOF'
+エッフェル塔は -> ローマ
+フランスの首都は -> パリ
+EOF
+
+machaon teach-many --model ./models/Qwen2.5-0.5B --facts facts.txt --out ./models/qwen-many
+```
+
+各事実は独自の層検索とローカルチェックを持ちます。連鎖は最後の全体安全な
+チェックポイントを `<out>/final` に置き、各ステップを `<out>/report.json` に
+記録します。事実が拒否された場合は停止し、以前の事実を保持します。
+`--continue-on-reject` は失敗を飛ばし、`--keep-steps` は連鎖全体を保持します。
+
 
 行列、key、保護集合を自分で選びたい場合は、以下の手動ステップを使ってください。
 

@@ -52,6 +52,21 @@ machaon teach --model ./models/Qwen2.5-0.5B \
 
 教学固定的是答案的**第一个 token**。多 token 答案会给出警告；后续内容属于
 基准问题，不是这次本地检查的保证。
+### 教一组事实
+
+```bash
+cat > facts.txt <<'EOF'
+埃菲尔铁塔位于 -> 罗马
+法国的首都是 -> 巴黎
+EOF
+
+machaon teach-many --model ./models/Qwen2.5-0.5B --facts facts.txt --out ./models/qwen-many
+```
+
+每条事实都有自己的选层搜索和本地检查。整条链把最后一条全局安全的检查点放在
+`<out>/final`，把每一步写入 `<out>/report.json`；某条被拒绝时停止，并保留
+之前的事实。`--continue-on-reject` 跳过坏事实；`--keep-steps` 保留整条链。
+
 
 需要自己选择矩阵、key 和保护集时，再使用下面的手动步骤。
 

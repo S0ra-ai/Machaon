@@ -40,7 +40,7 @@ uv pip install -e ".[dev,docs]" # 测试、lint、覆盖率、文档站
 预期结尾：
 
 ```
-Ran 485 tests ...
+Ran 504 tests ...
 ALL CHECKS PASSED
 ```
 

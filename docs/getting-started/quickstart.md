@@ -60,6 +60,23 @@ claim still needs the full gate report.
 Teaching pins the **first token** of the answer. A multi-token answer is
 reported as a warning; the rest of the continuation is a benchmark question,
 not a guarantee of this local check.
+### Teach a small list
+
+```bash
+cat > facts.txt <<'EOF'
+The Eiffel Tower is in the city of -> Rome
+The capital of France is -> Paris
+EOF
+
+machaon teach-many --model ./models/Qwen2.5-0.5B --facts facts.txt --out ./models/qwen-many
+```
+
+Each fact gets its own layer search and local checks. The chain keeps the last
+globally safe checkpoint at `<out>/final`, records every step in
+`<out>/report.json`, and stops without touching earlier facts when one is
+rejected. `--continue-on-reject` skips a bad fact; `--keep-steps` keeps the
+whole chain.
+
 
 Use the manual steps below when you want to choose the matrix, the key and the
 protected set yourself.

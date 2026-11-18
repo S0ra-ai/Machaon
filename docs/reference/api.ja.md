@@ -243,6 +243,21 @@ TeachPolicy(...) -> policy
 失敗時のロールバックまでを行います。`TeachResult.to_dict()` は全 trial、
 ランキング、チェック、警告、未測定指標を JSON 安全な形で保持します。
 
+```python
+from machaon.teach_many import load_facts, teach_many
+
+facts = load_facts("facts.txt")
+result = teach_many(session_factory, "./models/qwen", facts, "./models/qwen-many",
+                    budget=0.10, policy=TeachPolicy(max_rel_norm=0.02))
+result.final, result.cumulative_relative_delta, result.global_panel_agreement
+```
+
+`teach_many` は各事実について、直前の受け入れ済みチェックポイントから開いた
+新しい session でレシピ全体を実行します。累積予算、元の panel に対する
+top-1/KL ドリフト、最後の全体安全チェックポイントの保持、ステップごとの
+レポート書き出しを行います。`save_session(session, out_dir)` は CLI、Web、
+チェーンが共有するライターです。
+
 ## ツール · `machaon.tools`
 
 MCP サーバー背後の関数。モデルをロードしません。

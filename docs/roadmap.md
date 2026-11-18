@@ -41,6 +41,8 @@ ship. Every completed item has a test or a measured run behind it.
 - [x] One-sentence intent compiler and one-call teaching recipe: automatic
       baseline, depth-window search, target/panel/KL checks and bit-exact
       rollback
+- [x] Multi-fact teaching chain: one search per fact, cumulative budget,
+      original-panel drift checks and last-safe-checkpoint promotion
 - [x] Agent-callable ROME layer search over MCP with automatic rollback
 - [x] Conservative automatic diagnosis: target headroom plus mechanism relief
       for obstruction; low headroom without relief for capability gap

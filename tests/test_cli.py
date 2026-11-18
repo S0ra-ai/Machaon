@@ -343,6 +343,36 @@ class TestCli(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("--repo", err)
 
+    def test_teach_many_refuses_a_missing_model(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            facts = Path(tmp) / "facts.txt"
+            facts.write_text("The capital is -> Paris\n")
+            code, _, err = run(
+                "teach-many", "--model", "/tmp/definitely-not-a-model",
+                "--facts", str(facts),
+            )
+        self.assertEqual(code, 2)
+        self.assertIn("no such checkpoint", err)
+
+    def test_teach_many_refuses_an_empty_facts_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            facts = Path(tmp) / "facts.txt"
+            facts.write_text("# no facts here\n")
+            code, _, err = run(
+                "teach-many", "--model", tmp, "--facts", str(facts)
+            )
+        self.assertEqual(code, 2)
+        self.assertIn("contains no facts", err)
+
+    def test_teach_many_refuses_a_missing_facts_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            code, _, err = run(
+                "teach-many", "--model", tmp,
+                "--facts", str(Path(tmp) / "missing.txt"),
+            )
+        self.assertEqual(code, 2)
+        self.assertIn("error:", err)
+
     def test_start_prints_the_three_entry_points(self):
         code, out, _ = run("start")
         self.assertEqual(code, 0)

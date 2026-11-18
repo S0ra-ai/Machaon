@@ -87,6 +87,26 @@ Exit codes: `0` applied / already true / dry run, `1` rejected and rolled back,
 
 `--out`, `--evidence-out` and `--edit-out` are refused when the target already exists, so a run never overwrites an earlier artifact.
 
+## `teach-many`
+
+Teach a list of facts into one checkpoint chain. Each fact runs the full
+single-fact recipe on a fresh session loaded from the previous accepted
+checkpoint; the original checkpoint is never modified.
+
+```bash
+machaon teach-many --model ./models/Qwen2.5-0.5B \
+  --facts facts.txt --out ./models/qwen-many
+```
+
+`facts.txt` contains one teaching sentence per line (the same grammar as
+`machaon intent`) or a JSON / JSONL list of `{"say": ...}` or
+`{"prompt": ..., "answer": ...}` objects. The command keeps the last globally
+safe checkpoint at `<out>/final`, writes per-step evidence to
+`<out>/report.json`, and exits 1 when a fact is rejected or the cumulative
+drift check fails. `--continue-on-reject` records the failure and continues;
+`--keep-steps` keeps every step rather than only the last safe one. The
+cumulative `--budget` is enforced across the chain, not per fact.
+
 ## `demo`
 
 Runs the synthetic rank-one demo. No model, no network.

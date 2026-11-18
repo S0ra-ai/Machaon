@@ -100,6 +100,7 @@ from .task_arithmetic import (
     combine_task_vectors,
     task_vector,
 )
+from .teach_many import TeachManyResult, TeachStep, teach_many
 from .transaction import Transaction, Workspace
 from .wsp import (
     EffectVerdict,
@@ -175,6 +176,9 @@ __all__ = [
     "candidate_layers",
     "teach",
     "teach_fact",
+    "TeachManyResult",
+    "TeachStep",
+    "teach_many",
     "IntentError",
     "TeachIntent",
     "parse_intent",

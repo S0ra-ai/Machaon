@@ -88,6 +88,23 @@ python -m machaon.cli teach --model ./models/Qwen2.5-0.5B \
 
 `--out`、`--evidence-out`、`--edit-out` 的目标已存在时会拒绝运行，避免覆盖上一次的产物。
 
+## `teach-many`
+
+把一组事实教进一条 checkpoint 链。每条事实都在一个从上一个已接受检查点加载的
+干净 session 上运行完整的单条配方；源检查点不会被修改。
+
+```bash
+machaon teach-many --model ./models/Qwen2.5-0.5B \
+  --facts facts.txt --out ./models/qwen-many
+```
+
+`facts.txt` 每行一条教学句子（语法与 `machaon intent` 相同），也可以是
+JSON / JSONL 的 `{"say": ...}` 或 `{"prompt": ..., "answer": ...}` 列表。
+命令把最后一条全局安全的检查点放在 `<out>/final`，把每一步证据写入
+`<out>/report.json`。某条事实被拒绝或累计漂移检查失败时退出码为 1。
+`--continue-on-reject` 会记录失败并继续；`--keep-steps` 保留所有步骤而不是
+只保留最后一条安全步骤。累计 `--budget` 作用于整条链，而不是每条事实。
+
 ## `demo`
 
 运行合成 rank-one demo。无模型、无网络。

@@ -7,7 +7,6 @@ the CLI and MCP server.  FastAPI handlers only parse HTTP and attach a job.
 from __future__ import annotations
 
 import importlib
-import shutil
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from threading import RLock
@@ -409,41 +408,18 @@ class WebService:
         edited = list(state.get("edited", []))
         if not edited:
             raise RuntimeError("the session has no applied edits to save")
-        source = Path(session.model_id)
         out = Path(self.policy.require(out_dir))
         if out.exists():
             raise RuntimeError(
                 "output already exists: %s (choose another path or remove it)" % out
             )
-        from ..adapters import Checkpoint
+        from ..checkpointing import save_session
 
-        checkpoint = Checkpoint(source)
-        changes = session.changes()
-        stored = getattr(session.runtime, "stored_values", None)
-        try:
-            # A single 27B edit is one shard; avoid rewriting every shard when
-            # the session contains exactly one applied tensor.
-            if len(changes) == 1:
-                name = next(iter(changes))
-                values = session.runtime.read(name)
-                if callable(stored):
-                    values = stored(name, values)
-                report = checkpoint.write_tensor(
-                    name, values, out
-                )
-            else:
-                if callable(stored):
-                    changes = {
-                        name: stored(name, delta) for name, delta in changes.items()
-                    }
-                report = checkpoint.write_with(changes, out)
-        except Exception:
-            shutil.rmtree(out, ignore_errors=True)
-            raise
+        saved = save_session(session, out, require_new=True)
         return {
-            "output": str(out),
+            "output": saved["output"],
             "edited": edited,
-            "checkpoint": report,
+            "checkpoint": saved["checkpoint"],
             "state": self.state(),
         }
 

@@ -92,6 +92,25 @@ python -m machaon.cli teach --model ./models/Qwen2.5-0.5B \
 
 `--out`, `--evidence-out`, `--edit-out` 대상이 이미 있으면 이전 산출물을 덮어쓰지 않도록 거부합니다.
 
+## `teach-many`
+
+여러 사실을 하나의 체크포인트 체인으로 가르칩니다. 각 사실은 직전에 수용된
+체크포인트에서 새로 연 깨끗한 session에서 단일 사실 레시피 전체를 실행합니다.
+원본 체크포인트는 변경되지 않습니다.
+
+```bash
+machaon teach-many --model ./models/Qwen2.5-0.5B \
+  --facts facts.txt --out ./models/qwen-many
+```
+
+`facts.txt`는 한 줄에 하나의 교수 문장(`machaon intent`와 같은 문법)이거나
+JSON / JSONL의 `{"say": ...}` 또는 `{"prompt": ..., "answer": ...}` 목록입니다.
+마지막으로 전역 안전한 체크포인트를 `<out>/final`에 두고 각 단계 증거를
+`<out>/report.json`에 씁니다. 사실이 거부되거나 누적 드리프트 검사가 실패하면
+종료 코드 1입니다. `--continue-on-reject`는 실패를 기록하고 계속하며,
+`--keep-steps`는 마지막 안전 단계뿐 아니라 모든 단계를 보존합니다. 누적
+`--budget`은 사실별이 아니라 체인 전체에 적용됩니다.
+
 ## `demo`
 
 합성 rank-one 데모 실행. 모델도 네트워크도 필요 없음.

@@ -92,6 +92,25 @@ python -m machaon.cli teach --model ./models/Qwen2.5-0.5B \
 
 `--out`、`--evidence-out`、`--edit-out` の出力先が既に存在する場合、以前の成果物を上書きしないよう拒否します。
 
+## `teach-many`
+
+複数の事実を 1 つのチェックポイント連鎖として教えます。各事実は、直前の
+受け入れ済みチェックポイントから読み込んだ新しい session 上で単一の事実の
+レシピ全体を実行します。元のチェックポイントは変更しません。
+
+```bash
+machaon teach-many --model ./models/Qwen2.5-0.5B \
+  --facts facts.txt --out ./models/qwen-many
+```
+
+`facts.txt` は 1 行 1 文（`machaon intent` と同じ文法）か、JSON / JSONL の
+`{"say": ...}` または `{"prompt": ..., "answer": ...}` のリストです。最後の
+全体として安全なチェックポイントを `<out>/final` に置き、各ステップの証拠を
+`<out>/report.json` に書きます。事実が拒否された場合や累積ドリフト検査が
+失敗した場合は終了コード 1 です。`--continue-on-reject` は失敗を記録して
+続行し、`--keep-steps` は最後の安全なステップだけでなく全ステップを保持します。
+累積 `--budget` は事実ごとではなく連鎖全体に適用されます。
+
 ## `demo`
 
 合成 rank-one デモを実行。モデルもネットワークも不要。

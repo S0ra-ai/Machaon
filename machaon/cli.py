@@ -243,36 +243,9 @@ def _default_out(model: str) -> str:
 
 
 def _save_applied(session, out_dir: str) -> dict:
-    import shutil
-    from pathlib import Path
+    from .checkpointing import save_session
 
-    from .adapters import Checkpoint
-
-    target = Path(out_dir).expanduser()
-    if target.exists():
-        raise FileExistsError(
-            "output already exists: %s (choose another --out or remove it)" % target
-        )
-    checkpoint = Checkpoint(session.model_id)
-    changes = session.changes()
-    stored = getattr(session.runtime, "stored_values", None)
-    try:
-        if len(changes) == 1:
-            name = next(iter(changes))
-            values = session.runtime.read(name)
-            if callable(stored):
-                values = stored(name, values)
-            report = checkpoint.write_tensor(name, values, target)
-        else:
-            if callable(stored):
-                changes = {
-                    name: stored(name, delta) for name, delta in changes.items()
-                }
-            report = checkpoint.write_with(changes, target)
-    except Exception:
-        shutil.rmtree(target, ignore_errors=True)
-        raise
-    return {"output": str(target), "checkpoint": report}
+    return save_session(session, out_dir)
 
 
 def _discard_artifacts(artifacts: dict) -> None:
@@ -608,6 +581,96 @@ def _cmd_fetch(args) -> int:
         return int(exc.code or 0)
 
 
+def _cmd_teach_many(args) -> int:
+    from pathlib import Path
+
+    from .recipes import TeachPolicy
+    from .session import Session
+    from .teach_many import load_facts, teach_many
+
+    model_path = Path(args.model).expanduser()
+    if not model_path.exists():
+        return _error(
+            "%s: no such checkpoint; run machaon fetch --starter qwen05b" % args.model
+        )
+    if not model_path.is_dir():
+        return _error(
+            "teach-many needs a checkpoint directory; %s is a file" % model_path
+        )
+    try:
+        layers = _parse_layers(args.layers) if args.layers else None
+        facts = load_facts(args.facts)
+        preserve = _read_lines(args.preserve_file) if args.preserve_file else None
+    except (OSError, ValueError) as exc:
+        return _error(str(exc))
+    out = Path(args.out) if args.out else Path(_default_out(args.model))
+    if not args.out:
+        out = out.with_name(out.name + "-many")
+    policy = TeachPolicy(
+        max_rel_norm=args.max_rel_norm,
+        max_kl_p95=args.max_kl,
+        max_ppl_ratio=args.max_ppl_ratio,
+        min_panel_agreement=args.min_panel_agreement,
+    )
+
+    def session_factory(path, budget):
+        return Session.open(
+            str(path),
+            dtype=args.dtype,
+            device=args.device,
+            quantize=args.quantize,
+            budget=budget,
+        )
+
+    try:
+        result = teach_many(
+            session_factory,
+            str(model_path),
+            facts,
+            out,
+            budget=args.budget,
+            policy=policy,
+            preserve_prompts=preserve,
+            layers=layers,
+            solver=args.solver,
+            steps=args.steps,
+            lr=args.lr,
+            max_layers=args.max_layers,
+            keep_steps=args.keep_steps,
+            continue_on_reject=args.continue_on_reject,
+        )
+    except (OSError, ValueError, RuntimeError) as exc:
+        return _error(str(exc))
+    payload = result.to_dict()
+    if args.json:
+        print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+    else:
+        print("Machaon · teach-many")
+        print("model      : %s" % result.base_model)
+        print("facts      : %d" % result.facts)
+        print("budget     : %.4f cumulative (per-fact cap %.4f)" % (
+            result.budget, policy.max_rel_norm,
+        ))
+        for step in result.steps:
+            extra = ""
+            if step.global_panel_agreement is not None:
+                extra = " · global %d/%d, KL p95 %.3g" % (
+                    round(step.global_panel_agreement * result.panel_size),
+                    result.panel_size,
+                    step.global_kl_p95 or 0.0,
+                )
+            print("step %-3d %-12s %s%s" % (
+                step.index, step.status.upper(), step.prompt[:52], extra,
+            ))
+        print("final      : %s" % (result.final or "none (source unchanged)"))
+        print("cumulative : %.4f" % result.cumulative_relative_delta)
+        print("status     : %s" % result.status.upper())
+        print("summary    : %s" % result.summary)
+        if result.report_path:
+            print("report     : %s" % result.report_path)
+    return 0 if result.status in ("applied", "no_edits") else 1
+
+
 def _cmd_start(args) -> int:
     import numpy as np
 
@@ -834,6 +897,41 @@ def main(argv=None) -> int:
     )
     p_fetch.add_argument("--list", action="store_true", help="list starters and exit")
     p_fetch.add_argument("--json", action="store_true", help="machine-readable output")
+    p_many = sub.add_parser(
+        "teach-many",
+        help="teach several facts into one checkpoint chain",
+    )
+    p_many.add_argument("--model", required=True, help="base checkpoint directory")
+    p_many.add_argument(
+        "--facts", required=True,
+        help="text (one sentence per line), JSON or JSONL facts file",
+    )
+    p_many.add_argument("--out", default=None, help="output container directory")
+    p_many.add_argument("--budget", type=float, default=0.10, help="cumulative budget")
+    p_many.add_argument(
+        "--max-rel-norm", type=float, default=0.02, help="per-fact relative cap"
+    )
+    p_many.add_argument("--max-kl", type=float, default=0.05)
+    p_many.add_argument("--max-ppl-ratio", type=float, default=1.02)
+    p_many.add_argument("--min-panel-agreement", type=float, default=0.875)
+    p_many.add_argument("--preserve-file", default=None)
+    p_many.add_argument("--layers", default=None)
+    p_many.add_argument("--max-layers", type=int, default=7)
+    p_many.add_argument("--solver", choices=("direction", "gradient"), default="direction")
+    p_many.add_argument("--steps", type=int, default=250)
+    p_many.add_argument("--lr", type=float, default=0.02)
+    p_many.add_argument("--dtype", default="float32")
+    p_many.add_argument("--device", default=None)
+    p_many.add_argument("--quantize", choices=("int4", "int8"), default=None)
+    p_many.add_argument(
+        "--continue-on-reject", action="store_true",
+        help="record a rejected fact and continue with the next one",
+    )
+    p_many.add_argument(
+        "--keep-steps", action="store_true",
+        help="keep every step checkpoint, not only the last safe one",
+    )
+    p_many.add_argument("--json", action="store_true")
     p_start = sub.add_parser("start", help="print the shortest path to a first edit")
     p_start.add_argument("--demo", action="store_true", help="also run the synthetic demo")
 
@@ -864,6 +962,8 @@ def main(argv=None) -> int:
         return _cmd_intent(args)
     if args.command == "teach":
         return _cmd_teach(args)
+    if args.command == "teach-many":
+        return _cmd_teach_many(args)
     if args.command == "fetch":
         return _cmd_fetch(args)
     if args.command == "start":
