@@ -110,6 +110,16 @@ Read the third column. The naive edit moves the protected keys by 8.7e-2; the
 constrained edit leaves them at 3.1e-16. The last digit can move at the 1e-16
 level across BLAS implementations.
 
+To exercise the complete program path offline — generate, run, save, reload and
+verify a report — run:
+
+```bash
+python examples/tiny_program.py
+```
+
+It builds a tiny random GPT-2 locally and downloads nothing. This is a
+plumbing check, not a language-model result.
+
 ## 3 · Edit a matrix you own
 
 ```python

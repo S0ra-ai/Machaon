@@ -56,6 +56,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - `machaon program --plan` and `/api/program/plan` now include a side-effect-free
   preflight: model file/directory state, output collision/empty-directory
   status, the report path, and the starter name/size that would be downloaded.
+- `examples/tiny_program.py` exercises the complete offline program lifecycle
+  on a locally built tiny GPT-2: generate, run, save, reload, verify the report
+  and recheck the saved bytes. A skipped-without-extras regression test keeps
+  the path honest.
 - `machaon.intent`: a deterministic English/Chinese compiler from plain-language
   teaching requests (`->`, labelled blocks, "when asked ...", and sentence
   forms) into an exact, reviewable prompt/answer contract. Unstructured text is

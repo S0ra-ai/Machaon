@@ -16,6 +16,7 @@ model-level evidence.
 | `task_arithmetic.py` | extract and budget-combine task vectors | `python examples/task_arithmetic.py` |
 | `fingerprint_diff.py` | fingerprint tensors and report changed support | `python examples/fingerprint_diff.py` |
 | `action_edit.py` | run a protected Python action in an isolated worker | `python examples/action_edit.py` |
+| `tiny_program.py` | generate, run, reload and verify a complete program on a locally built tiny GPT-2 (requires `.[hf]`) | `python examples/tiny_program.py` |
 | `longform_check.py` | reference-scored long-form coherence | `python examples/longform_check.py` |
 | `wsp_report.json` | repair-vs-acquisition decision with matched controls and mechanism evidence | `python -m machaon.cli wsp examples/wsp_report.json` |
 | `wsp_benchmark.json` | labelled obstruction-vs-capability harness (synthetic fixture) | `python -m machaon.cli wsp-bench examples/wsp_benchmark.json` |

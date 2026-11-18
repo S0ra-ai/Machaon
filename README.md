@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-579-2ea44f)
+![tests](https://img.shields.io/badge/tests-580-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-78%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -437,6 +437,7 @@ The offline path needs no model download:
 ```bash
 python -m machaon.cli demo
 python examples/tiny_edit.py
+python examples/tiny_program.py   # full program lifecycle, no download
 ```
 
 The real-model path records dataset provenance before it runs:
