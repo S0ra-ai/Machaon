@@ -796,6 +796,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"firstEdit.title"', locales.text)
         self.assertIn('"firstEdit.save"', locales.text)
         self.assertIn('"firstEdit.openSaved"', locales.text)
+        self.assertIn('"firstEdit.again"', locales.text)
 
     def test_force_close_rolls_back_an_edited_session(self):
         opened = self.client.post(

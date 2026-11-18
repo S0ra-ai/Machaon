@@ -316,6 +316,7 @@
 
   function setActionState() {
     const ready = !!state.session;
+    const active = !!state.firstEdit;
     const canApply = ready && (!!state.proposal || !!state.session.has_pending) && !state.busy;
     const canEvaluate = ready && !state.busy;
     el.apply.disabled = !canApply;
@@ -329,6 +330,10 @@
     }
     if (el.firstEditOpen) el.firstEditOpen.disabled = state.busy;
     if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
+    if (el.firstEditButton) {
+      el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
+        ? t("firstEdit.again") : t("firstEdit.run");
+    }
   }
 
   function setConnection(kind, text, key = null) {
@@ -488,6 +493,10 @@
     }
     if (el.firstEditOpen) el.firstEditOpen.disabled = state.busy;
     if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
+    if (el.firstEditButton) {
+      el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
+        ? t("firstEdit.again") : t("firstEdit.run");
+    }
     if (el.firstEditOut && state.session && !el.firstEditOut.value) {
       const model = String(state.session.model || "").replace(/\/+$/, "");
       if (model) el.firstEditOut.value = model + "-machaon";
@@ -877,9 +886,14 @@
         return;
       }
       if (state.firstEdit && state.firstEdit.phase === "opening" && result && result.ready) {
-        state.firstEdit = null;
-        setFirstEditStatus("firstEdit.ready");
+        state.firstEdit = { phase: "another" };
+        el.firstEditSentence.value = "";
+        if (el.firstEditOut) el.firstEditOut.value = "";
+        const model = String(state.session.model || "").replace(/\/+$/, "");
+        if (el.firstEditOut && model) el.firstEditOut.value = model + "-machaon";
+        setFirstEditStatus("firstEdit.opened");
         renderFirstEdit();
+        el.firstEditSentence.focus();
         return;
       }
       if (kind === "close_session" && state.firstEdit && state.firstEdit.phase === "closing") {
@@ -958,6 +972,8 @@
         addTimelineEvent("first", t("timeline.firstEdit"), status, "ok");
         if (status === "applied") {
           state.firstEdit.phase = "done";
+        } else if (status === "already_true" || status === "rejected") {
+          state.firstEdit = { phase: "another" };
         } else {
           state.firstEdit = null;
         }
@@ -1211,6 +1227,22 @@
     renderTeachPreview(preview);
     $("#prompt").value = preview.prompt;
     $("#target").value = preview.answer;
+    if (state.firstEdit && state.firstEdit.phase === "another" && state.session) {
+      state.firstEdit = { sentence, preview, phase: "teach" };
+      setFirstEditStatus("firstEdit.teaching");
+      if (el.firstEditOut && !el.firstEditOut.value) {
+        const model = String(state.session.model || "").replace(/\/+$/, "");
+        if (model) el.firstEditOut.value = model + "-machaon";
+      }
+      renderFirstEdit();
+      startJob("/api/teach", {
+        sentence,
+        out_dir: null,
+        solver: "direction",
+        max_rel_norm: 0.02,
+      }, "teach");
+      return;
+    }
     const checkpoint = el.checkpointPath.value.trim();
     const root = (state.allowedRoots[0] || "").replace(/\/+$/, "");
     const dest = checkpoint || (root ? root + "/SmolLM2-135M" : "");

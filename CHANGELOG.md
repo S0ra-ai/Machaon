@@ -50,7 +50,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - The Web **FIRST EDIT** card chains starter download → open session →
   prefilled sentence → teaching result and keeps a prefilled checkpoint output
   plus a Save button after the edit is accepted, and then offers **Open saved
-  checkpoint** / **Done**; **Download starter** and **Teach a
+  checkpoint** / **Done**; opening returns to **Teach another fact** with a
+  cleared input and the new output path; **Download starter** and **Teach a
   list** expose the same flows, with a live SSE progress bar for downloads.
 - `/api/health` reports whether `torch`, `transformers` and `safetensors` are
   importable, and the console shows the exact missing-extra install command.
