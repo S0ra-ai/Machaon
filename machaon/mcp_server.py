@@ -165,6 +165,28 @@ def create_server():
         except Exception as exc:
             return {"error": str(exc)}
 
+    @server.tool()
+    def plan_program(path: str) -> Dict[str, Any]:
+        """Resolve a portable weight program without loading a model."""
+        from .program import load_program
+
+        try:
+            return load_program(path).to_dict()
+        except Exception as exc:
+            return {"error": str(exc)}
+
+    @server.tool()
+    def run_program(path: str, verify: Optional[bool] = None) -> Dict[str, Any]:
+        """Run a portable weight program and optionally verify saved bytes."""
+        from .program import load_program
+        from .program import run_program as execute_program
+
+        try:
+            result = execute_program(load_program(path), verify=verify)
+            return result.to_dict()
+        except Exception as exc:
+            return {"error": str(exc)}
+
     # -- model-level: one loaded session --------------------------------
 
     @server.tool()

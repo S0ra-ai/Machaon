@@ -44,6 +44,8 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `apply_delta(base_path, tensor, delta_path, out_dir)` | 把一个 `.npy` delta 应用到一个 tensor，写出新检查点 |
 | `gate(metrics)` | 应用验收门；缺失指标视为失败 |
 | `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | 重新加载保存检查点并复验一条或一组事实，不共享也不修改 session |
+| `plan_program(path)` | 解析可携带 `.machaon` 文本/JSON 程序，不加载模型 |
+| `run_program(path, verify)` | 运行程序、保存检查点链，并可选地重新加载并逐条复验事实 |
 | `wsp_audit(report)` | 将 WSP 报告分类为 repair、acquisition、non-specific 或 no-effect |
 | `wsp_save(report, out_dir, metadata)` | 写出内容寻址的 WSP evidence bundle |
 | `verify_binding(edit_dir, evidence_dir)` | 校验 OpenWSP edit 与 evidence bundle 的绑定 |
@@ -52,7 +54,8 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `parse_intent(sentence)` | 把一句自然语言教学请求编译成精确合同 |
 
 Header/evidence 工具委托给 `machaon.tools` 中的普通函数；`check_saved` 委托给
-`machaon.check`，会加载权重但不会打开或修改共享 session。传输层不增加行为。
+`machaon.check`，会加载权重但不会打开或修改共享 session。`plan_program` 只解析；
+`run_program` 与 CLI/Web 共用同一执行器和保存字节复验。传输层不增加行为。
 
 ## 模型级工具
 

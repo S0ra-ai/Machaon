@@ -77,6 +77,7 @@ class TestRegistration(unittest.TestCase):
             "describe_checkpoint", "list_tensors", "audit_edit", "apply_delta",
             "gate", "wsp_audit", "wsp_save", "verify_binding", "plan_surgery",
             "diagnose_failure", "parse_intent", "check_saved",
+            "plan_program", "run_program",
             "open_model", "model_status", "capture_baseline",
             "propose_edit", "propose_batch", "propose_action", "apply_edit",
             "evaluate", "assess_wsp", "assess_generation_wsp",
@@ -115,6 +116,27 @@ class TestRegistration(unittest.TestCase):
         self.assertEqual(payload["kind"], "teach")
         self.assertEqual(payload["prompt"], "北京的首都是")
         self.assertEqual(payload["answer"], "北京")
+
+    def test_program_tools_parse_without_a_model_and_report_errors(self):
+        with FakeMCPModules():
+            server = build_server()
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".machaon", delete=False
+        ) as handle:
+            handle.write(
+                "model: /tmp/definitely-not-a-model\n"
+                "output: /tmp/definitely-not-an-output\n"
+                "teach: The capital of France is -> Paris\n"
+            )
+            path = handle.name
+        try:
+            plan = server.tools["plan_program"](path)
+            self.assertEqual(len(plan["facts"]), 1)
+            self.assertEqual(plan["facts"][0]["prompt"], "The capital of France is")
+            failed = server.tools["run_program"](path, verify=False)
+            self.assertIn("error", failed)
+        finally:
+            Path(path).unlink(missing_ok=True)
 
 
 @requires_torch

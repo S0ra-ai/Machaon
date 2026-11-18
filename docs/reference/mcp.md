@@ -56,10 +56,14 @@ restart. Model-level tools share one explicitly opened `Session`.
 | `diagnose_failure(base, headroom, mechanism, target_metric, min_target_gap, min_mechanism_gap)` | classify obstruction vs capability gap without editing |
 | `parse_intent(sentence)` | compile a plain-language teaching request into an exact contract |
 | `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | reload a saved checkpoint and evaluate one fact or a fact list without a shared session |
+| `plan_program(path)` | parse a portable `.machaon` text/JSON program without loading a model |
+| `run_program(path, verify)` | run a portable program, save its checkpoint chain, and optionally reload/verify every fact |
 
 Header and evidence tools delegate to plain functions in `machaon.tools`.
 `check_saved` delegates to `machaon.check`, loads weights but never opens or
-changes the shared session. The transport adds no behaviour.
+changes the shared session. `plan_program` is header-only;
+`run_program` delegates to the same program runner as the CLI and Web console,
+including its saved-byte verification. The transport adds no behaviour.
 
 ## Model-level tools
 

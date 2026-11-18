@@ -18,6 +18,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   `/api/program/plan` and `/api/program/run`, constrained by the existing
   filesystem allowlist; it can prefill a program from the current checkpoint
   and download the editor text as a `.machaon` file.
+- MCP `plan_program` and `run_program` expose the portable program runner to
+  agents; the tool surface is now 27 tools.
 - `machaon.intent`: a deterministic English/Chinese compiler from plain-language
   teaching requests (`->`, labelled blocks, "when asked ...", and sentence
   forms) into an exact, reviewable prompt/answer contract. Unstructured text is

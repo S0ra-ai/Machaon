@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-554-2ea44f)
+![tests](https://img.shields.io/badge/tests-555-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-78%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -523,7 +523,7 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
   the WSP evidence hash inside the manifest's `machaon` object.
 - **Binding verification** — confirm the OpenWSP edit address, evidence address
   and manifest payload still agree before trusting either artefact.
-- **An agent interface** — 25 MCP tools over stdio, file-level, saved-checkpoint and model-level.
+- **An agent interface** — 27 MCP tools over stdio, file-level, portable-program, saved-checkpoint and model-level.
 - **A local browser console** — inspect, propose, apply, evaluate and roll back
   through the same session contract, with SSE job progress and a token-scoped
   checkpoint allowlist.

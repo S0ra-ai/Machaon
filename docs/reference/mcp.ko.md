@@ -44,11 +44,14 @@ Claude Desktop(`claude_desktop_config.json`):
 | `apply_delta(base_path, tensor, delta_path, out_dir)` | 하나의 `.npy` delta를 한 tensor에 적용하고 새 체크포인트 작성 |
 | `gate(metrics)` | 게이트 적용. 누락 지표는 실패 |
 | `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | 저장된 체크포인트를 다시 읽고 공유 session 없이 하나 또는 여러 사실 평가 |
+| `plan_program(path)` | 모델을 읽지 않고 이식 가능한 `.machaon` 텍스트/JSON 프로그램 파싱 |
+| `run_program(path, verify)` | 프로그램을 실행해 체크포인트 체인을 저장하고 선택적으로 모든 사실 재검증 |
 | `parse_intent(sentence)` | 자연어 교수 요청을 정확한 계약으로 컴파일 |
 
 Header/evidence 도구는 `machaon.tools`에, `check_saved`는 `machaon.check`에
 위임합니다. 후자는 가중치를 다시 읽지만 공유 session을 열거나 수정하지 않습니다.
-전송은 동작을 추가하지 않습니다.
+`plan_program`은 파싱만 하고, `run_program`은 CLI/Web과 같은 실행기와 저장 바이트
+검증을 사용합니다. 전송은 동작을 추가하지 않습니다.
 
 ## 모델 수준 도구
 

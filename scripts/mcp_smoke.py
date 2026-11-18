@@ -10,6 +10,8 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+import tempfile
+from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -18,6 +20,7 @@ EXPECTED = {
     "describe_checkpoint", "list_tensors", "audit_edit", "apply_delta", "gate",
     "wsp_audit", "wsp_save", "verify_binding", "plan_surgery",
     "diagnose_failure", "parse_intent", "check_saved",
+    "plan_program", "run_program",
     "open_model", "model_status", "capture_baseline", "propose_edit",
     "propose_batch", "propose_action", "apply_edit", "evaluate",
     "assess_wsp", "assess_generation_wsp", "search_rome_layers", "teach",
@@ -105,6 +108,34 @@ async def main() -> int:
             print("check_saved list without a model:", text[:60])
             if "error" not in text:
                 return 1
+
+            with tempfile.NamedTemporaryFile(
+                "w", suffix=".machaon", delete=False
+            ) as handle:
+                handle.write(
+                    "model: /tmp/definitely-not-a-model\n"
+                    "output: /tmp/definitely-not-an-output\n"
+                    "teach: The capital of France is -> Paris\n"
+                )
+                program_path = handle.name
+            planned_program = await session.call_tool(
+                "plan_program", {"path": program_path}
+            )
+            plan = json.loads(planned_program.content[0].text)
+            print("plan_program facts:", len(plan.get("facts", [])))
+            if len(plan.get("facts", [])) != 1:
+                return 1
+            failed_program = await session.call_tool(
+                "run_program", {"path": program_path, "verify": False}
+            )
+            text = failed_program.content[0].text
+            print("run_program without a model:", text[:60])
+            if "error" not in text:
+                return 1
+            try:
+                Path(program_path).unlink()
+            except OSError:
+                pass
 
             status = await session.call_tool("model_status", {})
             text = status.content[0].text
