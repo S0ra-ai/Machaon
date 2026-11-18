@@ -6,6 +6,7 @@
   const LOCALES = window.MACHAON_I18N || {};
   const SUPPORTED_LOCALES = ["en", "zh", "ja", "ko"];
   const LAST_CHECKPOINT_KEY = "machaon-last-checkpoint";
+  const PROGRAM_HISTORY_KEY = "machaon-program-history";
   const state = {
     token: "",
     locale: "en",
@@ -33,6 +34,7 @@
     firstEditStatusKind: "",
     firstEditEvidence: null,
     program: null,
+    programHistory: [],
   };
 
   const el = {
@@ -66,6 +68,8 @@
     programFile: $("#programFile"),
     programTemplateSmol: $("#programTemplateSmol"),
     programTemplateTwo: $("#programTemplateTwo"),
+    programHistory: $("#programHistory"),
+    programHistoryLoad: $("#programHistoryLoad"),
     programCard: $("#programCard"),
     checkpointBadge: $("#checkpointBadge"),
     tensorRows: $("#tensorRows"),
@@ -362,6 +366,7 @@
     if (el.programFileButton) el.programFileButton.disabled = state.busy;
     if (el.programTemplateSmol) el.programTemplateSmol.disabled = state.busy;
     if (el.programTemplateTwo) el.programTemplateTwo.disabled = state.busy;
+    if (el.programHistoryLoad) el.programHistoryLoad.disabled = state.busy;
     if (el.firstEditButton) {
       el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
         ? t("firstEdit.again") : t("firstEdit.run");
@@ -403,6 +408,7 @@
       if (state.session) el.checkpointPath.value = state.session.model || el.checkpointPath.value;
       if (state.session) rememberCheckpoint(state.session.model);
       if (!state.session) setFirstEditReadyStatus();
+      readProgramHistory();
       maybeShowGuide();
     } catch (err) {
       setConnection("error", t("conn.offline"), "conn.offline");
@@ -543,6 +549,62 @@
         "</p>" : "") +
       (payload.report_path ? '<p class="mono tiny">' +
         escapeHtml(payload.report_path) + "</p>" : "");
+  }
+
+  function readProgramHistory() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(PROGRAM_HISTORY_KEY) || "[]");
+      state.programHistory = Array.isArray(parsed) ? parsed.filter((item) =>
+        item && typeof item.text === "string" && item.text.trim()
+      ).slice(0, 8) : [];
+    } catch (_) {
+      state.programHistory = [];
+    }
+    renderProgramHistory();
+  }
+
+  function renderProgramHistory() {
+    if (!el.programHistory) return;
+    const current = el.programHistory.value;
+    const options = ['<option value="" data-i18n="program.history">' +
+      escapeHtml(t("program.history")) + "</option>"];
+    state.programHistory.forEach((item, index) => {
+      options.push('<option value="' + index + '">' +
+        escapeHtml(item.name || t("program.untitled")) + "</option>");
+    });
+    el.programHistory.innerHTML = options.join("");
+    if (current && Number(current) < state.programHistory.length) {
+      el.programHistory.value = current;
+    }
+  }
+
+  function rememberProgram() {
+    const text = el.programText.value.trim();
+    if (!text) return;
+    const nameMatch = text.match(/^\s*name\s*[:=]\s*(.+)$/m);
+    const modelMatch = text.match(/^\s*model\s*[:=]\s*(.+)$/m);
+    const name = (nameMatch && nameMatch[1].trim())
+      || (modelMatch && modelMatch[1].trim().split("/").pop())
+      || t("program.untitled");
+    state.programHistory = [
+      { name, text, saved_at: Date.now() },
+    ].concat(state.programHistory.filter((item) => item.text !== text)).slice(0, 8);
+    try {
+      localStorage.setItem(PROGRAM_HISTORY_KEY, JSON.stringify(state.programHistory));
+    } catch (_) {
+      // Storage can be unavailable or full; the editor still works.
+    }
+    renderProgramHistory();
+  }
+
+  function loadRememberedProgram() {
+    if (el.programHistory.value === "") return;
+    const index = Number(el.programHistory.value);
+    const item = state.programHistory[index];
+    if (!item) return;
+    el.programText.value = item.text;
+    el.programPanel.open = true;
+    addTimelineEvent("program", t("timeline.programHistory"), item.name || "", "ok");
   }
 
   function renderTensors(rows) {
@@ -1899,6 +1961,7 @@
         method: "POST",
         body: JSON.stringify(body),
       });
+      rememberProgram();
       renderProgram(payload);
       el.programPanel.open = true;
       addTimelineEvent("program", t("timeline.programPlan"),
@@ -1917,6 +1980,7 @@
       addTimelineEvent("error", err.message, "", "err");
     }
   });
+  $("#programHistoryLoad").addEventListener("click", loadRememberedProgram);
   $("#programDownloadButton").addEventListener("click", () => {
     try {
       downloadProgram();
@@ -1945,6 +2009,7 @@
     } catch (err) {
       return addTimelineEvent("error", err.message, "", "err");
     }
+    rememberProgram();
     startJob("/api/program/run", body, "program_run");
   });
   if (el.checkButton) {

@@ -916,6 +916,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="programFile"', page.text)
         self.assertIn('id="programTemplateSmol"', page.text)
         self.assertIn('id="programTemplateTwo"', page.text)
+        self.assertIn('id="programHistory"', page.text)
         self.assertIn('id="programDownloadButton"', page.text)
         self.assertIn('id="fetchOpen"', page.text)
         self.assertIn('data-i18n="onboarding.title"', page.text)
