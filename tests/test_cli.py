@@ -372,6 +372,15 @@ class TestCli(unittest.TestCase):
         self.assertIn("output: ./models/custom-machaon", out)
         self.assertNotIn("fetch:", out)
 
+    def test_program_new_uses_the_requested_starter_name(self):
+        code, out, _ = run(
+            "program-new", "-", "--fetch", "qwen05b",
+            "--teach", "北京的首都是 -> 北京",
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("model: ./models/Qwen2.5-0.5B", out)
+        self.assertIn("fetch: qwen05b", out)
+
     def test_program_new_refuses_conflicting_fetch_flags(self):
         code, _, err = run(
             "program-new", "-", "--fetch", "gpt2", "--no-fetch",

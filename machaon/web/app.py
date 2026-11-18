@@ -145,6 +145,17 @@ class ProgramVerifyRequest(BaseModel):
     checkpoint: Optional[str] = Field(default=None, max_length=4000)
 
 
+class ProgramNewRequest(BaseModel):
+    facts: List[str] = Field(min_length=1, max_length=100)
+    model: str = Field(min_length=1, max_length=4000)
+    output: Optional[str] = Field(default=None, max_length=4000)
+    fetch: Optional[str] = None
+    name: str = Field(default="", max_length=400)
+    protect: List[str] = Field(default_factory=list, max_length=100)
+    budget: float = Field(default=0.10, gt=0.0, le=1.0)
+    max_rel_norm: float = Field(default=0.02, gt=0.0, le=0.5)
+
+
 class EvaluateRequest(BaseModel):
     prompts: List[str] = Field(min_length=1)
     targets: List[Union[str, int]] = Field(min_length=1)
@@ -522,6 +533,22 @@ def create_app(
                 checkpoint=body.checkpoint,
             ),
         )
+
+    @app.post("/api/program/new")
+    def program_new(body: ProgramNewRequest) -> Dict[str, Any]:
+        try:
+            return web_service.new_program(
+                body.facts,
+                model=body.model,
+                output=body.output,
+                fetch=body.fetch,
+                name=body.name,
+                protect=body.protect,
+                budget=body.budget,
+                max_rel_norm=body.max_rel_norm,
+            )
+        except (OSError, TypeError, ValueError, PermissionError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.post("/api/teach_many")
     def teach_many(body: TeachManyRequest) -> Dict[str, Any]:

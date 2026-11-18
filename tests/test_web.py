@@ -519,6 +519,45 @@ class TestWebApp(unittest.TestCase):
         )
         self.assertIn(response.status_code, (400, 403))
 
+    def test_program_new_uses_the_shared_generator(self):
+        response = self.client.post(
+            "/api/program/new",
+            headers=self.headers,
+            json={
+                "facts": [
+                    "The capital of France is -> Paris",
+                    "The city is -> Rome",
+                ],
+                "model": "./base",
+                "output": "./edited",
+                "fetch": None,
+                "name": "Generated facts",
+                "protect": ["Two plus two equals"],
+                "budget": 0.12,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIn("teach: The capital of France is -> Paris", body["text"])
+        self.assertIn("protect: Two plus two equals", body["text"])
+        self.assertEqual(len(body["program"]["facts"]), 2)
+        self.assertEqual(body["program"]["policy"]["budget"], 0.12)
+        self.assertEqual(body["program"]["model"], str((self.root / "base").resolve()))
+
+    def test_program_new_reports_a_bad_sentence(self):
+        response = self.client.post(
+            "/api/program/new",
+            headers=self.headers,
+            json={
+                "facts": ["please make it better"],
+                "model": "./base",
+                "output": "./edited",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("could not read this as a teaching request",
+                      response.json()["detail"])
+
     def test_program_run_completes_as_a_job(self):
         text = (
             "model: ./base\noutput: ./edited\n"

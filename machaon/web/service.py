@@ -613,6 +613,42 @@ class WebService:
         payload["model_exists"] = Path(program.model).is_dir()
         return payload
 
+    def new_program(
+        self,
+        facts: Sequence[str],
+        *,
+        model: str,
+        output: Optional[str] = None,
+        fetch: Optional[str] = None,
+        name: str = "",
+        protect: Optional[Sequence[str]] = None,
+        budget: float = 0.10,
+        max_rel_norm: float = 0.02,
+    ) -> Dict[str, Any]:
+        """Generate the shared text format without writing a file."""
+        from ..program import parse_program, render_program_text
+
+        output_text = output or model.rstrip("/\\") + "-machaon"
+        text = render_program_text(
+            model=model,
+            output=output_text,
+            fetch=fetch,
+            name=name,
+            teach=list(facts),
+            protect=list(protect or ()),
+            budget=budget,
+            max_rel_norm=max_rel_norm,
+        )
+        program = parse_program(
+            text,
+            source="<web generated program>",
+            base_dir=self.policy.roots[0],
+        )
+        return {
+            "text": text,
+            "program": program.to_dict(),
+        }
+
     def run_program(
         self,
         text: str,

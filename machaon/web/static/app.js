@@ -1903,7 +1903,7 @@
     addTimelineEvent("program", t("timeline.programTemplate"), kind, "ok");
   }
 
-  function buildProgramFromFacts() {
+  async function buildProgramFromFacts() {
     const raw = el.programFacts.value.split(/\r?\n/)
       .map((line) => line.trim())
       .filter((line) => line && !line.startsWith("#"));
@@ -1923,22 +1923,20 @@
     }
     const output = nextCheckpointPath(model);
     const name = model.split("/").filter(Boolean).pop() || "weight-space";
-    const lines = [
-      "version: 1",
-      "name: " + name + " facts",
-      "model: " + portableProgramPath(model, base),
-    ];
-    if (fetchStarter) lines.push("fetch: " + fetchStarter);
-    lines.push(
-      "output: " + portableProgramPath(output, base),
-      "budget: 0.10",
-      "max_rel_norm: 0.02",
-      "verify: true",
-      "",
-    );
-    el.programText.value = lines.concat(
-      raw.map((line) => "teach: " + line)
-    ).join("\n") + "\n";
+    const payload = await api("/api/program/new", {
+      method: "POST",
+      body: JSON.stringify({
+        facts: raw,
+        model: portableProgramPath(model, base),
+        output: portableProgramPath(output, base),
+        fetch: fetchStarter,
+        name: name + " facts",
+        protect: preserveLines(),
+        budget: 0.10,
+        max_rel_norm: 0.02,
+      }),
+    });
+    el.programText.value = payload.text;
     el.programPanel.open = true;
     addTimelineEvent("program", t("timeline.programBuild"), raw.length + " facts", "ok");
   }
@@ -2338,11 +2336,11 @@
   $("#programFileButton").addEventListener("click", () => el.programFile.click());
   el.programTemplateSmol.addEventListener("click", () => loadProgramTemplate("smol"));
   el.programTemplateTwo.addEventListener("click", () => loadProgramTemplate("two"));
-  el.programBuildButton.addEventListener("click", () => {
+  el.programBuildButton.addEventListener("click", async () => {
     try {
-      buildProgramFromFacts();
+      await buildProgramFromFacts();
     } catch (err) {
-      addTimelineEvent("error", err.message, "", "err");
+      addTimelineEvent("error", localizedJobError(err.message), "", "err");
     }
   });
   el.programFile.addEventListener("change", async () => {

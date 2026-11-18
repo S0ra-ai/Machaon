@@ -421,6 +421,9 @@ def _cmd_first(args) -> int:
             artifacts,
             title="Machaon · first edit",
         )
+        if result.accepted:
+            print("share      : machaon program-new ./first.machaon \\")
+            print("               --teach %s" % json.dumps(args.say))
         if result.model_fetched:
             print("download   : %s" % result.model)
     return 0 if result.accepted else 1
@@ -770,6 +773,8 @@ def _cmd_start(args) -> int:
     print("   (machaon-web is the same launcher)")
     print()
     print("6. Save a whole run as a reviewable text program:")
+    print('   machaon program-new ./hello.machaon \\')
+    print('     --teach "The Eiffel Tower is in the city of -> Rome"')
     print("   machaon program examples/hello.machaon --plan")
     print("   machaon program examples/hello.machaon")
     print()
@@ -1062,7 +1067,14 @@ def _cmd_program_new(args) -> int:
 
     if args.fetch and args.no_fetch:
         return _error("use --fetch or --no-fetch, not both")
-    model = args.model or "./models/SmolLM2-135M"
+    starter_paths = {
+        "smol135m": "./models/SmolLM2-135M",
+        "qwen05b": "./models/Qwen2.5-0.5B",
+        "gpt2": "./models/gpt2",
+    }
+    model = args.model or starter_paths.get(
+        args.fetch or "smol135m", "./models/SmolLM2-135M"
+    )
     if args.output:
         output = args.output
     else:
