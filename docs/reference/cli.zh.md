@@ -166,7 +166,8 @@ machaon program ./lesson.json --out ./models/experiment-2
 
 `--plan` 只解析并打印合同，不下载、不加载模型。运行会把编辑交给
 `teach-many`，写入 `<output>/program-report.json`，并默认重新加载保存后的
-检查点逐条复验。`--no-verify` 跳过最后这一步；`--json` 输出完整计划或运行结果。
+检查点逐条复验。`--no-verify` 跳过最后这一步；`--json` 输出完整计划或运行结果；
+默认逐条打印进度，`--quiet` 可关闭。
 
 退出码：`0` 表示计划合法或运行通过复验，`1` 表示编辑被拒或复验失败，`2` 表示
 程序格式或模型错误。字段表和完整示例见[权重程序](../guides/weight-programs.md)。

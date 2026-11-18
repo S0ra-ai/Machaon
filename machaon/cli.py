@@ -920,9 +920,9 @@ def _cmd_program(args) -> int:
         return _error(str(exc))
 
     if args.plan:
-        if args.out or args.no_verify:
+        if args.out or args.no_verify or args.quiet:
             return _error(
-                "--out and --no-verify can only be used when running a program"
+                "--out, --no-verify and --quiet can only be used when running a program"
             )
         payload = program.to_dict()
         payload["command"] = "machaon program %s" % program.path
@@ -932,11 +932,31 @@ def _cmd_program(args) -> int:
             _print_program_plan(program)
         return 0
 
+    def progress(event):
+        if event.get("phase") != "program":
+            return
+        status = event.get("status", "")
+        if status == "started":
+            print("progress   : started %s fact(s)" % event.get("total", "?"),
+                  flush=True)
+        elif status == "finished":
+            print("progress   : finished · %s · %s fact(s)" % (
+                event.get("outcome", ""), event.get("total", "?"),
+            ), flush=True)
+        elif event.get("step"):
+            print("progress   : %s/%s %-12s %s" % (
+                event.get("step", "?"),
+                event.get("total", "?"),
+                status,
+                str(event.get("prompt", ""))[:64],
+            ), flush=True)
+
     try:
         result = run_program(
             program,
             out_override=args.out,
             verify=False if args.no_verify else None,
+            progress=None if (args.json or args.quiet) else progress,
         )
     except (OSError, ValueError, TypeError, RuntimeError, ProgramError) as exc:
         return _error(str(exc))
@@ -1267,6 +1287,10 @@ def main(argv=None) -> int:
     p_program.add_argument(
         "--no-verify", action="store_true",
         help="skip reloading the saved checkpoint for a fact check",
+    )
+    p_program.add_argument(
+        "--quiet", action="store_true",
+        help="do not print per-fact progress while the program runs",
     )
     p_program.add_argument("--json", action="store_true")
     p_start = sub.add_parser("start", help="print the shortest path to a first edit")
