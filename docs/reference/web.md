@@ -150,7 +150,9 @@ output naming rule, and the standard budget and verification defaults. It calls
 `machaon program-new`. Preserve prompts from the edit column become `protect`
 entries. With no checkpoint selected it uses the chosen SmolLM2/Qwen/GPT-2
 starter and adds the matching `fetch` directive, so a first program can start
-from zero.
+from zero. The same endpoint accepts the advanced generator fields (`layers`,
+`solver`, `dtype`, `device`, `quantize`, verification policy and step
+retention), so API clients are not limited to the browser form.
 Each completed run is also added to **Recent runs**; **Open output** reopens its
 final checkpoint without manually copying the path.
 

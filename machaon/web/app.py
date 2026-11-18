@@ -154,6 +154,19 @@ class ProgramNewRequest(BaseModel):
     protect: List[str] = Field(default_factory=list, max_length=100)
     budget: float = Field(default=0.10, gt=0.0, le=1.0)
     max_rel_norm: float = Field(default=0.02, gt=0.0, le=0.5)
+    max_kl: float = Field(default=0.05, gt=0.0)
+    min_panel_agreement: float = Field(default=0.875, ge=0.0, le=1.0)
+    layers: Optional[Union[str, List[int]]] = None
+    solver: str = "direction"
+    steps: int = 250
+    lr: float = 0.02
+    max_layers: int = 7
+    dtype: str = "float32"
+    device: Optional[str] = None
+    quantize: Optional[str] = None
+    verify: bool = True
+    continue_on_reject: bool = False
+    keep_steps: bool = False
 
 
 class EvaluateRequest(BaseModel):
@@ -546,6 +559,19 @@ def create_app(
                 protect=body.protect,
                 budget=body.budget,
                 max_rel_norm=body.max_rel_norm,
+                max_kl=body.max_kl,
+                min_panel_agreement=body.min_panel_agreement,
+                layers=body.layers,
+                solver=body.solver,
+                steps=body.steps,
+                lr=body.lr,
+                max_layers=body.max_layers,
+                dtype=body.dtype,
+                device=body.device,
+                quantize=body.quantize,
+                verify=body.verify,
+                continue_on_reject=body.continue_on_reject,
+                keep_steps=body.keep_steps,
             )
         except (OSError, TypeError, ValueError, PermissionError) as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc

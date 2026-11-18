@@ -126,7 +126,9 @@ Qwen2.5-0.5B 上で英語と中国語を同じプログラムで扱います。
 標準予算と検証方針を使ったレビュー可能な `.machaon` に変換します。チェックポイントが
 未選択の場合は選択中の SmolLM2/Qwen/GPT-2 starter と対応する `fetch` を自動で使います。
 このボタンは `/api/program/new` を呼び、`machaon program-new` と同じ生成器とパーサーを
-共有します。編集列の preserve prompts は `protect` エントリになります。
+共有します。編集列の preserve prompts は `protect` エントリになります。この端点は CLI と
+同じ layers、solver、dtype、device、quantize、検証方針、ステップ保持などの高度な生成
+フィールドを受け付けるため、API クライアントは Web フォームに制限されません。
 完了した実行は **最近の実行** に入り、**出力を開く** で final をパス入力なしで再オープンできます。
 
 どちらのルートも他のコンソール操作と同じファイル許可リストを適用します。

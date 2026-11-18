@@ -560,6 +560,36 @@ class TestWebApp(unittest.TestCase):
         self.assertIn("could not read this as a teaching request",
                       response.json()["detail"])
 
+    def test_program_new_accepts_advanced_fields(self):
+        response = self.client.post(
+            "/api/program/new",
+            headers=self.headers,
+            json={
+                "facts": ["The capital of France is -> Paris"],
+                "model": "./base",
+                "output": "./edited",
+                "layers": [1, 2],
+                "solver": "gradient",
+                "dtype": "auto",
+                "quantize": "int8",
+                "device": "cpu",
+                "verify": False,
+                "continue_on_reject": True,
+                "keep_steps": True,
+                "min_panel_agreement": 0.5,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        program = response.json()["program"]
+        self.assertEqual(program["runtime"]["layers"], [1, 2])
+        self.assertEqual(program["runtime"]["solver"], "gradient")
+        self.assertEqual(program["runtime"]["quantize"], "int8")
+        self.assertEqual(program["runtime"]["device"], "cpu")
+        self.assertFalse(program["verify"])
+        self.assertTrue(program["continue_on_reject"])
+        self.assertTrue(program["keep_steps"])
+        self.assertEqual(program["policy"]["min_panel_agreement"], 0.5)
+
     def test_program_run_completes_as_a_job(self):
         text = (
             "model: ./base\noutput: ./edited\n"

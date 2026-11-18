@@ -125,7 +125,9 @@ preserve prompts로 편집기를 채웁니다. **.machaon 다운로드**는 편�
 이름 규칙, 기본 예산과 검증 정책을 사용하는 검토 가능한 `.machaon`으로 변환합니다.
 체크포인트가 없으면 선택한 SmolLM2/Qwen/GPT-2 starter와 해당 `fetch` 지시문을 자동으로 넣습니다.
 이 버튼은 `/api/program/new`를 호출하며 `machaon program-new`와 같은 생성기와 파서를
-공유합니다. 편집 열의 preserve prompts는 `protect` 항목이 됩니다.
+공유합니다. 편집 열의 preserve prompts는 `protect` 항목이 됩니다. 이 엔드포인트는 CLI와
+같은 layers, solver, dtype, device, quantize, 검증 정책, 단계 보존 등 고급 생성 필드를
+받으므로 API 클라이언트가 웹 폼에 제한되지 않습니다.
 완료된 실행은 **최근 실행**에 추가되며, **출력 열기**로 final 체크포인트를 경로 입력 없이 다시 열 수 있습니다.
 
 두 경로 모두 다른 콘솔 작업과 같은 파일 시스템 허용 목록을 적용합니다.

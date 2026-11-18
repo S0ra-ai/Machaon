@@ -107,7 +107,9 @@ preserve prompts 填充编辑器；**下载 .machaon** 会把编辑器内容保�
 同一套输出命名规则以及默认预算和复验策略。若尚未选择检查点，会使用所选的
 SmolLM2/Qwen/GPT-2 starter，并自动加入对应的 `fetch` 指令，因此可以从零开始。
 该按钮调用 `/api/program/new`，与 `machaon program-new` 共用同一个生成器和解析器；
-编辑栏中的 preserve prompts 会成为 `protect` 条目。
+编辑栏中的 preserve prompts 会成为 `protect` 条目。该端点和 CLI 一样接受 layers、
+solver、dtype、device、quantize、复验策略和步骤保留等高级生成字段，API 客户端不必受限于
+网页表单。
 完成的运行会进入 **最近运行**；**打开输出** 可以直接重新打开 final 检查点，无需复制路径。
 
 这两个接口和浏览器其他操作一样受文件系统白名单限制；仅凭粘贴程序不能越过

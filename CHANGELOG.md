@@ -65,6 +65,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - **Build program from facts** now calls `/api/program/new`, the same generator
   and parser used by `machaon program-new`; preserve prompts become `protect`
   entries instead of being silently dropped.
+- `/api/program/new` accepts the advanced generator fields (layers, solver,
+  dtype, device, quantization, verification and step retention), matching the
+  CLI generator.
 - The Web program templates now include a **Bilingual Qwen** starter that
   teaches one Chinese and one English fact on Qwen2.5-0.5B.
 - `machaon program --plan` and `/api/program/plan` now include a side-effect-free
