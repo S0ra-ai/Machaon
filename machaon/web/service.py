@@ -508,6 +508,8 @@ class WebService:
         elif not prompt or answer is None or answer == "":
             raise ValueError("check needs a sentence, or both prompt and answer")
 
+        from ..check import evaluate_fact
+
         current = self.state() if self.session is not None else {"ready": False}
         owned = False
         session = None
@@ -537,32 +539,13 @@ class WebService:
                 )
                 owned = True
 
-            candidates = [answer]
-            if not prompt.endswith((" ", "\n", "\t")) and not answer.startswith(" "):
-                candidates.append(" " + answer)
-            best = None
-            for candidate in candidates:
-                metrics = session.evaluate([prompt], [candidate])
-                accuracy = float(metrics.get("accuracy", 0.0))
-                if (best is None or accuracy > best[1]
-                        or (accuracy == best[1] and candidate.startswith(" ")
-                            and not best[0].startswith(" "))):
-                    best = (candidate, accuracy, dict(metrics))
+            result = evaluate_fact(session, prompt, answer)
         finally:
             if owned:
                 session = None
 
-        assert best is not None
-        return {
-            "status": "pass" if best[1] >= 1.0 else "fail",
-            "passed": best[1] >= 1.0,
-            "model": resolved,
-            "prompt": prompt,
-            "answer": answer,
-            "answer_text": best[0],
-            "accuracy": best[1],
-            "metrics": best[2],
-        }
+        result["model"] = resolved
+        return result
 
     def _require_session(self) -> Any:
         with self._lock:

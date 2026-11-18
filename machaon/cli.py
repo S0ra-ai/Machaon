@@ -786,73 +786,32 @@ def _cmd_start(args) -> int:
 
 
 def _cmd_check(args) -> int:
-    import gc
-    from pathlib import Path
+    from .check import check_checkpoint
+    from .intent import IntentError
 
-    from .intent import IntentError, parse_intent
-    from .session import Session
-
-    try:
-        if args.say:
-            if args.prompt is not None or args.answer is not None:
-                return _error("use --say or --prompt/--answer, not both")
-            intent = parse_intent(args.say)
-            prompt, answer = intent.prompt, intent.answer
-        else:
-            if not args.prompt or args.answer is None:
-                return _error("pass --say or both --prompt and --answer")
-            prompt, answer = args.prompt, args.answer
-    except IntentError as exc:
-        return _error(str(exc))
     if args.quantize is not None and args.dtype != "auto":
         return _error("--quantize requires --dtype auto")
-
-    model = str(Path(args.model).expanduser())
-    candidates = [answer]
-    if not prompt.endswith((" ", "\n", "\t")) and not answer.startswith(" "):
-        candidates.append(" " + answer)
-    session = None
     try:
-        session = Session.open(
-            model,
+        payload = check_checkpoint(
+            args.model,
+            sentence=args.say,
+            prompt=args.prompt,
+            answer=args.answer,
             dtype=args.dtype,
             device=args.device,
             quantize=args.quantize,
         )
-        best = None
-        for candidate in candidates:
-            metrics = session.evaluate([prompt], [candidate])
-            accuracy = float(metrics.get("accuracy", 0.0))
-            if (best is None or accuracy > best[1]
-                    or (accuracy == best[1] and candidate.startswith(" ")
-                        and not best[0].startswith(" "))):
-                best = (candidate, accuracy, dict(metrics))
-    except (ImportError, OSError, RuntimeError, TypeError, ValueError) as exc:
+    except (ImportError, OSError, RuntimeError, TypeError, ValueError, IntentError) as exc:
         return _error(str(exc))
-    finally:
-        session = None
-        gc.collect()
-
-    assert best is not None
-    passed = best[1] >= 1.0
-    payload = {
-        "status": "pass" if passed else "fail",
-        "passed": passed,
-        "model": model,
-        "prompt": prompt,
-        "answer": answer,
-        "answer_text": best[0],
-        "accuracy": best[1],
-        "metrics": best[2],
-    }
+    passed = bool(payload["passed"])
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
     else:
         print("PASS" if passed else "FAIL")
-        print("model    : %s" % model)
-        print("prompt   : %s" % prompt)
-        print("answer   : %s" % best[0])
-        print("accuracy : %.3f" % best[1])
+        print("model    : %s" % payload["model"])
+        print("prompt   : %s" % payload["prompt"])
+        print("answer   : %s" % payload["answer_text"])
+        print("accuracy : %.3f" % payload["accuracy"])
     return 0 if passed else 1
 
 

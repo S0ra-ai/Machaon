@@ -55,9 +55,11 @@ restart. Model-level tools share one explicitly opened `Session`.
 | `plan_surgery(failure_type, layer_scores, patch_report, module_suffix, max_rel_norm, min_score)` | choose edit / diagnose / do-not-edit from failure and site evidence |
 | `diagnose_failure(base, headroom, mechanism, target_metric, min_target_gap, min_mechanism_gap)` | classify obstruction vs capability gap without editing |
 | `parse_intent(sentence)` | compile a plain-language teaching request into an exact contract |
+| `check_saved(model, sentence, prompt, answer, dtype, device, quantize)` | reload a saved checkpoint and evaluate one fact without a shared session |
 
-Every tool delegates to a plain function in `machaon.tools`, which is what the
-test suite exercises. The transport adds no behaviour.
+Header and evidence tools delegate to plain functions in `machaon.tools`.
+`check_saved` delegates to `machaon.check`, loads weights but never opens or
+changes the shared session. The transport adds no behaviour.
 
 ## Model-level tools
 
@@ -112,7 +114,8 @@ instead of raising, so an agent sees the reason rather than a generic
 ## Design boundaries
 
 - **File-level tools are header-first.** They inspect, audit and rewrite
-  checkpoints without loading a model into memory.
+  checkpoints without loading a model into memory; `check_saved` is the
+  explicit exception that reloads a checkpoint for a no-session fact check.
 - **Model-level tools are explicit.** `open_model` is the only expensive call;
   `propose_edit` reports cost before `apply_edit` writes anything.
 - **The agent chooses the site.** Layer selection belongs to the agent or to a

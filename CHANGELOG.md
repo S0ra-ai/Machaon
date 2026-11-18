@@ -25,6 +25,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   and pass/fail exit codes.
 - The Web console's **Check a saved fact** panel and `/api/check` expose the
   same saved-checkpoint evaluation without opening or editing a session.
+- MCP `check_saved` exposes the shared saved-checkpoint check without using the
+  model session; the tool surface is now 25 tools.
 - `HFModel.stored_values` and `Checkpoint.resolve`: a saved checkpoint uses the
   stored orientation and accepts a runtime tensor name whose module prefix
   differs, so GPT-2-style `Conv1D` checkpoints round-trip through teaching.

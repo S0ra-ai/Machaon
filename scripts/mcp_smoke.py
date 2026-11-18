@@ -17,7 +17,7 @@ from mcp.client.stdio import stdio_client
 EXPECTED = {
     "describe_checkpoint", "list_tensors", "audit_edit", "apply_delta", "gate",
     "wsp_audit", "wsp_save", "verify_binding", "plan_surgery",
-    "diagnose_failure", "parse_intent",
+    "diagnose_failure", "parse_intent", "check_saved",
     "open_model", "model_status", "capture_baseline", "propose_edit",
     "propose_batch", "propose_action", "apply_edit", "evaluate",
     "assess_wsp", "assess_generation_wsp", "search_rome_layers", "teach",
@@ -86,6 +86,15 @@ async def main() -> int:
             result = json.loads(diagnosis.content[0].text)
             print("diagnose_failure:", result["failure_type"])
             if result["failure_type"] != "obstruction":
+                return 1
+
+            checked = await session.call_tool("check_saved", {
+                "model": "/tmp/definitely-not-a-model",
+                "sentence": "please make it better",
+            })
+            text = checked.content[0].text
+            print("check_saved invalid sentence:", text[:60])
+            if "could not read" not in text and "error" not in text:
                 return 1
 
             status = await session.call_tool("model_status", {})

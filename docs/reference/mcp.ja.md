@@ -43,9 +43,12 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `audit_edit(base_path, edit_dir, max_rel_norm)` | OpenWSP v1 編集を base と照合し、ドリフトを再計算 |
 | `apply_delta(base_path, tensor, delta_path, out_dir)` | 1 つの `.npy` delta を 1 tensor に適用し、新しいチェックポイントを書く |
 | `gate(metrics)` | ゲートを適用。欠損指標は失敗 |
+| `check_saved(model, sentence, prompt, answer, dtype, device, quantize)` | 保存済みチェックポイントを読み直し、共有 session なしで 1 つの事実を評価 |
 | `parse_intent(sentence)` | 自然言語の教学リクエストを正確な契約へコンパイル |
 
-各ツールは `machaon.tools` の普通の関数に委譲し、テストはその関数を直接検証します。トランスポートは振る舞いを追加しません。
+Header/evidence ツールは `machaon.tools` の普通の関数に、`check_saved` は
+`machaon.check` に委譲します。後者は重みを読み直しますが、共有 session は開かず
+変更しません。トランスポートは振る舞いを追加しません。
 
 ## モデルレベルツール
 

@@ -498,7 +498,7 @@ is. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
   the WSP evidence hash inside the manifest's `machaon` object.
 - **Binding verification** — confirm the OpenWSP edit address, evidence address
   and manifest payload still agree before trusting either artefact.
-- **An agent interface** — 24 MCP tools over stdio, file-level and model-level.
+- **An agent interface** — 25 MCP tools over stdio, file-level, saved-checkpoint and model-level.
 - **A local browser console** — inspect, propose, apply, evaluate and roll back
   through the same session contract, with SSE job progress and a token-scoped
   checkpoint allowlist.

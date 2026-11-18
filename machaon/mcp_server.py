@@ -135,6 +135,27 @@ def create_server():
         """Compile a plain-language teaching request into an exact contract."""
         return tools.parse_intent(sentence)
 
+    @server.tool()
+    def check_saved(model: str, sentence: Optional[str] = None,
+                    prompt: Optional[str] = None, answer: Optional[str] = None,
+                    dtype: str = "auto", device: Optional[str] = None,
+                    quantize: Optional[str] = None) -> Dict[str, Any]:
+        """Evaluate one fact against a saved checkpoint without opening a session."""
+        from .check import check_checkpoint
+
+        try:
+            return check_checkpoint(
+                model,
+                sentence=sentence,
+                prompt=prompt,
+                answer=answer,
+                dtype=dtype,
+                device=device,
+                quantize=quantize,
+            )
+        except Exception as exc:
+            return {"error": str(exc)}
+
     # -- model-level: one loaded session --------------------------------
 
     @server.tool()

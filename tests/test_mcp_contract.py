@@ -76,7 +76,7 @@ class TestRegistration(unittest.TestCase):
         expected = {
             "describe_checkpoint", "list_tensors", "audit_edit", "apply_delta",
             "gate", "wsp_audit", "wsp_save", "verify_binding", "plan_surgery",
-            "diagnose_failure", "parse_intent",
+            "diagnose_failure", "parse_intent", "check_saved",
             "open_model", "model_status", "capture_baseline",
             "propose_edit", "propose_batch", "propose_action", "apply_edit",
             "evaluate", "assess_wsp", "assess_generation_wsp",

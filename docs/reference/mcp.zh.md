@@ -43,6 +43,7 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `audit_edit(base_path, edit_dir, max_rel_norm)` | 对照 base 校验 OpenWSP v1 编辑并重算漂移 |
 | `apply_delta(base_path, tensor, delta_path, out_dir)` | 把一个 `.npy` delta 应用到一个 tensor，写出新检查点 |
 | `gate(metrics)` | 应用验收门；缺失指标视为失败 |
+| `check_saved(model, sentence, prompt, answer, dtype, device, quantize)` | 重新加载保存检查点并复验一条事实，不共享也不修改 session |
 | `wsp_audit(report)` | 将 WSP 报告分类为 repair、acquisition、non-specific 或 no-effect |
 | `wsp_save(report, out_dir, metadata)` | 写出内容寻址的 WSP evidence bundle |
 | `verify_binding(edit_dir, evidence_dir)` | 校验 OpenWSP edit 与 evidence bundle 的绑定 |
@@ -50,7 +51,8 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `diagnose_failure(base, headroom, mechanism, target_metric, min_target_gap, min_mechanism_gap)` | 不编辑权重，分类 obstruction 与 capability gap |
 | `parse_intent(sentence)` | 把一句自然语言教学请求编译成精确合同 |
 
-每个工具都委托给 `machaon.tools` 中的普通函数，测试直接覆盖这些函数。传输层不增加行为。
+Header/evidence 工具委托给 `machaon.tools` 中的普通函数；`check_saved` 委托给
+`machaon.check`，会加载权重但不会打开或修改共享 session。传输层不增加行为。
 
 ## 模型级工具
 
