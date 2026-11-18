@@ -79,6 +79,10 @@ fresh session and baseline; use **Teach a list** when you need one cumulative
 budget and original-panel drift checks across facts. **Hide** persists the
 choice in `localStorage`.
 
+The last successfully opened or saved checkpoint path is also remembered in
+`localStorage`. A refresh restores it into the Checkpoint field, so returning
+to the console does not silently start another starter download.
+
 After a save, the card's **Teach a list** action opens the multi-fact panel,
 prefills the current fact and proposes a `<model>-machaon-many` container. The
 list result expands each step's prompt, status, layer, delta and global drift

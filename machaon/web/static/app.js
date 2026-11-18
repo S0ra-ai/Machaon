@@ -5,6 +5,7 @@
   const $ = (selector) => document.querySelector(selector);
   const LOCALES = window.MACHAON_I18N || {};
   const SUPPORTED_LOCALES = ["en", "zh", "ja", "ko"];
+  const LAST_CHECKPOINT_KEY = "machaon-last-checkpoint";
   const state = {
     token: "",
     locale: "en",
@@ -349,6 +350,11 @@
     el.connection.innerHTML = "<i></i> " + escapeHtml(text);
   }
 
+  function rememberCheckpoint(path) {
+    const value = String(path || "").trim();
+    if (value) localStorage.setItem(LAST_CHECKPOINT_KEY, value);
+  }
+
   async function boot() {
     setConnection("", t("conn.checking"), "conn.checking");
     try {
@@ -358,11 +364,16 @@
       state.capabilities = health.capabilities || {};
       el.allowedRoots.textContent = state.allowedRoots.join(" · ");
       renderCapabilities();
+      const remembered = localStorage.getItem(LAST_CHECKPOINT_KEY);
+      if (remembered && !el.checkpointPath.value) {
+        el.checkpointPath.value = remembered;
+      }
       const session = await api("/api/session/state");
       state.session = session && session.ready ? session : null;
       setConnection("live", t("conn.live"), "conn.live");
       renderSessionState();
       if (state.session) el.checkpointPath.value = state.session.model || el.checkpointPath.value;
+      if (state.session) rememberCheckpoint(state.session.model);
       maybeShowGuide();
     } catch (err) {
       setConnection("error", t("conn.offline"), "conn.offline");
@@ -971,6 +982,7 @@
     else if (kind === "fetch_model") {
       const path = result && result.dest ? result.dest : "";
       if (path) el.checkpointPath.value = path;
+      if (path) rememberCheckpoint(path);
       addTimelineEvent("fetch", t("timeline.fetch"),
         path + " · " + ((result && result.parameters) || 0).toLocaleString() + " params", "ok");
       if (path && state.firstEdit && state.firstEdit.phase === "fetch") {
@@ -991,6 +1003,7 @@
     }
     else if (kind === "open_session" || kind === "close_session") {
       state.session = result && result.ready ? result : null;
+      if (state.session && result.model) rememberCheckpoint(result.model);
       state.proposal = null;
       state.lastTeach = null;
       if (kind === "close_session" && !(state.firstEdit && state.firstEdit.phase === "closing")) {
@@ -1127,6 +1140,7 @@
       renderTeachResult(result);
       if (result && result.saved && result.saved.output) {
         $("#savePath").value = result.saved.output;
+        rememberCheckpoint(result.saved.output);
       }
       addTimelineEvent("teach", t("timeline.teach"),
         (result && result.result && result.result.status) || "", "ok");
@@ -1187,6 +1201,7 @@
       addTimelineEvent("rollback", t("timeline.rollback"), t("timeline.restored"), "ok");
     } else if (kind === "save_checkpoint") {
       addTimelineEvent("save", t("timeline.save"), (result && result.output) || "", "ok");
+      if (result && result.output) rememberCheckpoint(result.output);
       if (state.firstEdit && state.firstEdit.phase === "done") {
         state.firstEdit.phase = "saved";
         state.firstEdit.savedPath = (result && result.output) || "";
@@ -1368,6 +1383,7 @@
         button.innerHTML = escapeHtml(model.name) + "<small>" + escapeHtml(model.path) + "</small>";
         button.addEventListener("click", () => {
           el.checkpointPath.value = model.path;
+          rememberCheckpoint(model.path);
           el.modelsList.classList.add("hidden");
         });
         el.modelsList.appendChild(button);
@@ -1454,6 +1470,7 @@
       return;
     }
     const checkpoint = el.checkpointPath.value.trim();
+    if (checkpoint) rememberCheckpoint(checkpoint);
     const root = (state.allowedRoots[0] || "").replace(/\/+$/, "");
     const starterOption = el.firstEditStarter && el.firstEditStarter.selectedOptions
       ? el.firstEditStarter.selectedOptions[0] : null;

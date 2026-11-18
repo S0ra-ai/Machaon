@@ -801,6 +801,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('state.firstEdit.phase === "verify"', app.text)
         self.assertIn('function nextCheckpointPath', app.text)
         self.assertIn('function manyCheckpointPath', app.text)
+        self.assertIn('machaon-last-checkpoint', app.text)
         locales = self.client.get("/static/locales.js")
         self.assertEqual(locales.status_code, 200)
         self.assertIn('"zh": {', locales.text)
