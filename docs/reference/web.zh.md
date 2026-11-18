@@ -83,6 +83,8 @@ Checkpoint 栏的 **运行权重程序** 面板接受与 `machaon program` 相�
 **运行程序** 通过后台任务调用 `/api/program/run`，写出
 `<output>/program-report.json`，并在报告前重新加载保存后的检查点。任务横幅会显示
 每条事实的 step/total 与状态，最后显示运行结果和保存字节复验。
+某条事实被拒时，运行卡片会列出失败的 target、budget、panel 或 KL 检查，而不是只显示
+一个 `rejected` 状态。
 可选的 **报告路径** 可以把同一份报告写到 `<output>/program-report.json` 之外；
 运行卡片会显示报告的 SHA-256。
 

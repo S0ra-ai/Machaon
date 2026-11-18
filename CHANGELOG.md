@@ -70,6 +70,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   CLI generator.
 - `machaon program` human output now expands failed acceptance checks and the
   recorded rejection reason instead of printing only `rejected`.
+- The Web run card now shows the same failed target/budget/panel/KL checks
+  instead of stopping at the run status.
 - The Web program templates now include a **Bilingual Qwen** starter that
   teaches one Chinese and one English fact on Qwen2.5-0.5B.
 - `machaon program --plan` and `/api/program/plan` now include a side-effect-free

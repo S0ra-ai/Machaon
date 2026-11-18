@@ -112,6 +112,8 @@ missing. **Run program** calls `/api/program/run` as a background job, writes
 `<output>/program-report.json`, and reloads the saved checkpoint before
 reporting the run. The job banner reports each fact's step/total and status as
 the teaching chain advances, then the final outcome and saved-byte verification.
+If a fact is rejected, the run card lists the failed target, budget, panel or
+KL checks instead of leaving the outcome at a bare `rejected`.
 An optional **Report path** writes the same report somewhere other than
 `<output>/program-report.json`. The run card displays the report's SHA-256.
 

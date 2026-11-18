@@ -1150,6 +1150,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"program.run"', locales.text)
         self.assertIn('"program.templateBilingual"', locales.text)
         self.assertIn('"program.verifyLast"', locales.text)
+        self.assertIn('"program.failedChecks"', locales.text)
         self.assertIn('"program.verifyReport"', locales.text)
         self.assertIn('"program.integrityValid"', locales.text)
 

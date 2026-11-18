@@ -96,6 +96,8 @@ Checkpoint 열의 **가중치 프로그램 실행** 패널은 `machaon program`�
 작업으로 `/api/program/run`을 호출하고 `<output>/program-report.json`을 쓴 뒤,
 저장된 체크포인트를 다시 읽어 검증한 다음 보고합니다. 작업 배너는 각 사실의
 step/total과 상태를, 마지막에는 결과와 저장 바이트 검증을 표시합니다.
+사실이 거부되면 실행 카드는 단순한 `rejected` 대신 실패한 target, budget, panel, KL
+검사를 보여 줍니다.
 선택적 **보고서 경로**는 같은 보고서를 `<output>/program-report.json` 이외의 위치에
 씁니다. 실행 카드에는 보고서의 SHA-256이 표시됩니다.
 

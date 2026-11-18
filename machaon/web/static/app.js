@@ -582,6 +582,33 @@
           : (fact.confidence || "high")) +
         "</span></div></div>";
     }).join("");
+    const failureRows = [];
+    ((run && run.steps) || []).forEach((step) => {
+      const stepStatus = String((step && step.status) || "");
+      if (!["rejected", "error", "global_reject"].includes(stepStatus)) return;
+      const result = (step && step.result) || {};
+      const failed = (result.checks || []).filter((check) => !check.passed);
+      if (!failed.length && result.error) {
+        failureRows.push("<div class=\"teach-step bad\">" +
+          "<div class=\"teach-step-head\"><span class=\"check-chip bad\">!</span>" +
+          "<strong>fact " + escapeHtml(String(step.index || "?")) + "</strong>" +
+          "<span class=\"tiny\">" + escapeHtml(String(result.error)) +
+          "</span></div></div>");
+        return;
+      }
+      failed.forEach((check) => {
+        const value = check.value;
+        const suffix = value === null || value === undefined ? ""
+          : (typeof value === "number" ? " [" + fmt(value) + "]"
+            : " [" + String(value) + "]");
+        failureRows.push("<div class=\"teach-step bad\">" +
+          "<div class=\"teach-step-head\"><span class=\"check-chip bad\">!</span>" +
+          "<strong>" + escapeHtml(String(check.name || "check")) +
+          "</strong><span class=\"tiny\">" +
+          escapeHtml(String(check.requirement || "") + suffix) +
+          "</span></div></div>");
+      });
+    });
     const verificationLine = verification
       ? (verification.passed ? t("program.verified") : t("program.verifyFailed"))
       : (program.verify ? t("program.verifyNotRun") : t("program.verifyOff"));
@@ -619,6 +646,10 @@
       "<span>" + escapeHtml(t("program.verify")) + "<br><strong>" +
       escapeHtml(verificationLine) + "</strong></span>" +
       "</div>" + (rows ? '<div class="teach-steps">' + rows + "</div>" : "") +
+      (failureRows.length
+        ? '<p class="hint">' + escapeHtml(t("program.failedChecks")) + "</p>" +
+          '<div class="teach-steps">' + failureRows.join("") + "</div>"
+        : "") +
       (preflightLine ? '<p class="hint">' + escapeHtml(preflightLine) + "</p>" : "") +
       (program.base_dir ? '<p class="mono tiny">' +
         escapeHtml(t("program.base")) + ": " + escapeHtml(program.base_dir) +
