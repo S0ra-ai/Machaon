@@ -35,6 +35,7 @@
     firstEditEvidence: null,
     program: null,
     programHistory: [],
+    programResult: null,
   };
 
   const el = {
@@ -70,6 +71,9 @@
     programTemplateTwo: $("#programTemplateTwo"),
     programHistory: $("#programHistory"),
     programHistoryLoad: $("#programHistoryLoad"),
+    programCopyButton: $("#programCopyButton"),
+    programReportButton: $("#programReportButton"),
+    programUseOutputButton: $("#programUseOutputButton"),
     programCard: $("#programCard"),
     checkpointBadge: $("#checkpointBadge"),
     tensorRows: $("#tensorRows"),
@@ -367,6 +371,16 @@
     if (el.programTemplateSmol) el.programTemplateSmol.disabled = state.busy;
     if (el.programTemplateTwo) el.programTemplateTwo.disabled = state.busy;
     if (el.programHistoryLoad) el.programHistoryLoad.disabled = state.busy;
+    if (el.programCopyButton) el.programCopyButton.disabled = state.busy;
+    if (el.programReportButton) {
+      el.programReportButton.disabled = state.busy || !state.programResult;
+    }
+    if (el.programUseOutputButton) {
+      el.programUseOutputButton.disabled = state.busy || !(
+        state.programResult && state.programResult.run &&
+        state.programResult.run.final
+      );
+    }
     if (el.firstEditButton) {
       el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
         ? t("firstEdit.again") : t("firstEdit.run");
@@ -490,6 +504,16 @@
 
   function renderProgram(payload) {
     state.program = payload;
+    state.programResult = payload && payload.program ? payload : null;
+    if (el.programReportButton) {
+      el.programReportButton.disabled = !state.programResult || state.busy;
+    }
+    if (el.programUseOutputButton) {
+      el.programUseOutputButton.disabled = !(
+        state.programResult && state.programResult.run &&
+        state.programResult.run.final
+      ) || state.busy;
+    }
     const card = el.programCard;
     if (!card) return;
     if (!payload) {
@@ -549,6 +573,43 @@
         "</p>" : "") +
       (payload.report_path ? '<p class="mono tiny">' +
         escapeHtml(payload.report_path) + "</p>" : "");
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+    return Promise.resolve();
+  }
+
+  function downloadJson(value, filename) {
+    const blob = new Blob(
+      [JSON.stringify(value, null, 2) + "\n"],
+      { type: "application/json;charset=utf-8" }
+    );
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function programReportFilename() {
+    const name = ((state.programResult && state.programResult.program &&
+      state.programResult.program.name) || "machaon-program")
+      .replace(/[^A-Za-z0-9._-]+/g, "-");
+    return name + "-report.json";
   }
 
   function readProgramHistory() {
@@ -1981,6 +2042,30 @@
     }
   });
   $("#programHistoryLoad").addEventListener("click", loadRememberedProgram);
+  $("#programCopyButton").addEventListener("click", async () => {
+    const text = el.programText.value.trim();
+    if (!text) return addTimelineEvent("error", t("program.textRequired"), "", "err");
+    try {
+      await copyText(text + "\n");
+      addTimelineEvent("program", t("timeline.programCopy"), "", "ok");
+    } catch (err) {
+      addTimelineEvent("error", err.message, "", "err");
+    }
+  });
+  $("#programReportButton").addEventListener("click", () => {
+    if (!state.programResult) return;
+    downloadJson(state.programResult, programReportFilename());
+    addTimelineEvent("program", t("timeline.programReport"), "", "ok");
+  });
+  $("#programUseOutputButton").addEventListener("click", () => {
+    const final = state.programResult && state.programResult.run
+      && state.programResult.run.final;
+    if (!final) return addTimelineEvent("error", t("program.noOutput"), "", "err");
+    el.checkpointPath.value = final;
+    rememberCheckpoint(final);
+    el.programPanel.open = true;
+    startJob("/api/session/open", openSessionRequest(final), "open_session");
+  });
   $("#programDownloadButton").addEventListener("click", () => {
     try {
       downloadProgram();

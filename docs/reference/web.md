@@ -123,6 +123,10 @@ The last eight programs that pass **Check program** or start a run are kept in
 the browser's local history. **Load** restores a recent program without
 uploading it; history is stored only in `localStorage`.
 
+**Copy program** copies the editor text, **Download report** saves the current
+run's JSON report, and **Use output checkpoint** opens the run's final
+checkpoint in a fresh session without manually typing its path.
+
 Both routes enforce the same filesystem allowlist as every other console
 operation. A program cannot reach a model or output outside the configured
 roots merely because it was pasted into the browser.
