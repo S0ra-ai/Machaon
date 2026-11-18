@@ -30,6 +30,11 @@ machaon program-new ./hello.machaon \
 반복할 수 있고, 경로 `-`는 프로그램을 표준 출력으로 보냅니다. 기존 파일은 `--force`
 없이 교체하지 않습니다.
 
+긴 목록은 한 줄에 한 문장씩 파일에 넣고 `--facts facts.txt`로 읽을 수 있습니다.
+`--protect-file protect.txt`는 보호 패널에 같은 작업을 합니다. 생성기는 `--layers`,
+`--solver`, `--dtype`, `--quantize`, `--no-verify`, `--keep-steps` 등 텍스트 형식의
+일반적인 고급 필드도 직접 받습니다.
+
 생성, 확인, 실행:
 
 ```bash

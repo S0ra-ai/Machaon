@@ -170,7 +170,11 @@ machaon program-new - \
 默认 `--model` 是 `./models/SmolLM2-135M`，自动加入 `fetch: smol135m`，输出为
 `--output <model>-machaon`。自定义 `--model` 不会隐式下载；需要时显式使用
 `--fetch smol135m|qwen05b|gpt2` 或 `--no-fetch`。`--teach` 和 `--protect` 可重复，
-`--budget` 与 `--max-rel-norm` 设置两个常用策略值；路径 `-` 输出到标准输出。
+也可以用 `--facts FILE` 和 `--protect-file FILE` 从每行一条的文件读取。生成器还直接
+支持 `--layers`、`--solver`、`--steps`、`--lr`、`--max-layers`、`--max-kl`、
+`--min-panel-agreement`、`--dtype`、`--device`、`--quantize`、`--no-verify`、
+`--continue-on-reject` 和 `--keep-steps`，常用高级字段无需手改文件；路径 `-`
+输出到标准输出。
 目标文件已存在时默认拒绝，只有 `--force` 才替换。
 
 ## `program`

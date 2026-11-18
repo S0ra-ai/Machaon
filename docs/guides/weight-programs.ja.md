@@ -30,6 +30,11 @@ starter を追加し、`--no-fetch` で既定の starter を抑止できます�
 `--protect` は繰り返し指定でき、パス `-` は標準出力へプログラムを出します。既存ファイルは
 `--force` なしでは置換しません。
 
+長いリストは 1 行 1 文のファイルにし、`--facts facts.txt` で読み込めます。
+`--protect-file protect.txt` は保護パネルにも同じことを行います。生成器は
+`--layers`、`--solver`、`--dtype`、`--quantize`、`--no-verify`、`--keep-steps`
+などテキスト形式の一般的な高度フィールドも直接受け付けます。
+
 生成、確認、実行:
 
 ```bash

@@ -408,6 +408,66 @@ class TestCli(unittest.TestCase):
         self.assertIn("model: ./models/Qwen2.5-0.5B", out)
         self.assertIn("fetch: qwen05b", out)
 
+    def test_program_new_reads_fact_files_and_advanced_fields(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            facts = Path(tmp) / "facts.txt"
+            facts.write_text(
+                "The capital of France is -> Paris\n"
+                "\n"
+                "The city is -> Rome\n",
+                encoding="utf-8",
+            )
+            protect = Path(tmp) / "protect.txt"
+            protect.write_text(
+                "Two plus two equals\nWater freezes at a temperature of\n",
+                encoding="utf-8",
+            )
+            path = Path(tmp) / "advanced.machaon"
+            code, _, _ = run(
+                "program-new", str(path),
+                "--facts", str(facts),
+                "--protect-file", str(protect),
+                "--layers", "1-2",
+                "--solver", "gradient",
+                "--steps", "10",
+                "--lr", "0.1",
+                "--max-layers", "2",
+                "--max-kl", "0.02",
+                "--min-panel-agreement", "0.5",
+                "--dtype", "auto",
+                "--quantize", "int8",
+                "--device", "cpu",
+                "--no-verify",
+                "--continue-on-reject",
+                "--keep-steps",
+            )
+            self.assertEqual(code, 0)
+            code, out, _ = run("program", str(path), "--plan", "--json")
+        self.assertEqual(code, 0)
+        plan = json.loads(out)
+        self.assertEqual(len(plan["facts"]), 2)
+        self.assertEqual(plan["protect"], [
+            "Two plus two equals",
+            "Water freezes at a temperature of",
+        ])
+        self.assertEqual(plan["runtime"]["layers"], [1, 2])
+        self.assertEqual(plan["runtime"]["solver"], "gradient")
+        self.assertEqual(plan["runtime"]["steps"], 10)
+        self.assertEqual(plan["runtime"]["max_layers"], 2)
+        self.assertEqual(plan["runtime"]["dtype"], "auto")
+        self.assertEqual(plan["runtime"]["quantize"], "int8")
+        self.assertEqual(plan["runtime"]["device"], "cpu")
+        self.assertFalse(plan["verify"])
+        self.assertTrue(plan["continue_on_reject"])
+        self.assertTrue(plan["keep_steps"])
+        self.assertEqual(plan["policy"]["max_kl_p95"], 0.02)
+        self.assertEqual(plan["policy"]["min_panel_agreement"], 0.5)
+
+    def test_program_new_requires_a_fact_source(self):
+        code, _, err = run("program-new", "-")
+        self.assertEqual(code, 2)
+        self.assertIn("--teach or --facts", err)
+
     def test_program_new_refuses_conflicting_fetch_flags(self):
         code, _, err = run(
             "program-new", "-", "--fetch", "gpt2", "--no-fetch",

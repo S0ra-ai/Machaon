@@ -35,6 +35,12 @@ repeatable, `--protect` is repeatable, and path `-` prints the program to
 standard output for piping. An existing file is never replaced without
 `--force`.
 
+For a longer list, put one sentence per line in a file and pass
+`--facts facts.txt`; `--protect-file protect.txt` does the same for the
+protected panel. The generator also accepts the common advanced fields
+(`--layers`, `--solver`, `--dtype`, `--quantize`, `--no-verify`,
+`--keep-steps`, and the rest of the text-format fields) without hand-editing.
+
 Generate, inspect, then run:
 
 ```bash

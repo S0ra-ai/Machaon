@@ -13,6 +13,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   normal program parser, defaults to the SmolLM2 starter and a derived output
   path, supports custom model/output/fetch/budget/policy values, writes to
   standard output with `-`, and refuses to overwrite without `--force`.
+- `machaon program-new` also reads `--facts` and `--protect-file` lists and
+  exposes the common advanced fields (`layers`, solver, dtype, quantization,
+  verification and step retention) directly in the CLI.
 - `machaon.program.render_program_text(...)` exposes the same generator to
   Python callers, including the advanced program fields.
 - `machaon.program` and `machaon program`: a portable text or JSON weight

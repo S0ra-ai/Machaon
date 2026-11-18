@@ -28,6 +28,11 @@ machaon program-new ./hello.machaon \
 下载源，或用 `--no-fetch` 关闭默认 starter。`--teach` 和 `--protect` 都可以重复；
 路径写 `-` 时把程序打印到标准输出，便于管道处理。已有文件只有在 `--force` 时才会替换。
 
+更长的列表可以每行一条写进文件，用 `--facts facts.txt` 读取；`--protect-file
+protect.txt` 对保护面板做同样的事。生成器也接受常用高级字段（`--layers`、
+`--solver`、`--dtype`、`--quantize`、`--no-verify`、`--keep-steps` 以及文本格式的
+其余字段），无需手改文件。
+
 生成、检查、运行：
 
 ```bash

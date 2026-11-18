@@ -179,9 +179,12 @@ machaon program-new - \
 既定は `--model ./models/SmolLM2-135M`、`fetch: smol135m`、
 `--output <model>-machaon` です。カスタム `--model` には暗黙の `fetch` は付きません。
 必要なら `--fetch smol135m|qwen05b|gpt2` または `--no-fetch` を明示します。
-`--teach` と `--protect` は繰り返し可能で、`--budget` と `--max-rel-norm` は
-よく使う方針値です。パス `-` は標準出力へ書き、既存ファイルは `--force` なしでは
-拒否されます。
+`--teach` と `--protect` は繰り返し可能で、`--facts FILE` と
+`--protect-file FILE` による 1 行 1 件の読み込みにも対応します。さらに `--layers`、
+`--solver`、`--steps`、`--lr`、`--max-layers`、`--max-kl`、
+`--min-panel-agreement`、`--dtype`、`--device`、`--quantize`、`--no-verify`、
+`--continue-on-reject`、`--keep-steps` を生成時に指定できます。パス `-` は
+標準出力へ書き、既存ファイルは `--force` なしでは拒否されます。
 
 ## `program`
 

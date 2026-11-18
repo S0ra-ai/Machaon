@@ -1118,6 +1118,17 @@ def _cmd_program_new(args) -> int:
 
     if args.fetch and args.no_fetch:
         return _error("use --fetch or --no-fetch, not both")
+    teach_items = list(args.teach or ())
+    protect_items = list(args.protect or ())
+    try:
+        if args.facts:
+            teach_items.extend(_read_lines(args.facts))
+        if args.protect_file:
+            protect_items.extend(_read_lines(args.protect_file))
+    except OSError as exc:
+        return _error(str(exc))
+    if not teach_items:
+        return _error("provide at least one --teach or --facts")
     starter_paths = {
         "smol135m": "./models/SmolLM2-135M",
         "qwen05b": "./models/Qwen2.5-0.5B",
@@ -1148,10 +1159,23 @@ def _cmd_program_new(args) -> int:
             output=output,
             fetch=fetch,
             name=name,
-            teach=args.teach,
-            protect=args.protect or (),
+            teach=teach_items,
+            protect=protect_items,
             budget=args.budget,
             max_rel_norm=args.max_rel_norm,
+            max_kl=args.max_kl,
+            min_panel_agreement=args.min_panel_agreement,
+            layers=args.layers,
+            solver=args.solver,
+            steps=args.steps,
+            lr=args.lr,
+            max_layers=args.max_layers,
+            dtype=args.dtype,
+            device=args.device,
+            quantize=args.quantize,
+            verify=not args.no_verify,
+            continue_on_reject=args.continue_on_reject,
+            keep_steps=args.keep_steps,
         )
     except (TypeError, ValueError, ProgramError) as exc:
         return _error(str(exc))
@@ -1184,7 +1208,7 @@ def _cmd_program_new(args) -> int:
         " (fetch: %s)" % fetch if fetch else "",
     ))
     print("output     : %s" % output)
-    print("facts      : %d" % len(args.teach))
+    print("facts      : %d" % len(teach_items))
     print("\ncheck: machaon program %s --plan" % target)
     print("run  : machaon program %s" % target)
     return 0
@@ -1531,12 +1555,20 @@ def main(argv=None) -> int:
     )
     p_program_new.add_argument("--name", default=None, help="program title")
     p_program_new.add_argument(
-        "--teach", action="append", required=True,
+        "--teach", action="append", default=None,
         help="one teaching sentence; repeat for more facts",
+    )
+    p_program_new.add_argument(
+        "--facts", default=None,
+        help="text file with one teaching sentence per line",
     )
     p_program_new.add_argument(
         "--protect", action="append", default=None,
         help="one protected prompt; repeat as needed",
+    )
+    p_program_new.add_argument(
+        "--protect-file", default=None,
+        help="text file with one protected prompt per line",
     )
     p_program_new.add_argument(
         "--budget", type=float, default=0.10, help="cumulative budget (default: 0.10)"
@@ -1545,6 +1577,31 @@ def main(argv=None) -> int:
         "--max-rel-norm", type=float, default=0.02,
         help="per-fact relative cap (default: 0.02)",
     )
+    p_program_new.add_argument("--max-kl", type=float, default=0.05)
+    p_program_new.add_argument(
+        "--min-panel-agreement", type=float, default=0.875,
+    )
+    p_program_new.add_argument("--layers", default=None)
+    p_program_new.add_argument(
+        "--solver", choices=("direction", "gradient"), default="direction",
+    )
+    p_program_new.add_argument("--steps", type=int, default=250)
+    p_program_new.add_argument("--lr", type=float, default=0.02)
+    p_program_new.add_argument("--max-layers", type=int, default=7)
+    p_program_new.add_argument(
+        "--dtype", choices=("auto", "float32", "float16", "bfloat16"),
+        default="float32",
+    )
+    p_program_new.add_argument("--device", default=None)
+    p_program_new.add_argument(
+        "--quantize", choices=("int4", "int8"), default=None,
+    )
+    p_program_new.add_argument(
+        "--no-verify", action="store_true",
+        help="write verify: false",
+    )
+    p_program_new.add_argument("--continue-on-reject", action="store_true")
+    p_program_new.add_argument("--keep-steps", action="store_true")
     p_program_new.add_argument(
         "--force", action="store_true", help="replace an existing program file"
     )
