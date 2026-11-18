@@ -11,6 +11,7 @@ from machaon.program import (
     parse_layers,
     parse_program,
     read_program_report,
+    render_program_text,
     run_program,
     verify_program_report,
     write_program_report,
@@ -124,6 +125,63 @@ class TestProgramParser(unittest.TestCase):
         self.assertEqual(program.layers, (4, 6))
         self.assertFalse(program.verify)
         self.assertEqual(program.source_format, "json")
+
+    def test_rendered_program_round_trips_through_the_parser(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            text = render_program_text(
+                model="./models/SmolLM2-135M",
+                output="./models/lesson",
+                fetch="smol135m",
+                name="A generated lesson",
+                teach=[
+                    "The Eiffel Tower is in the city of -> Rome",
+                    "The capital of France is -> Paris",
+                ],
+                protect=["Two plus two equals"],
+                budget=0.12,
+                max_rel_norm=0.03,
+            )
+            path = Path(tmp) / "generated.machaon"
+            path.write_text(text, encoding="utf-8")
+            program = load_program(path)
+        self.assertEqual(program.name, "A generated lesson")
+        self.assertEqual(program.fetch, "smol135m")
+        self.assertEqual(program.budget, 0.12)
+        self.assertEqual(program.max_rel_norm, 0.03)
+        self.assertEqual(len(program.facts), 2)
+        self.assertEqual(program.protect, ("Two plus two equals",))
+        self.assertTrue(program.verify)
+        self.assertIn("program-new", text)
+
+    def test_rendered_program_refuses_multiline_values(self):
+        with self.assertRaisesRegex(ProgramError, "single line"):
+            render_program_text(
+                model="./base",
+                output="./edited",
+                teach=["The capital is -> Paris\nunexpected"],
+            )
+
+    def test_rendered_program_can_emit_advanced_fields(self):
+        text = render_program_text(
+            model="./base",
+            output="./edited",
+            teach=["The capital is -> Paris"],
+            layers=[4, 5],
+            solver="gradient",
+            dtype="auto",
+            quantize="int8",
+            min_panel_agreement=1.0,
+            continue_on_reject=True,
+            keep_steps=True,
+        )
+        program = parse_program(text, source="inline.machaon", base_dir=".")
+        self.assertEqual(program.layers, (4, 5))
+        self.assertEqual(program.solver, "gradient")
+        self.assertEqual(program.dtype, "auto")
+        self.assertEqual(program.quantize, "int8")
+        self.assertEqual(program.min_panel_agreement, 1.0)
+        self.assertTrue(program.continue_on_reject)
+        self.assertTrue(program.keep_steps)
 
     def test_unknown_field_names_the_line(self):
         with self.assertRaisesRegex(ProgramError, ":2: unknown field"):

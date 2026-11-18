@@ -1057,6 +1057,76 @@ def _cmd_program_verify(args) -> int:
     return 0
 
 
+def _cmd_program_new(args) -> int:
+    from .program import ProgramError, render_program_text
+
+    if args.fetch and args.no_fetch:
+        return _error("use --fetch or --no-fetch, not both")
+    model = args.model or "./models/SmolLM2-135M"
+    if args.output:
+        output = args.output
+    else:
+        output = model.rstrip("/\\") + "-machaon"
+    if args.no_fetch:
+        fetch = None
+    elif args.fetch is not None:
+        fetch = args.fetch
+    elif args.model is None:
+        fetch = "smol135m"
+    else:
+        fetch = None
+    name = args.name
+    if name is None:
+        leaf = model.rstrip("/\\").split("/")[-1].split("\\")[-1]
+        name = ("%s lesson" % leaf) if leaf else ""
+    try:
+        text = render_program_text(
+            model=model,
+            output=output,
+            fetch=fetch,
+            name=name,
+            teach=args.teach,
+            protect=args.protect or (),
+            budget=args.budget,
+            max_rel_norm=args.max_rel_norm,
+        )
+    except (TypeError, ValueError, ProgramError) as exc:
+        return _error(str(exc))
+
+    if args.path == "-":
+        print(text, end="")
+        return 0
+
+    target = Path(args.path).expanduser()
+    if target.exists() and not args.force:
+        return _error("%s already exists; pass --force to replace it" % target)
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if args.force:
+            target.write_text(text, encoding="utf-8")
+        else:
+            try:
+                with target.open("x", encoding="utf-8") as handle:
+                    handle.write(text)
+            except FileExistsError as exc:
+                raise ProgramError(
+                    "%s already exists; pass --force to replace it" % target
+                ) from exc
+    except (OSError, ProgramError) as exc:
+        return _error(str(exc))
+    print("Machaon · new weight program")
+    print("created    : %s" % target)
+    print("model      : %s%s" % (
+        model,
+        " (fetch: %s)" % fetch if fetch else "",
+    ))
+    print("output     : %s" % output)
+    print("facts      : %d" % len(args.teach))
+    print("\ncheck: machaon program %s --plan" % target)
+    print("run  : machaon program %s" % target)
+    return 0
+
+
 def _optional_version(module: str) -> str:
     try:
         return metadata.version(module)
@@ -1371,6 +1441,48 @@ def main(argv=None) -> int:
         help="with --check-model, recheck this checkpoint instead of the reported path",
     )
     p_program_verify.add_argument("--json", action="store_true")
+    p_program_new = sub.add_parser(
+        "program-new",
+        help="generate a reviewable weight program from a sentence list",
+    )
+    p_program_new.add_argument(
+        "path", help="output .machaon file, or - for standard output"
+    )
+    p_program_new.add_argument(
+        "--model", default=None,
+        help="checkpoint path (default: ./models/SmolLM2-135M)",
+    )
+    p_program_new.add_argument(
+        "--output", default=None,
+        help="output checkpoint path (default: <model>-machaon)",
+    )
+    p_program_new.add_argument(
+        "--fetch", choices=("smol135m", "qwen05b", "gpt2"), default=None,
+        help="starter to download when the model is missing",
+    )
+    p_program_new.add_argument(
+        "--no-fetch", action="store_true",
+        help="write no fetch directive even for the default starter",
+    )
+    p_program_new.add_argument("--name", default=None, help="program title")
+    p_program_new.add_argument(
+        "--teach", action="append", required=True,
+        help="one teaching sentence; repeat for more facts",
+    )
+    p_program_new.add_argument(
+        "--protect", action="append", default=None,
+        help="one protected prompt; repeat as needed",
+    )
+    p_program_new.add_argument(
+        "--budget", type=float, default=0.10, help="cumulative budget (default: 0.10)"
+    )
+    p_program_new.add_argument(
+        "--max-rel-norm", type=float, default=0.02,
+        help="per-fact relative cap (default: 0.02)",
+    )
+    p_program_new.add_argument(
+        "--force", action="store_true", help="replace an existing program file"
+    )
     p_start = sub.add_parser("start", help="print the shortest path to a first edit")
     p_start.add_argument("--demo", action="store_true", help="also run the synthetic demo")
     p_web = sub.add_parser("web", help="launch the optional local browser console")
@@ -1421,6 +1533,8 @@ def main(argv=None) -> int:
         return _cmd_program(args)
     if args.command == "program-verify":
         return _cmd_program_verify(args)
+    if args.command == "program-new":
+        return _cmd_program_new(args)
     if args.command == "fetch":
         return _cmd_fetch(args)
     if args.command == "start":

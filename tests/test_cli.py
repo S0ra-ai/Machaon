@@ -326,6 +326,60 @@ class TestCli(unittest.TestCase):
             self.assertEqual(code, 2)
             self.assertIn("address mismatch", err)
 
+    def test_program_new_writes_a_runnable_program(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "lesson.machaon")
+            code, out, _ = run(
+                "program-new", path,
+                "--teach", "The Eiffel Tower is in the city of -> Rome",
+                "--protect", "Two plus two equals",
+                "--budget", "0.12",
+            )
+            self.assertEqual(code, 0)
+            self.assertIn("created", out)
+            text = Path(path).read_text(encoding="utf-8")
+            self.assertIn("fetch: smol135m", text)
+            self.assertIn("budget: 0.12", text)
+            self.assertIn("teach: The Eiffel Tower", text)
+
+            code, out, _ = run("program", path, "--plan", "--json")
+            self.assertEqual(code, 0)
+            plan = json.loads(out)
+            self.assertEqual(plan["fetch"], "smol135m")
+            self.assertEqual(plan["protect"], ["Two plus two equals"])
+
+            code, _, err = run(
+                "program-new", path,
+                "--teach", "The capital is -> Paris",
+            )
+            self.assertEqual(code, 2)
+            self.assertIn("already exists", err)
+            code, _, _ = run(
+                "program-new", path, "--force",
+                "--teach", "The capital is -> Paris",
+            )
+            self.assertEqual(code, 0)
+            self.assertIn("The capital is", Path(path).read_text(encoding="utf-8"))
+
+    def test_program_new_stdout_and_custom_model(self):
+        code, out, _ = run(
+            "program-new", "-",
+            "--model", "./models/custom",
+            "--teach", "The capital is -> Paris",
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("model: ./models/custom", out)
+        self.assertIn("output: ./models/custom-machaon", out)
+        self.assertNotIn("fetch:", out)
+
+    def test_program_new_refuses_conflicting_fetch_flags(self):
+        code, _, err = run(
+            "program-new", "-", "--fetch", "gpt2", "--no-fetch",
+            "--teach", "The capital is -> Paris",
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("not both", err)
+
     def test_teach_refuses_conflicting_inputs_before_loading(self):
         code, _, err = run(
             "teach", "--model", "/tmp/none",
