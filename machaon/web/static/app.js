@@ -88,6 +88,7 @@
     programReportOut: $("#programReportOut"),
     programVerifyButton: $("#programVerifyButton"),
     programVerifyModelButton: $("#programVerifyModelButton"),
+    programVerifyLastButton: $("#programVerifyLastButton"),
     programVerifyMatch: $("#programVerifyMatch"),
     programVerifyCurrent: $("#programVerifyCurrent"),
     programReportFile: $("#programReportFile"),
@@ -538,6 +539,9 @@
     state.programResult = payload && payload.program ? payload : null;
     if (el.programReportButton) {
       el.programReportButton.disabled = !state.programResult || state.busy;
+    }
+    if (el.programVerifyLastButton) {
+      el.programVerifyLastButton.disabled = !state.programResult || state.busy;
     }
     if (el.programUseOutputButton) {
       el.programUseOutputButton.disabled = !(
@@ -2342,6 +2346,18 @@
   }
   if (el.programVerifyModelButton) {
     el.programVerifyModelButton.addEventListener("click", () => chooseProgramReport(true));
+  }
+  if (el.programVerifyLastButton) {
+    el.programVerifyLastButton.addEventListener("click", () => {
+      if (!state.programResult) {
+        return addTimelineEvent("error", t("program.noResultToVerify"), "", "err");
+      }
+      startJob(
+        "/api/program/verify",
+        { report: JSON.stringify(state.programResult), check_model: false },
+        "program_verify",
+      );
+    });
   }
   if (el.programReportFile) {
     el.programReportFile.addEventListener("change", async () => {

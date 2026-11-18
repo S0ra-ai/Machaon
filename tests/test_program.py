@@ -325,6 +325,7 @@ class TestRunProgram(unittest.TestCase):
         )
         self.assertEqual(len(report["report_sha256"]), 64)
         self.assertEqual(result.report_sha256, report["report_sha256"])
+        self.assertTrue(verify_program_report(result.to_dict())["valid"])
 
     def test_verification_failure_is_not_accepted(self):
         root, program = self._program()
