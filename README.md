@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-525-2ea44f)
+![tests](https://img.shields.io/badge/tests-526-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-79%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -59,7 +59,8 @@ checkpoint is never modified.
 
 `machaon check` reloads a saved checkpoint and verifies one prompt/answer pair
 without editing it. It exits 0 only when the target token is reproduced, so a
-saved edit can be asserted in a script or CI job.
+saved edit can be asserted in a script or CI job; `--facts` checks a whole fact
+list against the same checkpoint.
 
 `machaon intent "..."` shows the same parse without loading a model. The
 language is deliberately small: arrows and labelled blocks are exact, while

@@ -22,7 +22,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   OpenWSP export and a full JSON report.
 - `machaon check`: reload a saved checkpoint and evaluate one prompt/answer pair
   without editing it, with automatic continuation-space handling, JSON output
-  and pass/fail exit codes.
+  and pass/fail exit codes; `--facts` reuses one loaded checkpoint for a whole
+  fact list.
 - The Web console's **Check a saved fact** panel and `/api/check` expose the
   same saved-checkpoint evaluation without opening or editing a session.
 - MCP `check_saved` exposes the shared saved-checkpoint check without using the

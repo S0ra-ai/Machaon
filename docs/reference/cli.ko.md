@@ -40,11 +40,13 @@ machaon check --model ./models/qwen-first \
   --say "The Eiffel Tower is in the city of -> Rome"
 machaon check --model ./models/qwen-first \
   --prompt "The Eiffel Tower is in the city of" --answer Rome --json
+machaon check --model ./models/qwen-many/final --facts facts.txt
 ```
 
 기본 `--dtype auto`는 저장된 dtype을 읽습니다. `--quantize`에는
 `--dtype auto`가 필요합니다. JSON은 `passed`, `accuracy`, `answer_text`와
-원본 metrics를 포함하며, 사람이 읽는 출력은 `PASS` / `FAIL`입니다.
+원본 metrics를 포함하며, 사람이 읽는 출력은 `PASS` / `FAIL`입니다. `--facts`는
+체크포인트를 한 번만 읽고 각 사실을 검사하며, 하나라도 실패하면 종료 코드 1입니다.
 
 ## `fetch`
 

@@ -39,11 +39,13 @@ machaon check --model ./models/qwen-first \
   --say "The Eiffel Tower is in the city of -> Rome"
 machaon check --model ./models/qwen-first \
   --prompt "The Eiffel Tower is in the city of" --answer Rome --json
+machaon check --model ./models/qwen-many/final --facts facts.txt
 ```
 
 默认 `--dtype auto` 读取保存时的 dtype；`--quantize` 需要 `--dtype auto`。
 JSON 输出包含 `passed`、`accuracy`、`answer_text` 和原始 metrics，人类可读
-输出为 `PASS` 或 `FAIL`。
+输出为 `PASS` 或 `FAIL`。`--facts` 只加载一次检查点并逐条复验；任一事实失败时
+退出码为 1。
 
 ## `fetch`
 

@@ -786,26 +786,48 @@ def _cmd_start(args) -> int:
 
 
 def _cmd_check(args) -> int:
-    from .check import check_checkpoint
+    from .check import check_checkpoint, check_facts
     from .intent import IntentError
 
+    if args.facts and (args.say or args.prompt is not None or args.answer is not None):
+        return _error("use --facts or --say/--prompt/--answer, not both")
     if args.quantize is not None and args.dtype != "auto":
         return _error("--quantize requires --dtype auto")
     try:
-        payload = check_checkpoint(
-            args.model,
-            sentence=args.say,
-            prompt=args.prompt,
-            answer=args.answer,
-            dtype=args.dtype,
-            device=args.device,
-            quantize=args.quantize,
-        )
+        if args.facts:
+            payload = check_facts(
+                args.model,
+                args.facts,
+                dtype=args.dtype,
+                device=args.device,
+                quantize=args.quantize,
+            )
+        else:
+            payload = check_checkpoint(
+                args.model,
+                sentence=args.say,
+                prompt=args.prompt,
+                answer=args.answer,
+                dtype=args.dtype,
+                device=args.device,
+                quantize=args.quantize,
+            )
     except (ImportError, OSError, RuntimeError, TypeError, ValueError, IntentError) as exc:
         return _error(str(exc))
     passed = bool(payload["passed"])
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
+    elif "facts" in payload:
+        print("PASS" if passed else "FAIL")
+        print("model    : %s" % payload["model"])
+        for item in payload["facts"]:
+            print("%3d %-5s %.3f  %s -> %s" % (
+                item["index"],
+                "PASS" if item["passed"] else "FAIL",
+                item["accuracy"],
+                item["prompt"],
+                item["answer_text"],
+            ))
     else:
         print("PASS" if passed else "FAIL")
         print("model    : %s" % payload["model"])
@@ -1077,6 +1099,7 @@ def main(argv=None) -> int:
     p_check.add_argument("--say", default=None, help="one-sentence teaching request")
     p_check.add_argument("--prompt", default=None, help="prompt text (alternative to --say)")
     p_check.add_argument("--answer", default=None, help="expected continuation")
+    p_check.add_argument("--facts", default=None, help="text, JSON or JSONL fact list")
     p_check.add_argument(
         "--dtype", choices=("auto", "float32", "float16", "bfloat16"),
         default="auto",

@@ -433,6 +433,31 @@ class TestCli(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("--quantize", err)
 
+    def test_check_facts_reuses_one_saved_checkpoint(self):
+        class FakeSession:
+            def evaluate(self, prompts, targets):
+                return {"accuracy": 1.0, "n": len(prompts)}
+
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as handle:
+            handle.write("The capital is -> Paris\n")
+            handle.write("The city is -> Rome\n")
+            path = handle.name
+        try:
+            with mock.patch(
+                "machaon.session.Session.open",
+                return_value=FakeSession(),
+            ):
+                code, out, _ = run(
+                    "check", "--model", ROOT, "--facts", path, "--json"
+                )
+        finally:
+            os.unlink(path)
+        self.assertEqual(code, 0)
+        payload = json.loads(out)
+        self.assertTrue(payload["passed"])
+        self.assertEqual(len(payload["facts"]), 2)
+        self.assertEqual(payload["facts"][0]["answer_text"], " Paris")
+
     def test_start_prints_the_three_entry_points(self):
         code, out, _ = run("start")
         self.assertEqual(code, 0)

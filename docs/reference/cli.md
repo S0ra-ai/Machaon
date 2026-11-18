@@ -35,11 +35,14 @@ machaon check --model ./models/qwen-first \
   --say "The Eiffel Tower is in the city of -> Rome"
 machaon check --model ./models/qwen-first \
   --prompt "The Eiffel Tower is in the city of" --answer Rome --json
+machaon check --model ./models/qwen-many/final --facts facts.txt
 ```
 
 The default `--dtype auto` reads the stored checkpoint dtype. `--quantize`
 requires `--dtype auto`. The JSON output includes `passed`, `accuracy`,
 `answer_text` and the raw metrics; the human form prints `PASS` or `FAIL`.
+`--facts` loads the list once and checks every entry, exiting 1 if any fact
+fails.
 
 ## `fetch`
 

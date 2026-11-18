@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Optional, Sequence
 
 from .intent import parse_intent
 
-__all__ = ["evaluate_fact", "check_checkpoint"]
+__all__ = ["evaluate_fact", "check_checkpoint", "check_facts"]
 
 
 def evaluate_fact(session: Any, prompt: str, answer: str) -> Dict[str, Any]:
@@ -76,3 +76,60 @@ def check_checkpoint(
         gc.collect()
     result["model"] = model_path
     return result
+
+
+def check_facts(
+    model: str | Path,
+    facts: str | Path | Sequence[Any],
+    *,
+    dtype: str = "auto",
+    device: Optional[str] = None,
+    quantize: Optional[str] = None,
+    session_factory: Optional[Callable[[str], Any]] = None,
+) -> Dict[str, Any]:
+    """Load one checkpoint and evaluate a fact list against it."""
+    from .teach_many import load_facts
+
+    if isinstance(facts, (str, Path)):
+        normalized = load_facts(facts)
+    else:
+        normalized = []
+        for index, item in enumerate(facts, 1):
+            if isinstance(item, str):
+                intent = parse_intent(item)
+                normalized.append((intent.prompt, intent.answer))
+            elif isinstance(item, (list, tuple)) and len(item) == 2:
+                normalized.append((str(item[0]), str(item[1])))
+            else:
+                raise ValueError("fact %d must be a sentence or prompt/answer pair" % index)
+    if quantize is not None and dtype != "auto":
+        raise ValueError("quantize requires dtype='auto'")
+    model_path = str(Path(model).expanduser())
+
+    def default_factory(path: str):
+        from .session import Session
+
+        return Session.open(
+            path,
+            dtype=dtype,
+            device=device,
+            quantize=quantize,
+        )
+
+    factory = session_factory or default_factory
+    session = factory(model_path)
+    results = []
+    try:
+        for index, (prompt, answer) in enumerate(normalized, 1):
+            result = evaluate_fact(session, prompt, answer)
+            result["index"] = index
+            result["model"] = model_path
+            results.append(result)
+    finally:
+        session = None
+        gc.collect()
+    return {
+        "passed": all(item["passed"] for item in results),
+        "model": model_path,
+        "facts": results,
+    }
