@@ -192,8 +192,10 @@ machaon program examples/hello.machaon
 machaon program ./lesson.json --out ./models/experiment-2
 ```
 
-`--plan`은 모델을 다운로드하거나 로드하지 않고 해석된 계약만 출력합니다. 실행은
-편집을 `teach-many`에 맡기고 `<output>/program-report.json`을 쓰며, 기본적으로
+`--plan`은 모델을 다운로드하거나 로드하지 않고 해석된 계약만 출력합니다. 출력 경로가
+새 경로인지, 비어 있는지, 사용 가능한지 또는 이미 막혔는지, 보고서 경로, 모델이 없을 때
+다운로드할 starter의 이름과 크기도 보여 줍니다. 실행은 편집을 `teach-many`에 맡기고
+`<output>/program-report.json`을 쓰며, 기본적으로
 저장된 체크포인트를 다시 로드해 모든 사실을 재검증합니다. `--no-verify`는 마지막
 재검증을 생략하고, `--json`은 계획 또는 실행 결과 전체를 출력합니다. 사실별
 진행은 기본으로 출력되며 `--quiet`로 끌 수 있습니다. `--report-out PATH`는

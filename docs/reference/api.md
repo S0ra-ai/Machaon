@@ -686,6 +686,10 @@ text = render_program_text(
 )
 ```
 
+`program_preflight(program)` performs the same side-effect-free readiness check
+as `--plan`: model file/directory state, output collision and empty-directory
+state, `report_path`, and the starter name/size when a fetch is declared.
+
 ## Tools · `machaon.tools`
 
 The functions behind the MCP server. No model is loaded.

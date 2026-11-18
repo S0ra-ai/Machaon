@@ -67,6 +67,9 @@ protect: Water freezes at a temperature of
 machaon program hello.machaon --plan
 ```
 
+计划还会显示输出目录是新建、为空且可用，还是已被占用；报告会写到哪里；以及模型缺失时
+将要下载的 starter 大小。
+
 运行：
 
 ```bash

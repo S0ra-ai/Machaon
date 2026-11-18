@@ -316,6 +316,10 @@ text = render_program_text(
 )
 ```
 
+`program_preflight(program)` は `--plan` と同じ副作用なしの準備検査を行います。
+モデルのファイル/ディレクトリ状態、出力の衝突と空ディレクトリ状態、`report_path`、
+fetch 宣言時の starter 名とサイズを返します。
+
 ## ツール · `machaon.tools`
 
 MCP サーバー背後の関数。モデルをロードしません。

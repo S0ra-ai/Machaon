@@ -185,7 +185,8 @@ machaon program examples/hello.machaon
 machaon program ./lesson.json --out ./models/experiment-2
 ```
 
-`--plan` 只解析并打印合同，不下载、不加载模型。运行会把编辑交给
+`--plan` 只解析并打印合同，不下载、不加载模型；它还会显示输出目录是新建、可用还是
+已被占用/非空，报告路径，以及模型缺失时会下载的 starter 名称和大小。运行会把编辑交给
 `teach-many`，写入 `<output>/program-report.json`，并默认重新加载保存后的
 检查点逐条复验。`--no-verify` 跳过最后这一步；`--json` 输出完整计划或运行结果；
 默认逐条打印进度，`--quiet` 可关闭；`--report-out PATH` 可把程序报告写到指定文件，

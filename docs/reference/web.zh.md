@@ -79,6 +79,7 @@ Checkpoint 栏的 **运行权重程序** 面板接受与 `machaon program` 相�
 `.machaon` 文本或 JSON。把 **程序目录** 设为允许根目录下的文件夹，程序里的
 相对 `model` 和 `output` 路径会从那里解析。**检查程序** 调用
 `/api/program/plan`，不加载模型就显示解析后的模型、事实、预算和复验策略；
+卡片还会说明输出目录是新建、为空且可用，还是已被占用；模型缺失时会显示 starter 与大小。
 **运行程序** 通过后台任务调用 `/api/program/run`，写出
 `<output>/program-report.json`，并在报告前重新加载保存后的检查点。任务横幅会显示
 每条事实的 step/total 与状态，最后显示运行结果和保存字节复验。

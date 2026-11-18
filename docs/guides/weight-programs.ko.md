@@ -69,6 +69,9 @@ protect: Water freezes at a temperature of
 machaon program hello.machaon --plan
 ```
 
+계획은 출력 경로가 새 경로인지, 비어 있고 사용 가능한지, 이미 막혔는지, 보고서가 어디에
+기록되는지, 모델이 없을 때 내려받을 starter 크기도 보여 줍니다.
+
 실행합니다.
 
 ```bash

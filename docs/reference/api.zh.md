@@ -607,6 +607,9 @@ text = render_program_text(
 )
 ```
 
+`program_preflight(program)` 执行与 `--plan` 相同的无副作用就绪检查：模型文件/目录状态、
+输出冲突与空目录状态、`report_path`，以及声明 fetch 时的 starter 名称和大小。
+
 ## 工具 · `machaon.tools`
 
 MCP 服务背后的函数。不加载模型。

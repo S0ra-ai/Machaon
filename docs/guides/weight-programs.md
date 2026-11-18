@@ -75,6 +75,10 @@ Check the resolved contract without downloading or loading a model:
 machaon program hello.machaon --plan
 ```
 
+The plan also reports whether the output is new, empty and usable or already
+blocked, where the report will be written, and the starter size that would be
+downloaded if the model is missing.
+
 Run the program:
 
 ```bash

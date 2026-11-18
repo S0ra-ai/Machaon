@@ -106,7 +106,9 @@ The Checkpoint column's **Run a weight program** expander accepts the same
 a directory below an allowed root; relative `model` and `output` paths resolve
 from that folder. **Check program** calls `/api/program/plan` and shows the
 resolved model, parsed facts, budget and verification policy without loading a
-model. **Run program** calls `/api/program/run` as a background job, writes
+model. The card also states whether the output is new, empty and usable or
+already blocked, and names the starter and download size when the model is
+missing. **Run program** calls `/api/program/run` as a background job, writes
 `<output>/program-report.json`, and reloads the saved checkpoint before
 reporting the run. The job banner reports each fact's step/total and status as
 the teaching chain advances, then the final outcome and saved-byte verification.
