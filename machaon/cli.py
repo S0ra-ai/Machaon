@@ -10,7 +10,9 @@ contract, so the CLI can be used as a CI step without parsing text:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import platform
 import sys
 from importlib import metadata
@@ -368,15 +370,78 @@ def _cmd_intent(args) -> int:
 
 def _cmd_first(args) -> int:
     from .first import first_edit
+    from .program import ProgramError, render_program_text
     from .recipes import TeachPolicy
 
     if args.no_save and args.out:
         return _error("--no-save cannot be combined with --out")
+    if args.no_save and args.program_out:
+        return _error("--no-save cannot be combined with --program-out")
     try:
         layers = _parse_layers(args.layers) if args.layers else None
     except ValueError as exc:
         return _error(str(exc))
     out = None if args.no_save else (args.out or _default_out(args.model))
+    program_target = None
+    program_text = None
+    if args.program_out:
+        program_target = Path(args.program_out).expanduser()
+        if program_target.exists() and not args.program_force:
+            return _error(
+                "%s already exists; pass --program-force to replace it"
+                % program_target
+            )
+        target_resolved = program_target.resolve()
+        for label, base in (("model", args.model), ("output", out)):
+            base_resolved = Path(base).expanduser().resolve()
+            try:
+                target_resolved.relative_to(base_resolved)
+            except ValueError:
+                continue
+            return _error(
+                "--program-out must not be inside the %s directory" % label
+            )
+        model_missing = not Path(args.model).expanduser().is_dir()
+        try:
+            program_dir = program_target.parent.resolve()
+            try:
+                model_value = os.path.relpath(
+                    Path(args.model).expanduser().resolve(), program_dir
+                )
+                output_value = os.path.relpath(
+                    Path(out).expanduser().resolve(), program_dir
+                )
+            except ValueError:
+                model_value = str(Path(args.model).expanduser().resolve())
+                output_value = str(Path(out).expanduser().resolve())
+            program_text = render_program_text(
+                model=model_value,
+                output=output_value,
+                fetch=args.starter if model_missing else None,
+                name=args.program_name or "First edit",
+                teach=[args.say],
+                budget=args.budget,
+                max_rel_norm=args.max_rel_norm,
+                max_kl=args.max_kl,
+                min_panel_agreement=args.min_panel_agreement,
+                layers=layers,
+                solver=args.solver,
+                steps=args.steps,
+                lr=args.lr,
+                max_layers=args.max_layers,
+                dtype=args.dtype,
+                device=args.device,
+                quantize=args.quantize,
+                verify=True,
+            )
+            program_target.parent.mkdir(parents=True, exist_ok=True)
+            if args.program_force:
+                program_target.write_text(program_text, encoding="utf-8")
+            else:
+                with program_target.open("x", encoding="utf-8") as handle:
+                    handle.write(program_text)
+        except (OSError, ProgramError) as exc:
+            return _error(str(exc))
     policy = TeachPolicy(
         max_rel_norm=args.max_rel_norm,
         max_kl_p95=args.max_kl,
@@ -411,6 +476,11 @@ def _cmd_first(args) -> int:
     except (OSError, ValueError, RuntimeError) as exc:
         return _error(str(exc))
     payload = result.to_dict()
+    if program_target is not None and program_text is not None:
+        payload["program_path"] = str(program_target)
+        payload["program_sha256"] = hashlib.sha256(
+            program_text.encode("utf-8")
+        ).hexdigest()
     if args.json:
         print(json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True))
     else:
@@ -452,6 +522,8 @@ def _cmd_first(args) -> int:
                 print("               " + line)
         if result.model_fetched:
             print("download   : %s" % result.model)
+        if program_target is not None:
+            print("program    : %s" % program_target)
     return 0 if result.accepted else 1
 
 
@@ -1493,6 +1565,18 @@ def main(argv=None) -> int:
     p_first.add_argument("--device", default=None)
     p_first.add_argument("--quantize", choices=("int4", "int8"), default=None)
     p_first.add_argument("--no-save", action="store_true")
+    p_first.add_argument(
+        "--program-out", default=None,
+        help="write a matching portable .machaon program before the run",
+    )
+    p_first.add_argument(
+        "--program-name", default=None,
+        help="name stored in the generated program",
+    )
+    p_first.add_argument(
+        "--program-force", action="store_true",
+        help="replace an existing --program-out file",
+    )
     p_first.add_argument("--json", action="store_true")
     p_check = sub.add_parser(
         "check",

@@ -20,6 +20,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - A successful `machaon first` now prints a complete `program-new` command with
   the exact model, output and starter, instead of a command that silently fell
   back to the default SmolLM2 paths.
+- `machaon first --program-out PATH` writes a matching portable program before
+  the edit. The generated paths are relative to the program file; `--program-name`
+  sets its title and `--program-force` replaces an existing file.
 - `machaon.program.render_program_text(...)` exposes the same generator to
   Python callers, including the advanced program fields.
 - `machaon.program` and `machaon program`: a portable text or JSON weight

@@ -23,14 +23,16 @@ SmolLM2-135M）を取得し、チェックポイントを開いて 1 つの事�
 machaon first
 machaon first --say "フランスの首都は -> ベルリン"
 machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
+machaon first --program-out ./first.machaon
 ```
 
 既定の事実は "The Eiffel Tower is in the city of -> Rome"、既定の出力は
 `<model>-machaon` です。`--no-save` はメモリ内だけに保持し、`--json` は完全な
 結果を出力します。適用済み/既知なら 0、ローカルチェックで拒否なら 1、
-入力またはモデルエラーなら 2 で終了します。成功時には実際のモデル、出力、
-starter を含む完全な `program-new` コマンドを表示するため、パスを再入力せずに
-同じ実行をレビュー可能なプログラムとして保存できます。
+入力またはモデルエラーなら 2 で終了します。`--program-out PATH` は実行前に
+対応するプログラムを書き出します。相対パスは生成ファイル基準で、モデルが無い場合だけ
+`fetch` を含みます。`--program-name` はタイトル、`--program-force` は既存ファイルの
+置換です。成功時には完全な `program-new` コマンドも表示します。
 
 ## `check`
 

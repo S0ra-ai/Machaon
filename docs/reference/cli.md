@@ -15,15 +15,19 @@ sentence, and saves the accepted edit.
 machaon first
 machaon first --say "The capital of France is -> Berlin"
 machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
+machaon first --program-out ./first.machaon
 ```
 
 The default fact is "The Eiffel Tower is in the city of -> Rome". The default
 output is `<model>-machaon`. Use `--no-save` to keep the edit in memory only;
 `--json` prints the full result. The command exits 0 when the fact was applied
 or already true, 1 when the local checks rejected it, and 2 on malformed input
-or a model error. A successful run prints a complete `program-new` command with
-the exact model, output and starter, so the same run can be saved as a reviewable
-program without retyping paths.
+or a model error. `--program-out PATH` writes a matching portable program before
+the run; the generated program uses paths relative to its own file and includes
+the starter only when the model is missing. `--program-name` sets its title and
+`--program-force` replaces an existing program file. A successful run also
+prints the exact `program-new` command, so the same run can be reproduced even
+without the file.
 
 ## `check`
 

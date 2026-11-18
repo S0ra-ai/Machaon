@@ -644,6 +644,62 @@ class TestCli(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("--no-save", err)
 
+    def test_first_writes_a_matching_program_before_the_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            program_path = Path(tmp) / "first.machaon"
+            output_path = Path(tmp) / "edited"
+
+            class FakeResult:
+                accepted = True
+
+                def to_dict(self):
+                    return {"status": "applied", "accepted": True}
+
+            with mock.patch(
+                "machaon.first.first_edit", return_value=FakeResult()
+            ):
+                code, out, _ = run(
+                    "first",
+                    "--model", str(Path(tmp) / "SmolLM2-135M"),
+                    "--out", str(output_path),
+                    "--program-out", str(program_path),
+                    "--say", "The capital of France is -> Paris",
+                    "--json",
+                )
+            self.assertEqual(code, 0)
+            text = program_path.read_text(encoding="utf-8")
+            self.assertIn("model: SmolLM2-135M", text)
+            self.assertIn("fetch: smol135m", text)
+            self.assertIn("output: edited", text)
+            self.assertIn("teach: The capital of France is -> Paris", text)
+            payload = json.loads(out)
+            self.assertEqual(payload["program_path"], str(program_path))
+            self.assertEqual(len(payload["program_sha256"]), 64)
+
+            code, _, err = run(
+                "first",
+                "--model", str(Path(tmp) / "SmolLM2-135M"),
+                "--out", str(output_path),
+                "--program-out", str(program_path),
+                "--say", "The capital of France is -> Paris",
+                "--json",
+            )
+        self.assertEqual(code, 2)
+        self.assertIn("--program-force", err)
+
+    def test_first_refuses_program_inside_the_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "edited"
+            code, _, err = run(
+                "first",
+                "--model", str(Path(tmp) / "SmolLM2-135M"),
+                "--out", str(output),
+                "--program-out", str(output / "first.machaon"),
+                "--say", "The capital of France is -> Paris",
+            )
+        self.assertEqual(code, 2)
+        self.assertIn("inside the output directory", err)
+
     def test_check_reports_pass_fail_and_json_without_a_real_model(self):
         class FakeSession:
             def __init__(self, accuracy):

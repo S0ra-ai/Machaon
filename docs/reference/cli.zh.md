@@ -22,13 +22,15 @@ python -m machaon <command>
 machaon first
 machaon first --say "法国的首都是 -> 柏林"
 machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
+machaon first --program-out ./first.machaon
 ```
 
 默认事实是 "The Eiffel Tower is in the city of -> Rome"，默认输出是
 `<model>-machaon`。`--no-save` 只保留在内存中；`--json` 输出完整结果。
 事实已应用或本来就正确时退出码 0，被本地检查拒绝时 1，输入或模型错误时 2。
-运行成功时会打印一条完整的 `program-new` 命令，包含实际的模型、输出与 starter，
-无需重新输入路径就能把同一次运行保存成可审查程序。
+`--program-out PATH` 会在运行前写出一份匹配的程序；相对路径以程序文件所在目录为基准，
+只有模型缺失时才写 `fetch`，`--program-name` 设置标题，`--program-force` 替换已有文件。
+运行成功时还会打印完整的 `program-new` 命令，即使没有自动生成文件也能复现同一次运行。
 
 ## `check`
 
