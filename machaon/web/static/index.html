@@ -171,6 +171,9 @@
           <label class="field full"><span data-i18n="program.base">Program folder</span>
             <input id="programBase" autocomplete="off" spellcheck="false" data-i18n-placeholder="program.basePlaceholder" placeholder="./models">
           </label>
+          <label class="field full"><span data-i18n="program.reportOut">Report path (optional)</span>
+            <input id="programReportOut" autocomplete="off" spellcheck="false" data-i18n-placeholder="program.reportOutPlaceholder" placeholder="./reports/program-report.json">
+          </label>
           <div class="quick-row">
             <button id="programPrefillButton" class="ghost small" type="button" data-i18n="program.prefill">Use current checkpoint</button>
             <button id="programFileButton" class="ghost small" type="button" data-i18n="program.openFile">Open .machaon</button>
@@ -210,6 +213,20 @@
             <button id="programReportButton" class="ghost" type="button" disabled data-i18n="program.report">Download report</button>
           </div>
           <button id="programUseOutputButton" class="ghost wide" type="button" disabled data-i18n="program.useOutput">Use output checkpoint</button>
+          <div class="button-grid">
+            <button id="programVerifyButton" class="ghost" type="button" data-i18n="program.verifyReport">Verify report</button>
+            <button id="programVerifyModelButton" class="ghost" type="button" data-i18n="program.verifyReportModel">Verify report + checkpoint</button>
+          </div>
+          <label class="check-row compact">
+            <input id="programVerifyMatch" type="checkbox">
+            <span data-i18n="program.verifyMatch">also match the program currently in the editor</span>
+          </label>
+          <label class="check-row compact">
+            <input id="programVerifyCurrent" type="checkbox">
+            <span data-i18n="program.verifyCurrent">recheck the currently selected checkpoint instead of the report path</span>
+          </label>
+          <input id="programReportFile" type="file" accept=".json,application/json" hidden>
+          <div id="programVerifyCard" class="evidence-card empty-state" data-i18n="program.verifyEmpty">Open a program report to verify its SHA-256 address and optionally recheck the saved checkpoint.</div>
           <div id="programCard" class="evidence-card empty-state" data-i18n="program.empty">Check a program to see its resolved model, facts, budget and verification policy.</div>
         </details>
 

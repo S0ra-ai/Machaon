@@ -135,6 +135,14 @@ class TeachManyRequest(BaseModel):
 class ProgramRequest(BaseModel):
     program: str = Field(min_length=1, max_length=200_000)
     base_dir: Optional[str] = None
+    report_out: Optional[str] = Field(default=None, max_length=4000)
+
+
+class ProgramVerifyRequest(BaseModel):
+    report: str = Field(min_length=1, max_length=2_000_000)
+    program: Optional[str] = Field(default=None, max_length=200_000)
+    check_model: bool = False
+    checkpoint: Optional[str] = Field(default=None, max_length=4000)
 
 
 class EvaluateRequest(BaseModel):
@@ -497,9 +505,22 @@ def create_app(
         return start_job(
             "program_run",
             lambda progress: web_service.run_program(
-                body.program, base, progress=progress
+                body.program, base, progress=progress,
+                report_out=body.report_out,
             ),
             with_progress=True,
+        )
+
+    @app.post("/api/program/verify")
+    def program_verify(body: ProgramVerifyRequest) -> Dict[str, Any]:
+        return start_job(
+            "program_verify",
+            lambda: web_service.verify_program_report(
+                body.report,
+                program_text=body.program,
+                check_model=body.check_model,
+                checkpoint=body.checkpoint,
+            ),
         )
 
     @app.post("/api/teach_many")

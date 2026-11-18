@@ -14,6 +14,7 @@ import json
 import platform
 import sys
 from importlib import metadata
+from pathlib import Path
 from typing import Any, Dict
 
 from . import __version__
@@ -1000,7 +1001,60 @@ def _cmd_program(args) -> int:
     elif result.status != "verification_skipped":
         print("verified   : not run")
     print("report     : %s" % (result.report_path or "not written"))
+    if result.report_sha256:
+        print("report SHA : %s" % result.report_sha256)
     return 0 if result.accepted else 1
+
+
+def _cmd_program_verify(args) -> int:
+    from .program import ProgramReportError, verify_program_report
+
+    if args.checkpoint and not args.check_model:
+        return _error("--checkpoint can only be used with --check-model")
+    try:
+        result = verify_program_report(
+            args.path,
+            program_path=args.program,
+            check_model=args.check_model,
+            checkpoint=args.checkpoint,
+        )
+    except (OSError, ValueError, TypeError, ProgramReportError) as exc:
+        return _error("%s: %s" % (args.path, exc))
+
+    model_check = result.get("model_check")
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True))
+    else:
+        print("Machaon · program report")
+        print("report     : %s" % Path(args.path).expanduser())
+        print("sha256     : %s" % result["report_sha256"])
+        if result.get("program_name"):
+            print("name       : %s" % result["program_name"])
+        print("program    : %s" % result["program_sha256"])
+        print("status     : %s" % str(result.get("status", "unknown")).upper())
+        print("accepted   : %s" % ("yes" if result.get("accepted") else "no"))
+        print("facts      : %d" % result.get("facts", 0))
+        print("integrity  : VALID")
+        if result.get("program_hash_matches") is not None:
+            print("program    : MATCH")
+        if model_check is None:
+            print("model check: not run (pass --check-model to reload the checkpoint)")
+        else:
+            checks = model_check.get("facts", [])
+            passed = sum(1 for item in checks if item.get("passed"))
+            verdict = "PASS" if model_check.get("passed") else "FAIL"
+            print("model check: %s (%d/%d facts)" % (verdict, passed, len(checks)))
+            print("checkpoint : %s" % model_check.get("checkpoint"))
+            if model_check.get("reported_passed") is not None:
+                print("report says: %s" % (
+                    "PASS" if model_check["reported_passed"] else "FAIL"
+                ))
+                print("match      : %s" % (
+                    "yes" if model_check.get("matches_report") else "no"
+                ))
+    if model_check is not None and not model_check.get("passed"):
+        return 1
+    return 0
 
 
 def _optional_version(module: str) -> str:
@@ -1299,6 +1353,24 @@ def main(argv=None) -> int:
         help="write the program report JSON to this path",
     )
     p_program.add_argument("--json", action="store_true")
+    p_program_verify = sub.add_parser(
+        "program-verify",
+        help="verify a program report and optionally recheck its checkpoint",
+    )
+    p_program_verify.add_argument("path", help="program-report.json")
+    p_program_verify.add_argument(
+        "--program", default=None,
+        help="also require this program file to match the report's SHA-256",
+    )
+    p_program_verify.add_argument(
+        "--check-model", action="store_true",
+        help="reload the reported checkpoint and check every fact again",
+    )
+    p_program_verify.add_argument(
+        "--checkpoint", default=None,
+        help="with --check-model, recheck this checkpoint instead of the reported path",
+    )
+    p_program_verify.add_argument("--json", action="store_true")
     p_start = sub.add_parser("start", help="print the shortest path to a first edit")
     p_start.add_argument("--demo", action="store_true", help="also run the synthetic demo")
     p_web = sub.add_parser("web", help="launch the optional local browser console")
@@ -1347,6 +1419,8 @@ def main(argv=None) -> int:
         return _cmd_check(args)
     if args.command == "program":
         return _cmd_program(args)
+    if args.command == "program-verify":
+        return _cmd_program_verify(args)
     if args.command == "fetch":
         return _cmd_fetch(args)
     if args.command == "start":

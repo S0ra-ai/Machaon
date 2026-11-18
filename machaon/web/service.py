@@ -618,19 +618,80 @@ class WebService:
         text: str,
         base_dir: Optional[str] = None,
         progress: Optional[Any] = None,
+        report_out: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Run a pasted program through the shared program runner."""
-        program, _base = self._program_from_text(text, base_dir)
+        program, base = self._program_from_text(text, base_dir)
+        report_path = None
+        if report_out:
+            candidate = Path(report_out).expanduser()
+            if not candidate.is_absolute():
+                candidate = base / candidate
+            report_path = self.policy.require(str(candidate))
         runner = self.program_runner
         if runner is None:
             from ..program import run_program as runner
-        if progress is None:
-            result = runner(program)
-        else:
-            result = runner(program, progress=progress)
+        kwargs: Dict[str, Any] = {}
+        if progress is not None:
+            kwargs["progress"] = progress
+        if report_path is not None:
+            kwargs["report_out"] = report_path
+        result = runner(program, **kwargs)
         if hasattr(result, "to_dict"):
             return dict(result.to_dict())
         return dict(result)
+
+    def verify_program_report(
+        self,
+        report_text: str,
+        program_text: Optional[str] = None,
+        check_model: bool = False,
+        checkpoint: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Verify a pasted report without trusting paths outside the allowlist."""
+        from ..program import (
+            parse_program_report,
+            program_report_checkpoint,
+            verify_program_report,
+        )
+
+        if not isinstance(report_text, str) or not report_text.strip():
+            raise ValueError("report text is required")
+        document = parse_program_report(
+            report_text, source="<web program report>"
+        )
+        if program_text is not None and str(program_text).strip():
+            from ..program import parse_program
+
+            actual = parse_program(
+                str(program_text),
+                source="<web program>",
+                base_dir=self.policy.roots[0],
+            ).sha256
+            expected = document["program"]["sha256"]
+            if actual != expected:
+                raise ValueError(
+                    "program hash does not match the report: expected %s, got %s"
+                    % (expected, actual)
+                )
+        if checkpoint and not check_model:
+            raise ValueError("checkpoint can only be used with check_model")
+        target = None
+        if checkpoint:
+            target = self.policy.require_existing(checkpoint)
+        elif check_model:
+            target = self.policy.require_existing(
+                program_report_checkpoint(document)
+            )
+        result = verify_program_report(
+            document, check_model=check_model, checkpoint=target
+        )
+        if program_text is not None and str(program_text).strip():
+            result["program_hash_matches"] = True
+        if target is not None:
+            # The allowlist check and the verifier see the same saved path.
+            result["model_check"]["checkpoint"] = target
+        return result
 
     def _require_session(self) -> Any:
         with self._lock:

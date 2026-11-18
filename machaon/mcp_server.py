@@ -187,6 +187,26 @@ def create_server():
         except Exception as exc:
             return {"error": str(exc)}
 
+    @server.tool()
+    def verify_program_report(
+        path: str,
+        program_path: Optional[str] = None,
+        check_model: bool = False,
+        checkpoint: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Verify a program report and optionally recheck its saved checkpoint."""
+        from .program import verify_program_report as verify_report
+
+        try:
+            return verify_report(
+                path,
+                program_path=program_path,
+                check_model=check_model,
+                checkpoint=checkpoint,
+            )
+        except Exception as exc:
+            return {"valid": False, "error": str(exc)}
+
     # -- model-level: one loaded session --------------------------------
 
     @server.tool()

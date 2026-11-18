@@ -286,6 +286,46 @@ class TestCli(unittest.TestCase):
         self.assertIn("unknown field", err)
         self.assertNotIn("Traceback", err)
 
+    def test_program_report_verification(self):
+        from machaon.program import parse_program, write_program_report
+
+        with tempfile.TemporaryDirectory() as tmp:
+            program = parse_program(
+                "model: ./base\noutput: ./out\n"
+                "teach: The capital of France is -> Paris\n",
+                source="lesson.machaon",
+                base_dir=tmp,
+            )
+            report_path = os.path.join(tmp, "program-report.json")
+            write_program_report(report_path, {
+                "format": "machaon.program/1",
+                "program": program.to_dict(),
+                "run": {"status": "no_edits", "final": None},
+                "verification": {"passed": True, "facts": []},
+                "status": "no_edits",
+                "accepted": True,
+                "summary": "already true",
+            })
+            code, out, _ = run("program-verify", report_path)
+            self.assertEqual(code, 0)
+            self.assertIn("integrity  : VALID", out)
+            self.assertIn("NO_EDITS", out)
+
+            code, out, _ = run("program-verify", report_path, "--json")
+            self.assertEqual(code, 0)
+            payload = json.loads(out)
+            self.assertTrue(payload["valid"])
+            self.assertEqual(len(payload["report_sha256"]), 64)
+
+            with open(report_path) as handle:
+                tampered = json.load(handle)
+            tampered["accepted"] = False
+            with open(report_path, "w") as handle:
+                json.dump(tampered, handle)
+            code, _, err = run("program-verify", report_path)
+            self.assertEqual(code, 2)
+            self.assertIn("address mismatch", err)
+
     def test_teach_refuses_conflicting_inputs_before_loading(self):
         code, _, err = run(
             "teach", "--model", "/tmp/none",

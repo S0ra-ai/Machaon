@@ -77,7 +77,7 @@ class TestRegistration(unittest.TestCase):
             "describe_checkpoint", "list_tensors", "audit_edit", "apply_delta",
             "gate", "wsp_audit", "wsp_save", "verify_binding", "plan_surgery",
             "diagnose_failure", "parse_intent", "check_saved",
-            "plan_program", "run_program",
+            "plan_program", "run_program", "verify_program_report",
             "open_model", "model_status", "capture_baseline",
             "propose_edit", "propose_batch", "propose_action", "apply_edit",
             "evaluate", "assess_wsp", "assess_generation_wsp",
@@ -135,6 +135,9 @@ class TestRegistration(unittest.TestCase):
             self.assertEqual(plan["facts"][0]["prompt"], "The capital of France is")
             failed = server.tools["run_program"](path, verify=False)
             self.assertIn("error", failed)
+            missing = server.tools["verify_program_report"](path)
+            self.assertFalse(missing["valid"])
+            self.assertIn("error", missing)
         finally:
             Path(path).unlink(missing_ok=True)
 

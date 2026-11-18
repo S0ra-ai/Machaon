@@ -38,6 +38,10 @@
     programHistory: [],
     programResult: null,
     programRuns: [],
+    programReportText: "",
+    programReportName: "",
+    programVerifyCheckModel: false,
+    programVerification: null,
   };
 
   const el = {
@@ -80,6 +84,13 @@
     programCopyButton: $("#programCopyButton"),
     programReportButton: $("#programReportButton"),
     programUseOutputButton: $("#programUseOutputButton"),
+    programReportOut: $("#programReportOut"),
+    programVerifyButton: $("#programVerifyButton"),
+    programVerifyModelButton: $("#programVerifyModelButton"),
+    programVerifyMatch: $("#programVerifyMatch"),
+    programVerifyCurrent: $("#programVerifyCurrent"),
+    programReportFile: $("#programReportFile"),
+    programVerifyCard: $("#programVerifyCard"),
     programCard: $("#programCard"),
     checkpointBadge: $("#checkpointBadge"),
     tensorRows: $("#tensorRows"),
@@ -196,6 +207,9 @@
     }
     if (state.lastTeachMany) renderTeachManyResult(state.lastTeachMany);
     if (state.program) renderProgram(state.program);
+    if (state.programVerification) {
+      renderProgramVerification(state.programVerification);
+    }
     updateEventCount();
     if (state.lastJob) {
       el.jobTitle.textContent = t("job.default");
@@ -388,6 +402,10 @@
         state.programResult && state.programResult.run &&
         state.programResult.run.final
       );
+    }
+    if (el.programVerifyButton) el.programVerifyButton.disabled = state.busy;
+    if (el.programVerifyModelButton) {
+      el.programVerifyModelButton.disabled = state.busy;
     }
     if (el.firstEditButton) {
       el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
@@ -582,7 +600,59 @@
       (payload.summary ? '<p class="hint">' + escapeHtml(payload.summary) +
         "</p>" : "") +
       (payload.report_path ? '<p class="mono tiny">' +
-        escapeHtml(payload.report_path) + "</p>" : "");
+        escapeHtml(payload.report_path) + "</p>" : "") +
+      (payload.report_sha256 ? '<p class="mono tiny">' +
+        escapeHtml(t("program.reportSha")) + ": " +
+        escapeHtml(payload.report_sha256) + "</p>" : "");
+  }
+
+  function renderProgramVerification(payload) {
+    state.programVerification = payload || null;
+    const card = el.programVerifyCard;
+    if (!card) return;
+    if (!payload) {
+      card.className = "evidence-card empty-state";
+      card.textContent = t("program.verifyEmpty");
+      return;
+    }
+    const model = payload.model_check;
+    const integrity = !!payload.valid;
+    const modelLine = model
+      ? t(model.passed ? "program.modelVerified" : "program.modelVerifyFailed", {
+        passed: (model.facts || []).filter((item) => item.passed).length,
+        total: (model.facts || []).length,
+      })
+      : t("program.modelVerifyNotRun");
+    const matchLine = (model && model.reported_passed !== null
+      && model.reported_passed !== undefined)
+      ? t(model.matches_report ? "program.reportMatch" : "program.reportMismatch")
+      : "";
+    const accepted = payload.accepted ? t("program.acceptedYes")
+      : t("program.acceptedNo");
+    card.className = "evidence-card";
+    card.innerHTML =
+      '<div class="teach-status"><strong>' +
+      escapeHtml(t(integrity ? "program.integrityValid"
+        : "program.integrityInvalid")) +
+      '</strong><span class="badge ' + (integrity ? "live" : "quiet") + '">' +
+      escapeHtml(String(payload.status || "unknown")) + "</span></div>" +
+      '<div class="teach-grid">' +
+      "<span>" + escapeHtml(t("program.reportSha")) +
+      '<br><strong class="mono tiny">' +
+      escapeHtml(payload.report_sha256 || "—") + "</strong></span>" +
+      "<span>" + escapeHtml(t("program.programSha")) +
+      '<br><strong class="mono tiny">' +
+      escapeHtml(payload.program_sha256 || "—") + "</strong></span>" +
+      "<span>" + escapeHtml(t("program.accepted")) + "<br><strong>" +
+      escapeHtml(accepted) + "</strong></span>" +
+      "<span>" + escapeHtml(t("program.modelCheck")) + "<br><strong>" +
+      escapeHtml(modelLine) + "</strong></span>" +
+      "</div>" +
+      (matchLine ? '<p class="hint">' + escapeHtml(matchLine) + "</p>" : "") +
+      (payload.program_path ? '<p class="mono tiny">' +
+        escapeHtml(payload.program_path) + "</p>" : "") +
+      (payload.report_sha256 ? '<p class="mono tiny">' +
+        escapeHtml(state.programReportName || "") + "</p>" : "");
   }
 
   function copyText(text) {
@@ -1505,6 +1575,10 @@
       renderProgram(result);
       addTimelineEvent("program", t("timeline.program"),
         (result && result.status) || "", result && result.accepted ? "ok" : "err");
+    } else if (kind === "program_verify") {
+      renderProgramVerification(result);
+      addTimelineEvent("program", t("timeline.programVerify"),
+        (result && result.status) || "", result && result.valid ? "ok" : "err");
     } else if (kind === "teach") {
       if (result && result.state) state.session = result.state;
       state.proposal = null;
@@ -1684,7 +1758,40 @@
     return {
       program: el.programText.value,
       base_dir: el.programBase.value.trim() || null,
+      report_out: (el.programReportOut && el.programReportOut.value.trim()) || null,
     };
+  }
+
+  function chooseProgramReport(checkModel) {
+    state.programVerifyCheckModel = !!checkModel;
+    if (!el.programReportFile) return;
+    el.programReportFile.value = "";
+    el.programReportFile.click();
+  }
+
+  async function verifyProgramReportFile(file) {
+    if (!file) return;
+    const text = await file.text();
+    if (!text.trim()) throw new Error(t("program.emptyFile"));
+    state.programReportText = text;
+    state.programReportName = file.name;
+    const currentCheckpoint = el.programVerifyCurrent
+      && el.programVerifyCurrent.checked
+      ? (el.checkpointPath.value.trim() ||
+        String((state.session && state.session.model) || "").trim())
+      : "";
+    const checkModel = !!state.programVerifyCheckModel || !!currentCheckpoint;
+    const body = {
+      report: text,
+      check_model: checkModel,
+    };
+    if (currentCheckpoint) body.checkpoint = currentCheckpoint;
+    const current = el.programText.value.trim();
+    if (el.programVerifyMatch && el.programVerifyMatch.checked && current) {
+      body.program = el.programText.value;
+    }
+    startJob("/api/program/verify", body, "program_verify");
+    el.programPanel.open = true;
   }
 
   function portableProgramPath(value, base) {
@@ -2193,6 +2300,24 @@
     downloadJson(state.programResult, programReportFilename());
     addTimelineEvent("program", t("timeline.programReport"), "", "ok");
   });
+  if (el.programVerifyButton) {
+    el.programVerifyButton.addEventListener("click", () => chooseProgramReport(false));
+  }
+  if (el.programVerifyModelButton) {
+    el.programVerifyModelButton.addEventListener("click", () => chooseProgramReport(true));
+  }
+  if (el.programReportFile) {
+    el.programReportFile.addEventListener("change", async () => {
+      const file = el.programReportFile.files && el.programReportFile.files[0];
+      try {
+        await verifyProgramReportFile(file);
+      } catch (err) {
+        addTimelineEvent("error", localizedJobError(err.message), "", "err");
+      } finally {
+        el.programReportFile.value = "";
+      }
+    });
+  }
   $("#programUseOutputButton").addEventListener("click", () => {
     const final = state.programResult && state.programResult.run
       && state.programResult.run.final;

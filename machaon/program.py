@@ -25,6 +25,8 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
@@ -35,10 +37,20 @@ from .recipes import TeachPolicy
 
 __all__ = [
     "ProgramError",
+    "ProgramReportError",
     "WeightProgram",
     "ProgramRun",
+    "PROGRAM_REPORT_FORMAT",
+    "PROGRAM_REPORT_VERSION",
+    "PROGRAM_REPORT_FILENAME",
     "load_program",
     "parse_program",
+    "program_report_sha256",
+    "program_report_checkpoint",
+    "parse_program_report",
+    "read_program_report",
+    "verify_program_report",
+    "write_program_report",
     "run_program",
 ]
 
@@ -46,6 +58,14 @@ __all__ = [
 class ProgramError(ValueError):
     """A program is syntactically valid JSON/text but not a valid contract."""
 
+
+class ProgramReportError(ProgramError):
+    """A program report is malformed, corrupted, or not self-consistent."""
+
+
+PROGRAM_REPORT_FORMAT = "machaon.program.report/1"
+PROGRAM_REPORT_VERSION = 1
+PROGRAM_REPORT_FILENAME = "program-report.json"
 
 _SINGLE_FIELDS = {
     "version",
@@ -511,11 +531,13 @@ class ProgramRun:
     accepted: bool
     summary: str
     report_path: Optional[str]
+    report_sha256: Optional[str] = None
     model_fetched: bool = False
     effective_output: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "format": "machaon.program/1",
             "program": dict(self.program),
             "run": dict(self.run),
             "verification": self.verification,
@@ -523,6 +545,13 @@ class ProgramRun:
             "accepted": bool(self.accepted),
             "summary": self.summary,
             "report_path": self.report_path,
+            "report_format": (
+                PROGRAM_REPORT_FORMAT if self.report_sha256 else None
+            ),
+            "report_format_version": (
+                PROGRAM_REPORT_VERSION if self.report_sha256 else None
+            ),
+            "report_sha256": self.report_sha256,
             "model_fetched": bool(self.model_fetched),
             "effective_output": self.effective_output,
         }
@@ -536,11 +565,255 @@ def _as_dict(value: Any) -> Dict[str, Any]:
     raise TypeError("expected a mapping or an object with to_dict()")
 
 
-def _write_report(path: Path, payload: Dict[str, Any]) -> None:
-    path.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+def _canonical_bytes(value: Any) -> bytes:
+    try:
+        return json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise ProgramReportError(
+            "program report is not JSON-serialisable: %s" % exc
+        ) from exc
+
+
+def program_report_sha256(document: Mapping[str, Any]) -> str:
+    """Address a program report excluding the address field itself."""
+    if not isinstance(document, Mapping):
+        raise ProgramReportError("program report must be an object")
+    body = {key: value for key, value in document.items()
+            if key != "report_sha256"}
+    return hashlib.sha256(_canonical_bytes(body)).hexdigest()
+
+
+def write_program_report(
+    path: str | Path, payload: Mapping[str, Any]
+) -> Dict[str, Any]:
+    """Atomically write a self-addressed program report and return it."""
+    if not isinstance(payload, Mapping):
+        raise ProgramReportError("program report must be an object")
+    document = dict(payload)
+    document.pop("report_sha256", None)
+    document["report_format"] = PROGRAM_REPORT_FORMAT
+    document["report_format_version"] = PROGRAM_REPORT_VERSION
+    document["report_sha256"] = program_report_sha256(document)
+
+    target = Path(path).expanduser()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        dir=target.parent,
+        prefix=".program-report-",
+        suffix=".tmp",
+        delete=False,
         encoding="utf-8",
+    ) as handle:
+        temp_path = Path(handle.name)
+        json.dump(
+            document,
+            handle,
+            indent=2,
+            ensure_ascii=False,
+            sort_keys=True,
+            allow_nan=False,
+        )
+        handle.write("\n")
+    try:
+        os.replace(temp_path, target)
+    finally:
+        temp_path.unlink(missing_ok=True)
+    return document
+
+
+def parse_program_report(
+    text: str, *, source: str = "<program report>"
+) -> Dict[str, Any]:
+    """Parse and integrity-check one report without loading a model."""
+    try:
+        document = json.loads(text)
+    except ValueError as exc:
+        raise ProgramReportError("%s: %s" % (source, exc)) from exc
+    if not isinstance(document, dict):
+        raise ProgramReportError("%s: a program report must be an object" % source)
+    if document.get("report_format") != PROGRAM_REPORT_FORMAT:
+        raise ProgramReportError(
+            "%s: unsupported report format %r"
+            % (source, document.get("report_format"))
+        )
+    if document.get("report_format_version") != PROGRAM_REPORT_VERSION:
+        raise ProgramReportError(
+            "%s: unsupported report version %r"
+            % (source, document.get("report_format_version"))
+        )
+    address = document.get("report_sha256")
+    if not isinstance(address, str) or len(address) != 64:
+        raise ProgramReportError("%s: report is missing its SHA-256 address" % source)
+    try:
+        actual = program_report_sha256(document)
+    except ProgramReportError as exc:
+        raise ProgramReportError("%s: %s" % (source, exc)) from exc
+    if address != actual:
+        raise ProgramReportError("%s: report address mismatch" % source)
+    program = document.get("program")
+    if not isinstance(program, dict):
+        raise ProgramReportError("%s: report needs a program object" % source)
+    sha256 = program.get("sha256")
+    if not isinstance(sha256, str) or len(sha256) != 64:
+        raise ProgramReportError(
+            "%s: report program is missing its SHA-256 address" % source
+        )
+    if not isinstance(program.get("facts"), list):
+        raise ProgramReportError("%s: report program needs a facts list" % source)
+    if not isinstance(document.get("run"), dict):
+        raise ProgramReportError("%s: report needs a run object" % source)
+    return document
+
+
+def read_program_report(path: str | Path) -> Dict[str, Any]:
+    """Read and integrity-check a saved program report."""
+    source = Path(path).expanduser()
+    try:
+        text = source.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ProgramReportError("%s: %s" % (source, exc)) from exc
+    return parse_program_report(text, source=str(source))
+
+
+def _report_facts(document: Mapping[str, Any]) -> List[Tuple[str, str]]:
+    program = document.get("program")
+    facts = program.get("facts") if isinstance(program, Mapping) else None
+    if not isinstance(facts, list) or not facts:
+        raise ProgramReportError("program report has no facts to check")
+    pairs: List[Tuple[str, str]] = []
+    for index, fact in enumerate(facts, 1):
+        if not isinstance(fact, Mapping):
+            raise ProgramReportError("program report fact %d is not an object" % index)
+        prompt = fact.get("prompt")
+        answer = fact.get("answer")
+        if not isinstance(prompt, str) or not isinstance(answer, str):
+            raise ProgramReportError(
+                "program report fact %d needs prompt and answer strings" % index
+            )
+        pairs.append((prompt, answer))
+    return pairs
+
+
+def program_report_checkpoint(document: Mapping[str, Any]) -> str:
+    """Return the checkpoint named by a report, or explain why there is none."""
+    run = document.get("run")
+    if isinstance(run, Mapping):
+        final = run.get("final")
+        if isinstance(final, str) and final.strip():
+            return final
+    if document.get("status") == "no_edits":
+        program = document.get("program")
+        model = program.get("model") if isinstance(program, Mapping) else None
+        if isinstance(model, str) and model.strip():
+            return model
+    raise ProgramReportError(
+        "program report has no saved checkpoint to check; "
+        "the run did not produce a final checkpoint"
     )
+
+
+def verify_program_report(
+    report: str | Path | Mapping[str, Any],
+    *,
+    program_path: Optional[str | Path] = None,
+    check_model: bool = False,
+    checkpoint: Optional[str | Path] = None,
+    check_fn: Optional[Callable[..., Any]] = None,
+) -> Dict[str, Any]:
+    """Verify report integrity, its program address, and optionally its facts.
+
+    Integrity verification is local and needs no model.  ``check_model=True``
+    reloads the checkpoint named by the report (or ``checkpoint`` when the
+    saved bytes have moved) and re-runs every declared fact; that is the check
+    that turns a valid report into fresh behavioural evidence.
+    """
+    if isinstance(report, Mapping):
+        document = parse_program_report(
+            json.dumps(report, ensure_ascii=False),
+            source="<inline program report>",
+        )
+    elif isinstance(report, (str, Path)):
+        document = read_program_report(report)
+    else:
+        raise ProgramReportError("report must be a path or a JSON object")
+
+    program = document["program"]
+    result: Dict[str, Any] = {
+        "valid": True,
+        "format": PROGRAM_REPORT_FORMAT,
+        "format_version": PROGRAM_REPORT_VERSION,
+        "report_sha256": document["report_sha256"],
+        "program_sha256": program["sha256"],
+        "program_name": program.get("name", ""),
+        "status": document.get("status"),
+        "accepted": bool(document.get("accepted")),
+        "facts": len(program.get("facts", [])),
+        "program_hash_matches": None,
+        "model_check": None,
+    }
+
+    if program_path is not None:
+        source = load_program(program_path)
+        if source.sha256 != program["sha256"]:
+            raise ProgramReportError(
+                "program hash does not match the report: expected %s, got %s"
+                % (program["sha256"], source.sha256)
+            )
+        result["program_hash_matches"] = True
+        result["program_path"] = source.path
+
+    if check_model:
+        target = (
+            str(Path(checkpoint).expanduser())
+            if checkpoint is not None
+            else program_report_checkpoint(document)
+        )
+        runtime = program.get("runtime")
+        runtime = runtime if isinstance(runtime, Mapping) else {}
+        pairs = _report_facts(document)
+        checker = check_fn
+        if checker is None:
+            from .check import check_facts
+
+            checker = check_facts
+        try:
+            checked = _as_dict(checker(
+                target,
+                pairs,
+                dtype=str(runtime.get("dtype", "auto")),
+                device=runtime.get("device"),
+                quantize=runtime.get("quantize"),
+            ))
+        except Exception as exc:
+            raise ProgramReportError(
+                "saved-byte check could not run: %s: %s"
+                % (type(exc).__name__, exc)
+            ) from exc
+        live = bool(checked.get("passed"))
+        reported = document.get("verification")
+        reported_passed = (
+            bool(reported.get("passed"))
+            if isinstance(reported, Mapping)
+            else None
+        )
+        result["model_check"] = {
+            "performed": True,
+            "checkpoint": target,
+            "passed": live,
+            "reported_passed": reported_passed,
+            "matches_report": (
+                None if reported_passed is None else live == reported_passed
+            ),
+            "facts": checked.get("facts", []),
+        }
+    return result
 
 
 def run_program(
@@ -575,7 +848,7 @@ def run_program(
     report_path = (
         Path(report_out).expanduser().resolve()
         if report_out is not None
-        else output / "program-report.json"
+        else output / PROGRAM_REPORT_FILENAME
     )
     if report_out is not None and report_path.exists():
         raise FileExistsError(
@@ -769,13 +1042,15 @@ def run_program(
         "status": status,
         "accepted": bool(run_ok and verification_ok and status != "verification_failed"),
         "summary": summary,
+        "report_path": str(report_path),
         "model_fetched": fetched,
         "effective_output": str(output),
     }
+    report_sha256: Optional[str] = None
     try:
         output.mkdir(parents=True, exist_ok=True)
-        report_path.parent.mkdir(parents=True, exist_ok=True)
-        _write_report(report_path, payload)
+        written = write_program_report(report_path, payload)
+        report_sha256 = str(written["report_sha256"])
     except (OSError, TypeError, ValueError):
         report_path = None
 
@@ -787,6 +1062,7 @@ def run_program(
         accepted=bool(payload["accepted"]),
         summary=summary,
         report_path=str(report_path) if report_path else None,
+        report_sha256=report_sha256,
         model_fetched=fetched,
         effective_output=str(output),
     )

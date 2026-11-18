@@ -6,10 +6,14 @@ from pathlib import Path
 
 from machaon.program import (
     ProgramError,
+    ProgramReportError,
     load_program,
     parse_layers,
     parse_program,
+    read_program_report,
     run_program,
+    verify_program_report,
+    write_program_report,
 )
 
 TEXT_PROGRAM = """\
@@ -225,6 +229,11 @@ class TestRunProgram(unittest.TestCase):
         )
         self.assertEqual(report["program"]["sha256"], program.sha256)
         self.assertEqual(report["verification"]["passed"], True)
+        self.assertEqual(
+            report["report_format"], "machaon.program.report/1"
+        )
+        self.assertEqual(len(report["report_sha256"]), 64)
+        self.assertEqual(result.report_sha256, report["report_sha256"])
 
     def test_verification_failure_is_not_accepted(self):
         root, program = self._program()
@@ -428,6 +437,109 @@ class TestRunProgram(unittest.TestCase):
         self.assertFalse(result.accepted)
         self.assertEqual(result.status, "verification_failed")
         self.assertIn("reload failed", result.verification["error"])
+
+
+class TestProgramReportVerification(unittest.TestCase):
+    def _report(self, *, passed=True, accepted=True):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        root = Path(self.tmp.name)
+        (root / "models" / "base").mkdir(parents=True)
+        program_path = root / "lesson.machaon"
+        program_path.write_text(TEXT_PROGRAM, encoding="utf-8")
+        program = load_program(program_path)
+        payload = {
+            "format": "machaon.program/1",
+            "program": program.to_dict(),
+            "run": {
+                "status": "applied",
+                "final": str(root / "models" / "lesson" / "final"),
+                "out_dir": str(root / "models" / "lesson"),
+                "facts": len(program.facts),
+            },
+            "verification": {
+                "passed": passed,
+                "facts": [
+                    {
+                        "index": index,
+                        "prompt": fact["prompt"],
+                        "answer": fact["answer"],
+                        "passed": passed,
+                    }
+                    for index, fact in enumerate(program.facts, 1)
+                ],
+            },
+            "status": "applied" if accepted else "verification_failed",
+            "accepted": accepted,
+            "summary": "a recorded run",
+            "model_fetched": False,
+            "effective_output": program.output,
+        }
+        report_path = root / "program-report.json"
+        document = write_program_report(report_path, payload)
+        return root, program_path, report_path, document
+
+    def test_report_round_trips_with_a_content_address(self):
+        _root, _program_path, path, document = self._report()
+        loaded = read_program_report(path)
+        self.assertEqual(loaded, document)
+        self.assertEqual(document["report_format_version"], 1)
+        self.assertEqual(
+            document["report_sha256"], read_program_report(path)["report_sha256"]
+        )
+
+    def test_modified_report_is_refused(self):
+        _root, _program_path, path, document = self._report()
+        document["accepted"] = False
+        path.write_text(json.dumps(document), encoding="utf-8")
+        with self.assertRaisesRegex(ProgramReportError, "address mismatch"):
+            read_program_report(path)
+
+    def test_program_hash_cross_check(self):
+        root, program_path, path, _document = self._report()
+        result = verify_program_report(path, program_path=program_path)
+        self.assertTrue(result["valid"])
+        self.assertTrue(result["program_hash_matches"])
+        self.assertIsNone(result["model_check"])
+
+        other = root / "other.machaon"
+        other.write_text(
+            TEXT_PROGRAM.replace("First lesson", "Another lesson"),
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ProgramReportError, "program hash"):
+            verify_program_report(path, program_path=other)
+
+    def test_optional_model_check_reloads_the_checkpoint(self):
+        _root, _program_path, path, _document = self._report()
+        check, calls = fake_check()
+        result = verify_program_report(path, check_model=True, check_fn=check)
+        self.assertTrue(result["model_check"]["performed"])
+        self.assertTrue(result["model_check"]["passed"])
+        self.assertTrue(result["model_check"]["matches_report"])
+        self.assertEqual(len(calls[0][1]), 2)
+        self.assertTrue(calls[0][0].endswith("/models/lesson/final"))
+
+    def test_model_check_can_disagree_with_the_recorded_claim(self):
+        _root, _program_path, path, _document = self._report()
+        check, _calls = fake_check(passed=False)
+        result = verify_program_report(path, check_model=True, check_fn=check)
+        self.assertFalse(result["model_check"]["passed"])
+        self.assertFalse(result["model_check"]["matches_report"])
+
+    def test_missing_saved_checkpoint_is_reported(self):
+        _root, _program_path, path, document = self._report(accepted=False)
+        document["run"]["final"] = None
+        write_program_report(path, document)
+        with self.assertRaisesRegex(ProgramReportError, "no saved checkpoint"):
+            verify_program_report(path, check_model=True, check_fn=fake_check()[0])
+
+    def test_old_report_without_an_address_is_refused(self):
+        _root, _program_path, path, document = self._report()
+        document.pop("report_format")
+        path.write_text(json.dumps(document), encoding="utf-8")
+        with self.assertRaisesRegex(ProgramReportError, "unsupported report format"):
+            read_program_report(path)
 
 
 if __name__ == "__main__":

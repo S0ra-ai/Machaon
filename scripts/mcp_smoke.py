@@ -20,7 +20,7 @@ EXPECTED = {
     "describe_checkpoint", "list_tensors", "audit_edit", "apply_delta", "gate",
     "wsp_audit", "wsp_save", "verify_binding", "plan_surgery",
     "diagnose_failure", "parse_intent", "check_saved",
-    "plan_program", "run_program",
+    "plan_program", "run_program", "verify_program_report",
     "open_model", "model_status", "capture_baseline", "propose_edit",
     "propose_batch", "propose_action", "apply_edit", "evaluate",
     "assess_wsp", "assess_generation_wsp", "search_rome_layers", "teach",
@@ -131,6 +131,13 @@ async def main() -> int:
             text = failed_program.content[0].text
             print("run_program without a model:", text[:60])
             if "error" not in text:
+                return 1
+            failed_report = await session.call_tool(
+                "verify_program_report", {"path": program_path}
+            )
+            text = failed_report.content[0].text
+            print("verify_program_report on a program:", text[:70])
+            if '"valid": false' not in text:
                 return 1
             try:
                 Path(program_path).unlink()

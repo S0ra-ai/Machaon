@@ -245,7 +245,7 @@ def many_recipe(factory, base_model, facts, out_dir, **kwargs):
     }
 
 
-def program_runner(program, progress=None):
+def program_runner(program, progress=None, report_out=None):
     if progress is not None:
         progress({"phase": "program", "status": "teaching",
                   "step": 1, "total": len(program.facts)})
@@ -275,6 +275,7 @@ def program_runner(program, progress=None):
         "accepted": True,
         "summary": "test program applied",
         "report_path": str(Path(program.output) / "program-report.json"),
+        "report_out": str(report_out) if report_out is not None else None,
         "model_fetched": False,
         "effective_output": program.output,
     }
@@ -537,6 +538,109 @@ class TestWebApp(unittest.TestCase):
             "/api/jobs/%s/events?token=%s" % (response.json()["job"], self.token)
         )
         self.assertIn('"phase": "program"', events.text)
+
+    def test_program_run_accepts_a_report_path(self):
+        text = (
+            "model: ./base\noutput: ./edited\n"
+            "teach: The capital of France is -> Paris\n"
+        )
+        response = self.client.post(
+            "/api/program/run",
+            headers=self.headers,
+            json={
+                "program": text,
+                "base_dir": str(self.root),
+                "report_out": "./reports/lesson.json",
+            },
+        )
+        job = _wait_for_job(
+            self.client, response.json()["job"], self.headers
+        )
+        self.assertEqual(job["status"], "done")
+        self.assertEqual(
+            job["result"]["report_out"],
+            str((self.root / "reports" / "lesson.json").resolve()),
+        )
+
+    def test_program_report_verification_endpoint(self):
+        from machaon.program import parse_program, write_program_report
+
+        program = parse_program(
+            "model: ./base\noutput: ./edited\n"
+            "teach: The capital of France is -> Paris\n",
+            source="lesson.machaon",
+            base_dir=str(self.root),
+        )
+        report_path = self.root / "program-report.json"
+        write_program_report(report_path, {
+            "format": "machaon.program/1",
+            "program": program.to_dict(),
+            "run": {"status": "applied", "final": str(self.root / "edited")},
+            "verification": {"passed": True, "facts": []},
+            "status": "applied",
+            "accepted": True,
+            "summary": "a recorded run",
+        })
+        response = self.client.post(
+            "/api/program/verify",
+            headers=self.headers,
+            json={"report": report_path.read_text(encoding="utf-8")},
+        )
+        job = _wait_for_job(
+            self.client, response.json()["job"], self.headers
+        )
+        self.assertEqual(job["status"], "done")
+        self.assertTrue(job["result"]["valid"])
+        self.assertEqual(len(job["result"]["report_sha256"]), 64)
+        self.assertIsNone(job["result"]["model_check"])
+
+    def test_program_report_verification_can_match_the_program(self):
+        from machaon.program import parse_program, write_program_report
+
+        text = (
+            "model: ./base\noutput: ./edited\n"
+            "teach: The capital of France is -> Paris\n"
+        )
+        program = parse_program(
+            text, source="lesson.machaon", base_dir=str(self.root)
+        )
+        report_path = self.root / "program-report.json"
+        write_program_report(report_path, {
+            "format": "machaon.program/1",
+            "program": program.to_dict(),
+            "run": {"status": "no_edits", "final": None},
+            "verification": {"passed": True, "facts": []},
+            "status": "no_edits",
+            "accepted": True,
+            "summary": "already true",
+        })
+        response = self.client.post(
+            "/api/program/verify",
+            headers=self.headers,
+            json={
+                "report": report_path.read_text(encoding="utf-8"),
+                "program": text,
+            },
+        )
+        job = _wait_for_job(
+            self.client, response.json()["job"], self.headers
+        )
+        self.assertEqual(job["status"], "done")
+        self.assertTrue(job["result"]["program_hash_matches"])
+
+        response = self.client.post(
+            "/api/program/verify",
+            headers=self.headers,
+            json={
+                "report": report_path.read_text(encoding="utf-8"),
+                "program": text.replace("Paris", "Rome"),
+            },
+        )
+        job = _wait_for_job(
+            self.client, response.json()["job"], self.headers
+        )
+        self.assertEqual(job["status"], "error")
+        self.assertIn("program hash does not match", job["error"])
 
     def test_fetch_starter_downloads_below_an_allowed_root(self):
         dest = self.root / "Smol"
@@ -934,6 +1038,11 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="programReportButton"', page.text)
         self.assertIn('id="programUseOutputButton"', page.text)
         self.assertIn('id="programDownloadButton"', page.text)
+        self.assertIn('id="programReportOut"', page.text)
+        self.assertIn('id="programVerifyButton"', page.text)
+        self.assertIn('id="programVerifyModelButton"', page.text)
+        self.assertIn('id="programReportFile"', page.text)
+        self.assertIn('id="programVerifyCard"', page.text)
         self.assertIn('id="fetchOpen"', page.text)
         self.assertIn('data-i18n="onboarding.title"', page.text)
         self.assertIn('src="/static/locales.js"', page.text)
@@ -966,6 +1075,8 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"check.summary"', locales.text)
         self.assertIn('"program.summary"', locales.text)
         self.assertIn('"program.run"', locales.text)
+        self.assertIn('"program.verifyReport"', locales.text)
+        self.assertIn('"program.integrityValid"', locales.text)
 
     def test_force_close_rolls_back_an_edited_session(self):
         opened = self.client.post(
