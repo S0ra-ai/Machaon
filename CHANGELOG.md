@@ -22,6 +22,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   remembers the last eight programs in `localStorage`.
 - MCP `plan_program` and `run_program` expose the portable program runner to
   agents; the tool surface is now 27 tools.
+- The Web program panel can build a `.machaon` file from a plain teaching
+  sentence list, copy the editor, download a run report, and reopen the run's
+  final checkpoint without retyping its path.
 - `machaon.intent`: a deterministic English/Chinese compiler from plain-language
   teaching requests (`->`, labelled blocks, "when asked ...", and sentence
   forms) into an exact, reviewable prompt/answer contract. Unstructured text is

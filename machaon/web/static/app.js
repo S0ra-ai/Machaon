@@ -7,6 +7,7 @@
   const SUPPORTED_LOCALES = ["en", "zh", "ja", "ko"];
   const LAST_CHECKPOINT_KEY = "machaon-last-checkpoint";
   const PROGRAM_HISTORY_KEY = "machaon-program-history";
+  const PROGRAM_RUNS_KEY = "machaon-program-runs";
   const state = {
     token: "",
     locale: "en",
@@ -36,6 +37,7 @@
     program: null,
     programHistory: [],
     programResult: null,
+    programRuns: [],
   };
 
   const el = {
@@ -73,6 +75,8 @@
     programBuildButton: $("#programBuildButton"),
     programHistory: $("#programHistory"),
     programHistoryLoad: $("#programHistoryLoad"),
+    programRuns: $("#programRuns"),
+    programRunHistoryLoad: $("#programRunHistoryLoad"),
     programCopyButton: $("#programCopyButton"),
     programReportButton: $("#programReportButton"),
     programUseOutputButton: $("#programUseOutputButton"),
@@ -374,6 +378,7 @@
     if (el.programTemplateTwo) el.programTemplateTwo.disabled = state.busy;
     if (el.programBuildButton) el.programBuildButton.disabled = state.busy;
     if (el.programHistoryLoad) el.programHistoryLoad.disabled = state.busy;
+    if (el.programRunHistoryLoad) el.programRunHistoryLoad.disabled = state.busy;
     if (el.programCopyButton) el.programCopyButton.disabled = state.busy;
     if (el.programReportButton) {
       el.programReportButton.disabled = state.busy || !state.programResult;
@@ -426,6 +431,7 @@
       if (state.session) rememberCheckpoint(state.session.model);
       if (!state.session) setFirstEditReadyStatus();
       readProgramHistory();
+      readProgramRuns();
       maybeShowGuide();
     } catch (err) {
       setConnection("error", t("conn.offline"), "conn.offline");
@@ -517,6 +523,7 @@
         state.programResult.run.final
       ) || state.busy;
     }
+    if (state.programResult) rememberProgramRun(state.programResult);
     const card = el.programCard;
     if (!card) return;
     if (!payload) {
@@ -669,6 +676,69 @@
     el.programText.value = item.text;
     el.programPanel.open = true;
     addTimelineEvent("program", t("timeline.programHistory"), item.name || "", "ok");
+  }
+
+  function readProgramRuns() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(PROGRAM_RUNS_KEY) || "[]");
+      state.programRuns = Array.isArray(parsed) ? parsed.filter((item) =>
+        item && typeof item.final === "string" && item.final.trim()
+      ).slice(0, 8) : [];
+    } catch (_) {
+      state.programRuns = [];
+    }
+    renderProgramRuns();
+  }
+
+  function renderProgramRuns() {
+    if (!el.programRuns) return;
+    const current = el.programRuns.value;
+    const options = ['<option value="" data-i18n="program.runs">' +
+      escapeHtml(t("program.runs")) + "</option>"];
+    state.programRuns.forEach((item, index) => {
+      const label = (item.name || t("program.untitled")) + " · " +
+        (item.status || "unknown");
+      options.push('<option value="' + index + '">' + escapeHtml(label) +
+        "</option>");
+    });
+    el.programRuns.innerHTML = options.join("");
+    if (current && Number(current) < state.programRuns.length) {
+      el.programRuns.value = current;
+    }
+  }
+
+  function rememberProgramRun(payload) {
+    if (!payload || !payload.run || !payload.run.final) return;
+    const program = payload.program || {};
+    const item = {
+      name: program.name || program.model || t("program.untitled"),
+      final: String(payload.run.final),
+      status: String(payload.status || ""),
+      report_path: payload.report_path || null,
+      saved_at: Date.now(),
+    };
+    state.programRuns = [
+      item,
+    ].concat(state.programRuns.filter((entry) => entry.final !== item.final))
+      .slice(0, 8);
+    try {
+      localStorage.setItem(PROGRAM_RUNS_KEY, JSON.stringify(state.programRuns));
+    } catch (_) {
+      // History is a convenience; the run itself is already persisted.
+    }
+    renderProgramRuns();
+  }
+
+  function loadProgramRun() {
+    if (el.programRuns.value === "") return;
+    const item = state.programRuns[Number(el.programRuns.value)];
+    if (!item) return;
+    el.checkpointPath.value = item.final;
+    rememberCheckpoint(item.final);
+    el.programPanel.open = true;
+    addTimelineEvent("program", t("timeline.programRunHistory"),
+      item.final, "ok");
+    startJob("/api/session/open", openSessionRequest(item.final), "open_session");
   }
 
   function renderTensors(rows) {
@@ -2093,6 +2163,7 @@
     }
   });
   $("#programHistoryLoad").addEventListener("click", loadRememberedProgram);
+  $("#programRunHistoryLoad").addEventListener("click", loadProgramRun);
   $("#programCopyButton").addEventListener("click", async () => {
     const text = el.programText.value.trim();
     if (!text) return addTimelineEvent("error", t("program.textRequired"), "", "err");

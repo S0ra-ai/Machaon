@@ -131,6 +131,8 @@ checkpoint in a fresh session without manually typing its path.
 **Build program from facts** turns one teaching sentence per line into a
 reviewable `.machaon` program using the selected/current checkpoint, the same
 output naming rule, and the standard budget and verification defaults.
+Each completed run is also added to **Recent runs**; **Open output** reopens its
+final checkpoint without manually copying the path.
 
 Both routes enforce the same filesystem allowlist as every other console
 operation. A program cannot reach a model or output outside the configured
