@@ -213,6 +213,10 @@ changing the bytes. `--check-model` is the stronger check because it executes
 the declared facts against the saved weights. Reports written before the
 address field was added are refused rather than treated as verified.
 
+Integrity and acceptance are separate: a rejected or verification-failed run
+can still have a valid report. Read `status` and `accepted` in the report before
+deciding whether the checkpoint is usable.
+
 ## What this does not claim
 
 The local checks prove that the declared facts work and that the protected
