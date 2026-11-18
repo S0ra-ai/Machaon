@@ -203,6 +203,10 @@ target and panel, and roll back automatically if a check fails. **Teach a
 list** in the same box runs the multi-fact chain, shows every step, and can
 open the final safe checkpoint.
 
+The **FIRST EDIT** card goes one step further: if no checkpoint is selected, it
+downloads SmolLM2-135M, opens it, teaches the prefilled fact and leaves the
+accepted edit in the session for **Save**.
+
 The Checkpoint column also has a **Download starter** control for SmolLM2-135M,
 Qwen2.5-0.5B or GPT-2, with Hugging Face / mirror / ModelScope fallback and live
 SSE byte/percent progress, so a first run does not require a pre-existing local

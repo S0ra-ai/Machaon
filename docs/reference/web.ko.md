@@ -41,6 +41,14 @@ machaon-web --allowed-root /models --port 8765
 **탐색 시작**을 누르면 읽음으로 기록되고, 상단의 **가이드**로 언제든 다시 열 수
 있습니다. Hero 아래의 4단계 안내는 가벼운 리마인더로 남겨 둡니다.
 
+## 첫 편집 카드
+
+첫 인증 화면에는 **FIRST EDIT** 카드도 표시됩니다. 체크포인트를 선택하지 않았다면
+SmolLM2-135M을 받아 열고, "The Eiffel Tower is in the city of -> Rome"을 미리 채운
+뒤 교수 레시피를 실행해 결과를 보여 줍니다. session이 열리면 카드는 사라지고,
+수용된 편집은 **저장**을 위해 session에 남습니다. **숨기기**는 `localStorage`에
+저장됩니다.
+
 ## 세 열 작업 흐름
 
 1. **Checkpoint**: safetensors 파일 또는 분할 디렉터리의 header를 읽어

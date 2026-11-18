@@ -72,6 +72,25 @@
       <button id="onboardingGuideButton" class="secondary" type="button" data-i18n="onboarding.open">Open the 60-second guide</button>
     </section>
 
+    <section id="firstEditCard" class="first-edit" aria-labelledby="firstEditTitle">
+      <div class="first-edit-copy">
+        <p class="eyebrow" data-i18n="firstEdit.eyebrow">FIRST EDIT</p>
+        <h2 id="firstEditTitle" data-i18n="firstEdit.title">One click from zero</h2>
+        <p data-i18n="firstEdit.lede">If you have no checkpoint, this downloads SmolLM2-135M, opens it, teaches one fact and shows the result. The starter checkpoint is never modified.</p>
+        <p class="hint" data-i18n="firstEdit.note">The edit stays in the session. Use Save when you want a new checkpoint.</p>
+      </div>
+      <div class="first-edit-controls">
+        <label class="field full"><span data-i18n="firstEdit.sentence">Fact to teach</span>
+          <input id="firstEditSentence" autocomplete="off" spellcheck="false" value="The Eiffel Tower is in the city of -> Rome">
+        </label>
+        <div class="button-grid">
+          <button id="firstEditButton" class="primary" type="button" data-i18n="firstEdit.run">Try the first edit</button>
+          <button id="firstEditDismiss" class="ghost" type="button" data-i18n="firstEdit.dismiss">Hide</button>
+        </div>
+        <p id="firstEditStatus" class="hint" data-i18n="firstEdit.ready">Ready. This downloads SmolLM2-135M (~270 MB) on first use.</p>
+      </div>
+    </section>
+
     <section class="workspace" aria-label="Weight surgery workspace">
       <!-- checkpoint column -->
       <article class="panel">

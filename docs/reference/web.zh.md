@@ -38,6 +38,14 @@ machaon-web --allowed-root /models --port 8765
 的含义。点击 **开始探索** 会记录已读；顶栏的 **引导** 可以随时重新打开。
 Hero 下方的四步提示条会一直保留，作为轻量提醒。
 
+## 首次编辑卡片
+
+首次认证进入时还会显示 **FIRST EDIT（首次编辑）** 卡片。它把已有环节串起来：
+没有选择检查点时下载 SmolLM2-135M、打开模型、预填
+"The Eiffel Tower is in the city of -> Rome"、运行教学配方并显示结果。会话打开后
+卡片自动消失；通过的编辑保留在 session 中，按 **保存** 写出。
+**隐藏** 会把选择保存到 `localStorage`。
+
 ## 三步工作流
 
 1. **Checkpoint**：读取 safetensors 文件或分片目录的 header，显示 tensor 数、

@@ -35,6 +35,23 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   optionally writing the accepted checkpoint.
 - Four-language quickstart, CLI, API, MCP, Web and roadmap coverage for the
   intent/teaching layer.
+- `machaon.fetch` and `machaon fetch`: a standard-library-only starter
+  downloader with Hugging Face / hf-mirror / ModelScope fallback, safetensors
+  header validation, resume, a fixed starter catalogue and SSE progress when
+  driven by the Web console.
+- `machaon.first` and `machaon first`: the zero-to-one path that downloads
+  SmolLM2-135M when needed, opens it, teaches one sentence, verifies it and
+  saves the accepted checkpoint.
+- `machaon.teach_many` and `machaon teach-many`: fact-list teaching with one
+  full search per fact, a cumulative budget, original-panel top-1/KL drift
+  checks, per-step evidence and a last-globally-safe checkpoint.
+- `machaon.checkpointing.save_session`: the shared session-to-checkpoint writer
+  used by the CLI, Web console and multi-fact chain.
+- The Web **FIRST EDIT** card chains starter download → open session →
+  prefilled sentence → teaching result; **Download starter** and **Teach a
+  list** expose the same flows, with a live SSE progress bar for downloads.
+- `/api/health` reports whether `torch`, `transformers` and `safetensors` are
+  importable, and the console shows the exact missing-extra install command.
 - `machaon.executor`: one explicit dispatcher for the declarative edit DSL,
   with operand validation, solver refusal, and declared-budget enforcement.
 - `machaon.wsp`: WSP acceptance protocol with deterministic same-support,

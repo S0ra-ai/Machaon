@@ -42,6 +42,14 @@ machaon-web --allowed-root /models --port 8765
 開きます。**探索を始める** で既読になり、上部の **ガイド** からいつでも
 再表示できます。Hero 下の 4 ステップ表示は軽いリマインダーとして残ります。
 
+## 最初の編集カード
+
+初回認証時には **FIRST EDIT** カードも表示されます。チェックポイント未選択なら
+SmolLM2-135M を取得し、開いて
+"The Eiffel Tower is in the city of -> Rome" をプリフィルし、教学レシピを実行して
+結果を表示します。session が開くとカードは消え、受け入れられた編集は **保存** 用に
+session に残ります。**隠す** は `localStorage` に保存されます。
+
 ## 三列のワークフロー
 
 1. **Checkpoint**: safetensors の header を読み、tensor 数、パラメータ数、

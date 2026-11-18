@@ -52,6 +52,15 @@ evaluate → save/rollback loop, and what each control does. **Start exploring**
 marks the guide as seen; **Guide** in the top bar reopens it at any time. The
 four-step onboarding strip remains under the hero as a compact reminder.
 
+## First edit card
+
+The first-authenticated page also shows a **FIRST EDIT** card. It chains the
+existing pieces: download SmolLM2-135M if no checkpoint is selected, open it,
+prefill "The Eiffel Tower is in the city of -> Rome", run the teaching recipe
+and report the result. The card disappears once a model session is open; the
+accepted edit stays in the session for **Save**. **Hide** persists the choice in
+`localStorage`.
+
 ## Three-column workflow
 
 1. **Checkpoint.** Inspect a safetensors file or a sharded checkpoint directory.

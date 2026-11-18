@@ -782,6 +782,8 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="wspSessionSaveButton"', page.text)
         self.assertIn('id="openwspExportButton"', page.text)
         self.assertIn('id="bindingVerifyButton"', page.text)
+        self.assertIn('id="firstEditCard"', page.text)
+        self.assertIn('id="firstEditButton"', page.text)
         self.assertIn('data-i18n="onboarding.title"', page.text)
         self.assertIn('src="/static/locales.js"', page.text)
         locales = self.client.get("/static/locales.js")
@@ -789,6 +791,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"zh": {', locales.text)
         self.assertIn('"ja": {', locales.text)
         self.assertIn('"ko": {', locales.text)
+        self.assertIn('"firstEdit.title"', locales.text)
 
     def test_save_checkpoint_uses_the_checkpoint_writer(self):
         opened = self.client.post(

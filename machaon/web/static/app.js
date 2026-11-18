@@ -25,6 +25,11 @@
     allowedRoots: [],
     capabilities: {},
     pendingAfterBusy: null,
+    firstEdit: null,
+    firstEditDismissed: localStorage.getItem("machaon-first-dismissed") === "1",
+    firstEditStatusKey: "firstEdit.ready",
+    firstEditStatusVars: {},
+    firstEditStatusKind: "",
   };
 
   const el = {
@@ -50,6 +55,11 @@
     gateCard: $("#gateCard"),
     teachCard: $("#teachCard"),
     teachManyCard: $("#teachManyCard"),
+    firstEditCard: $("#firstEditCard"),
+    firstEditSentence: $("#firstEditSentence"),
+    firstEditButton: $("#firstEditButton"),
+    firstEditDismiss: $("#firstEditDismiss"),
+    firstEditStatus: $("#firstEditStatus"),
     stateCard: $("#stateCard"),
     timeline: $("#timeline"),
     eventCount: $("#eventCount"),
@@ -132,6 +142,7 @@
     history.replaceState(null, "", window.location.pathname + (query ? "?" + query : ""));
     applyStaticLocale();
     renderConnection();
+    renderFirstEdit();
     renderSessionState();
     renderProposal(state.proposal);
     renderTensors(state.lastTensors || []);
@@ -306,6 +317,7 @@
     el.evaluate.disabled = !canEvaluate;
     el.rollback.disabled = !ready || state.busy;
     el.save.disabled = !ready || !(state.session.edited || []).length || state.busy;
+    if (el.firstEditButton) el.firstEditButton.disabled = state.busy;
   }
 
   function setConnection(kind, text, key = null) {
@@ -400,6 +412,7 @@
       "<dt>" + escapeHtml(t("session.state.budget")) + "</dt><dd>" + escapeHtml(fmt(s.budget_total)) + " / " +
       escapeHtml(fmt(s.budget_limit)) + "</dd></dl>";
     setActionState();
+    renderFirstEdit();
   }
 
   function renderProposal(p) {
@@ -437,6 +450,38 @@
           "</tbody></table></div></details>"
         : "");
     setActionState();
+  }
+
+  function setFirstEditStatus(key, vars = {}, kind = "") {
+    state.firstEditStatusKey = key;
+    state.firstEditStatusVars = vars;
+    state.firstEditStatusKind = kind;
+    if (!el.firstEditStatus) return;
+    el.firstEditStatus.textContent = t(key, vars);
+    el.firstEditStatus.className = "hint" + (kind ? " " + kind : "");
+  }
+
+  function renderFirstEdit() {
+    if (!el.firstEditCard) return;
+    const visible = !state.session && !state.firstEditDismissed;
+    el.firstEditCard.classList.toggle("hidden", !visible);
+    if (state.firstEditStatusKey) {
+      setFirstEditStatus(
+        state.firstEditStatusKey,
+        state.firstEditStatusVars,
+        state.firstEditStatusKind
+      );
+    }
+  }
+
+  function openSessionRequest(path) {
+    return {
+      path,
+      dtype: el.dtype.value,
+      quantize: el.quantize.value || null,
+      device: $("#device").value.trim() || null,
+      budget_total: Number($("#budget").value),
+    };
   }
 
   function renderTeachPreview(payload) {
@@ -750,6 +795,10 @@
     } else if (event.type === "result") {
       addTimelineEvent("result", t("timeline.result"), "", "ok");
     } else if (event.type === "error") {
+      if (state.firstEdit) {
+        setFirstEditStatus("firstEdit.error", { error: data.error || "" }, "err");
+        state.firstEdit = null;
+      }
       addTimelineEvent("error", data.error || t("timeline.failed"),
         data.error_type || "", "err");
     }
@@ -768,12 +817,28 @@
       state.session = result && result.ready ? result : null;
       state.proposal = null;
       state.lastTeach = null;
+      if (kind === "close_session") setFirstEditStatus("firstEdit.ready");
       renderProposal(null);
       renderTeachPreview(null);
       renderSessionState();
       if (state.session && result && result.ready) {
         const teach = $("#teachSentence");
         if (teach && !teach.value) teach.focus();
+      }
+      if (state.firstEdit && state.firstEdit.phase === "open" && result && result.ready) {
+        state.firstEdit.phase = "teach";
+        $("#teachSentence").value = state.firstEdit.sentence;
+        setFirstEditStatus("firstEdit.teaching");
+        const payload = {
+          sentence: state.firstEdit.sentence,
+          out_dir: null,
+          solver: "direction",
+          max_rel_norm: 0.02,
+        };
+        state.pendingAfterBusy = () => {
+          if (state.firstEdit) startJob("/api/teach", payload, "teach");
+        };
+        return;
       }
     } else if (kind === "baseline") {
       if (result && result.state) state.session = result.state;
@@ -825,6 +890,16 @@
       }
       addTimelineEvent("teach", t("timeline.teach"),
         (result && result.result && result.result.status) || "", "ok");
+      if (state.firstEdit) {
+        const status = result && result.result ? result.result.status : "error";
+        const key = status === "applied" ? "firstEdit.applied"
+          : status === "already_true" ? "firstEdit.alreadyTrue"
+          : status === "rejected" ? "firstEdit.rejected"
+          : "firstEdit.error";
+        setFirstEditStatus(key, { summary: result && result.result ? result.result.summary : "" });
+        addTimelineEvent("first", t("timeline.firstEdit"), status, "ok");
+        state.firstEdit = null;
+      }
     } else if (kind === "rollback") {
       state.session = result && result.state ? result.state : null;
       state.proposal = null;
@@ -1028,6 +1103,64 @@
       dest: root + "/" + name,
     }, "fetch_model");
   });
+  async function startFirstEdit() {
+    if (!el.firstEditCard || state.busy) return;
+    const sentence = el.firstEditSentence.value.trim();
+    if (!sentence) {
+      setFirstEditStatus("firstEdit.invalid", {}, "err");
+      return;
+    }
+    if (el.quantize.value && el.dtype.value !== "auto") {
+      setFirstEditStatus("firstEdit.error", { error: t("errors.quantizeDtype") }, "err");
+      return;
+    }
+    let preview;
+    try {
+      preview = await api("/api/teach/preview", {
+        method: "POST",
+        body: JSON.stringify({ sentence }),
+      });
+    } catch (err) {
+      setFirstEditStatus("firstEdit.invalid", { error: err.message }, "err");
+      addTimelineEvent("error", err.message, t("teach.invalid"), "err");
+      return;
+    }
+    state.lastTeach = preview;
+    renderTeachPreview(preview);
+    $("#prompt").value = preview.prompt;
+    $("#target").value = preview.answer;
+    const checkpoint = el.checkpointPath.value.trim();
+    const root = (state.allowedRoots[0] || "").replace(/\/+$/, "");
+    const dest = checkpoint || (root ? root + "/SmolLM2-135M" : "");
+    if (!dest) {
+      setFirstEditStatus("firstEdit.noRoot", {}, "err");
+      return;
+    }
+    state.firstEdit = {
+      sentence,
+      preview,
+      dest,
+      phase: checkpoint ? "open" : "fetch",
+    };
+    if (!checkpoint) {
+      setFirstEditStatus("firstEdit.downloading");
+      startJob("/api/models/fetch", { starter: "smol135m", dest }, "fetch_model");
+    } else {
+      setFirstEditStatus("firstEdit.opening");
+      startJob("/api/session/open", openSessionRequest(dest), "open_session");
+    }
+  }
+
+  if (el.firstEditButton) {
+    el.firstEditButton.addEventListener("click", startFirstEdit);
+  }
+  if (el.firstEditDismiss) {
+    el.firstEditDismiss.addEventListener("click", () => {
+      state.firstEditDismissed = true;
+      localStorage.setItem("machaon-first-dismissed", "1");
+      renderFirstEdit();
+    });
+  }
   $("#teachPreviewButton").addEventListener("click", async () => {
     const sentence = $("#teachSentence").value.trim();
     if (!sentence) return addTimelineEvent("error", t("teach.sentenceRequired"), "", "err");
@@ -1092,13 +1225,7 @@
   $("#openButton").addEventListener("click", () => {
     const path = el.checkpointPath.value.trim();
     if (!path) return addTimelineEvent("error", t("errors.pathRequired"), "", "err");
-    const body = {
-      path,
-      dtype: $("#dtype").value,
-      quantize: $("#quantize").value || null,
-      device: $("#device").value.trim() || null,
-      budget_total: Number($("#budget").value),
-    };
+    const body = openSessionRequest(path);
     if (body.quantize && body.dtype !== "auto") {
       return addTimelineEvent("error", t("errors.quantizeDtype"), "", "err");
     }
