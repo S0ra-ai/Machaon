@@ -215,7 +215,8 @@ the advanced form; the next output uses a numbered path such as
 applies an edit, while `France → Paris` reports that the model already knows
 the answer. After an applied edit the card also shows the chosen layer, relative
 Δ, panel preservation and KL p95, so the first success is visible evidence
-rather than only a status badge.
+rather than only a status badge. After saving, **Teach a list** opens the
+multi-fact flow with the current fact prefilled and a container output path.
 
 The Checkpoint column also has a **Download starter** control for SmolLM2-135M,
 Qwen2.5-0.5B or GPT-2, with Hugging Face / mirror / ModelScope fallback and live

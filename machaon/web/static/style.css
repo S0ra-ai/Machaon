@@ -280,6 +280,21 @@ h1 em { color: var(--accent); font-style: normal; }
 .example-row .hint { margin: 0; }
 .first-edit-evidence { color: var(--quiet); line-height: 1.55; }
 #firstEditNext { margin-top: 8px; }
+.teach-steps { display: grid; gap: 6px; margin-top: 8px; }
+.teach-step {
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px;
+  background: rgba(0,0,0,.12);
+}
+.teach-step.ok { border-color: rgba(114,228,177,.24); }
+.teach-step.bad { border-color: rgba(255,123,135,.24); }
+.teach-step-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.teach-step-head strong {
+  min-width: 0; color: var(--text); font: 600 10px var(--mono);
+  overflow-wrap: anywhere;
+}
+.teach-step-head .tiny { margin-left: auto; }
+.teach-step-meta { margin: 5px 0 0; color: var(--quiet); font-size: 9px; }
+.teach-step .teach-warning { margin-top: 5px; }
 @media (max-width: 980px) {
   .first-edit { grid-template-columns: 1fr; gap: 16px; }
 }

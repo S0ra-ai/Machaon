@@ -79,6 +79,11 @@ fresh session and baseline; use **Teach a list** when you need one cumulative
 budget and original-panel drift checks across facts. **Hide** persists the
 choice in `localStorage`.
 
+After a save, the card's **Teach a list** action opens the multi-fact panel,
+prefills the current fact and proposes a `<model>-machaon-many` container. The
+list result expands each step's prompt, status, layer, delta and global drift
+instead of showing only status chips.
+
 ## Three-column workflow
 
 1. **Checkpoint.** Inspect a safetensors file or a sharded checkpoint directory.

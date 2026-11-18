@@ -790,6 +790,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('data-example="The capital of France is -> Paris"', page.text)
         self.assertIn('id="firstEditSave"', page.text)
         self.assertIn('id="firstEditOpen"', page.text)
+        self.assertIn('id="firstEditList"', page.text)
         self.assertIn('id="firstEditEvidence"', page.text)
         self.assertIn('id="fetchOpen"', page.text)
         self.assertIn('data-i18n="onboarding.title"', page.text)
@@ -799,6 +800,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('state.firstEdit.phase === "fetch"', app.text)
         self.assertIn('state.firstEdit.phase === "verify"', app.text)
         self.assertIn('function nextCheckpointPath', app.text)
+        self.assertIn('function manyCheckpointPath', app.text)
         locales = self.client.get("/static/locales.js")
         self.assertEqual(locales.status_code, 200)
         self.assertIn('"zh": {', locales.text)
@@ -808,12 +810,14 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"firstEdit.save"', locales.text)
         self.assertIn('"firstEdit.openSaved"', locales.text)
         self.assertIn('"firstEdit.again"', locales.text)
+        self.assertIn('"firstEdit.list"', locales.text)
         self.assertIn('"firstEdit.starterQwen"', locales.text)
         self.assertIn('"firstEdit.examples"', locales.text)
         self.assertIn('"firstEdit.evidenceLayer"', locales.text)
         self.assertIn('"firstEdit.verifying"', locales.text)
         self.assertIn('"firstEdit.verified"', locales.text)
         self.assertIn('"firstEdit.verifyFailed"', locales.text)
+        self.assertIn('"teachMany.stepLayer"', locales.text)
 
     def test_force_close_rolls_back_an_edited_session(self):
         opened = self.client.post(

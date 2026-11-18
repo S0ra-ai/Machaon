@@ -68,6 +68,7 @@
     firstEditEvidence: $("#firstEditEvidence"),
     firstEditNext: $("#firstEditNext"),
     firstEditOpen: $("#firstEditOpen"),
+    firstEditList: $("#firstEditList"),
     firstEditDone: $("#firstEditDone"),
     stateCard: $("#stateCard"),
     timeline: $("#timeline"),
@@ -333,6 +334,7 @@
         || state.firstEdit.phase !== "done";
     }
     if (el.firstEditOpen) el.firstEditOpen.disabled = state.busy;
+    if (el.firstEditList) el.firstEditList.disabled = state.busy;
     if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
     if (el.firstEditButton) {
       el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
@@ -514,6 +516,9 @@
     const active = !!state.firstEdit;
     if (!active) state.firstEditEvidence = null;
     const visible = (!state.session || active) && !state.firstEditDismissed;
+    const listReady = active && !!state.session
+      && !(state.session.edited || []).length
+      && state.firstEdit.phase === "another";
     el.firstEditCard.classList.toggle("hidden", !visible);
     if (el.firstEditSave) {
       el.firstEditSave.disabled = state.busy || !state.session || !active
@@ -525,7 +530,9 @@
       );
     }
     if (el.firstEditOpen) el.firstEditOpen.disabled = state.busy;
+    if (el.firstEditList) el.firstEditList.disabled = state.busy;
     if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
+    if (el.firstEditList) el.firstEditList.classList.toggle("hidden", !listReady);
     if (el.firstEditButton) {
       el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
         ? t("firstEdit.again") : t("firstEdit.run");
@@ -553,15 +560,45 @@
     return match[1] + "-machaon-" + next;
   }
 
+  function manyCheckpointPath(model) {
+    const path = String(model || "").replace(/\/+$/, "");
+    if (!path) return "";
+    return /-machaon(?:-\d+)?$/.test(path)
+      ? path + "-many"
+      : path + "-machaon-many";
+  }
+
   function firstEditAnother(statusKey, vars = {}, kind = "") {
     const model = String((state.session && state.session.model) || "").replace(/\/+$/, "");
-    state.firstEdit = { phase: "another" };
+    const lastSentence = (state.firstEdit && state.firstEdit.sentence) || "";
+    state.firstEdit = { phase: "another", lastSentence };
     state.firstEditEvidence = null;
     if (el.firstEditSentence) el.firstEditSentence.value = "";
     if (el.firstEditOut) el.firstEditOut.value = model ? nextCheckpointPath(model) : "";
     setFirstEditStatus(statusKey, vars, kind);
     renderFirstEdit();
     if (el.firstEditSentence) el.firstEditSentence.focus();
+  }
+
+  function openFirstEditList() {
+    const panel = $("#teachManyPanel");
+    if (panel) panel.open = true;
+    const facts = $("#teachManyFacts");
+    const seed = (state.firstEdit
+      && (state.firstEdit.lastSentence || state.firstEdit.sentence))
+      || "The Eiffel Tower is in the city of -> Rome";
+    if (facts && !facts.value.trim()) {
+      facts.value = seed;
+    }
+    const out = $("#teachManyOut");
+    if (out && !out.value && state.session) {
+      const model = String(state.session.model || "").replace(/\/+$/, "");
+      if (model) out.value = manyCheckpointPath(model);
+    }
+    if (panel && panel.scrollIntoView) {
+      panel.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    if (facts) facts.focus();
   }
 
   function openSessionRequest(path) {
@@ -615,8 +652,35 @@
     const accepted = !!result.accepted;
     const steps = (result.steps || []).map((step) => {
       const ok = step.status === "applied" || step.status === "already_true";
-      return '<span class="check-chip ' + (ok ? "ok" : "bad") + '">' +
-        escapeHtml(step.index + " " + step.status) + "</span>";
+      const detail = step.result || {};
+      const meta = [];
+      if (detail.best_layer !== null && detail.best_layer !== undefined) {
+        meta.push(t("teachMany.stepLayer", { layer: detail.best_layer }));
+      }
+      if (detail.relative_delta !== null && detail.relative_delta !== undefined) {
+        meta.push(t("teachMany.stepDelta", { delta: fmt(detail.relative_delta) }));
+      }
+      if (step.global_panel_agreement !== null
+          && step.global_panel_agreement !== undefined && result.panel_size) {
+        meta.push(t("teachMany.stepGlobal", {
+          kept: Math.round(Number(step.global_panel_agreement) * result.panel_size),
+          total: result.panel_size,
+        }));
+      }
+      if (step.global_kl_p95 !== null && step.global_kl_p95 !== undefined) {
+        meta.push(t("teachMany.stepKl", { kl: fmt(step.global_kl_p95) }));
+      }
+      const message = step.error || (!ok && detail.summary ? detail.summary : "");
+      return '<div class="teach-step ' + (ok ? "ok" : "bad") + '">' +
+        '<div class="teach-step-head"><span class="check-chip ' +
+        (ok ? "ok" : "bad") + '">' + escapeHtml(step.index) + "</span><strong>" +
+        escapeHtml(step.prompt || "") + " → " + escapeHtml(step.answer || "") +
+        '</strong><span class="tiny">' + escapeHtml(step.status || "") +
+        "</span></div>" +
+        (meta.length ? '<p class="teach-step-meta mono">' +
+          escapeHtml(meta.join(" · ")) + "</p>" : "") +
+        (message ? '<p class="teach-warning">' + escapeHtml(message) + "</p>" : "") +
+        "</div>";
     }).join("");
     const report = result.report_path
       ? '<p class="mono tiny">' + escapeHtml(result.report_path) + "</p>" : "";
@@ -635,7 +699,7 @@
       "<span>" + escapeHtml(t("teachMany.cumulative")) + "<br><strong>" +
       ((result.cumulative_relative_delta || 0) * 100).toFixed(2) + "%</strong></span>" +
       "</div>" +
-      (steps ? '<div class="check-list">' + steps + "</div>" : "") +
+      (steps ? '<div class="teach-steps">' + steps + "</div>" : "") +
       report + useFinal;
     const button = card.querySelector("#teachManyUseFinal");
     if (button && result.final) {
@@ -1457,6 +1521,12 @@
       startJob("/api/session/close", { force: true }, "close_session");
     });
   }
+  if (el.firstEditList) {
+    el.firstEditList.addEventListener("click", () => {
+      if (state.busy) return;
+      openFirstEditList();
+    });
+  }
   if (el.firstEditDone) {
     el.firstEditDone.addEventListener("click", () => {
       if (state.busy) return;
@@ -1491,7 +1561,7 @@
     if (!facts.length) return addTimelineEvent("error", t("teachMany.factsRequired"), "", "err");
     let out = $("#teachManyOut").value.trim();
     if (!out && state.session.model) {
-      out = String(state.session.model).replace(/\/+$/, "") + "-machaon-many";
+      out = manyCheckpointPath(state.session.model);
     }
     if (!out) return addTimelineEvent("error", t("errors.outputRequired"), "", "err");
     startJob("/api/teach_many", {

@@ -60,7 +60,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   Applied edits expose the chosen layer, relative Δ, panel preservation and
   KL p95 directly in the card. Continuation checkpoints use numbered
   `<name>-machaon-N` paths rather than stacking `-machaon` suffixes, and the
-  two starter selectors stay in sync.
+  two starter selectors stay in sync. A saved card now offers **Teach a list**
+  with the current fact prefilled, and list results expose per-step prompt,
+  status, layer, delta and global drift.
 - `/api/health` reports whether `torch`, `transformers` and `safetensors` are
   importable, and the console shows the exact missing-extra install command.
 - `machaon.executor`: one explicit dispatcher for the declarative edit DSL,
