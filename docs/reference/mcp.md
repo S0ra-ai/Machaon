@@ -56,13 +56,14 @@ restart. Model-level tools share one explicitly opened `Session`.
 | `diagnose_failure(base, headroom, mechanism, target_metric, min_target_gap, min_mechanism_gap)` | classify obstruction vs capability gap without editing |
 | `parse_intent(sentence)` | compile a plain-language teaching request into an exact contract |
 | `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | reload a saved checkpoint and evaluate one fact or a fact list without a shared session |
-| `plan_program(path)` | parse a portable `.machaon` text/JSON program without loading a model |
+| `plan_program(path)` | parse a portable `.machaon` text/JSON program and return model/output/download preflight without loading a model |
 | `run_program(path, verify, out, report_out)` | run a portable program with optional output/report overrides and saved-byte verification |
 | `verify_program_report(path, program_path, check_model, checkpoint)` | verify a report's content address, optional program hash, and optional saved-byte facts |
 
 Header and evidence tools delegate to plain functions in `machaon.tools`.
 `check_saved` delegates to `machaon.check`, loads weights but never opens or
-changes the shared session. `plan_program` is header-only;
+changes the shared session. `plan_program` is header-only and reports the same
+model, output, report-path and starter-download preflight as the CLI/Web plan;
 `run_program` delegates to the same program runner as the CLI and Web console,
 including its saved-byte verification. `verify_program_report` returns
 `{"valid": false, "error": ...}` for a malformed or modified report instead of

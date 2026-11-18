@@ -168,10 +168,13 @@ def create_server():
     @server.tool()
     def plan_program(path: str) -> Dict[str, Any]:
         """Resolve a portable weight program without loading a model."""
-        from .program import load_program
+        from .program import load_program, program_preflight
 
         try:
-            return load_program(path).to_dict()
+            program = load_program(path)
+            payload = program.to_dict()
+            payload["preflight"] = program_preflight(program)
+            return payload
         except Exception as exc:
             return {"error": str(exc)}
 

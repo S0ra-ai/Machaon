@@ -44,7 +44,7 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `apply_delta(base_path, tensor, delta_path, out_dir)` | 把一个 `.npy` delta 应用到一个 tensor，写出新检查点 |
 | `gate(metrics)` | 应用验收门；缺失指标视为失败 |
 | `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | 重新加载保存检查点并复验一条或一组事实，不共享也不修改 session |
-| `plan_program(path)` | 解析可携带 `.machaon` 文本/JSON 程序，不加载模型 |
+| `plan_program(path)` | 解析可携带 `.machaon` 文本/JSON 程序并返回模型/输出/下载预检，不加载模型 |
 | `run_program(path, verify, out, report_out)` | 运行程序，可覆盖输出/报告路径，并复验保存字节与事实 |
 | `verify_program_report(path, program_path, check_model, checkpoint)` | 校验报告内容地址、可选程序哈希，以及可选的保存字节事实复验 |
 | `wsp_audit(report)` | 将 WSP 报告分类为 repair、acquisition、non-specific 或 no-effect |
@@ -55,7 +55,8 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `parse_intent(sentence)` | 把一句自然语言教学请求编译成精确合同 |
 
 Header/evidence 工具委托给 `machaon.tools` 中的普通函数；`check_saved` 委托给
-`machaon.check`，会加载权重但不会打开或修改共享 session。`plan_program` 只解析；
+`machaon.check`，会加载权重但不会打开或修改共享 session。`plan_program` 只做解析和
+无副作用预检，返回与 CLI/Web plan 相同的模型、输出、报告路径与 starter 下载信息；
 `run_program` 与 CLI/Web 共用同一执行器和保存字节复验。
 `verify_program_report` 面对损坏或被改过的报告时返回
 `{"valid": false, "error": ...}`，而不是让异常穿透传输层。服务器现在暴露 28 个工具。

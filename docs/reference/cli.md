@@ -182,7 +182,8 @@ Defaults are `--model ./models/SmolLM2-135M`, `fetch: smol135m`, and
 `--output <model>-machaon`. A custom `--model` has no implicit `fetch`; add
 `--fetch smol135m|qwen05b|gpt2` or `--no-fetch` explicitly. `--teach` and
 `--protect` are repeatable, or use `--facts FILE` and `--protect-file FILE` for
-one entry per line. The generator also exposes `--layers`, `--solver`,
+one entry per line; blank lines and `#` comments are ignored. The generator also
+exposes `--layers`, `--solver`,
 `--steps`, `--lr`, `--max-layers`, `--max-kl`, `--min-panel-agreement`,
 `--dtype`, `--device`, `--quantize`, `--no-verify`, `--continue-on-reject` and
 `--keep-steps`, so the common advanced fields do not require a manual edit.

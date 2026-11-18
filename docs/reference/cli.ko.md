@@ -180,7 +180,7 @@ machaon program-new - \
 `--output <model>-machaon`입니다. 사용자 지정 `--model`에는 암시적 `fetch`가 없습니다.
 필요하면 `--fetch smol135m|qwen05b|gpt2` 또는 `--no-fetch`를 명시하세요.
 `--teach`와 `--protect`는 반복할 수 있고, `--facts FILE`과 `--protect-file FILE`로
-한 줄에 하나씩 읽을 수도 있습니다. `--layers`, `--solver`, `--steps`, `--lr`,
+한 줄에 하나씩 읽을 수도 있습니다. 빈 줄과 `#` 주석은 무시됩니다. `--layers`, `--solver`, `--steps`, `--lr`,
 `--max-layers`, `--max-kl`, `--min-panel-agreement`, `--dtype`, `--device`,
 `--quantize`, `--no-verify`, `--continue-on-reject`, `--keep-steps`도 생성 시
 지정할 수 있습니다. 경로 `-`는 표준 출력으로 쓰며, 기존 파일은 `--force` 없이

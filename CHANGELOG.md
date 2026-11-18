@@ -15,7 +15,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   standard output with `-`, and refuses to overwrite without `--force`.
 - `machaon program-new` also reads `--facts` and `--protect-file` lists and
   exposes the common advanced fields (`layers`, solver, dtype, quantization,
-  verification and step retention) directly in the CLI.
+  verification and step retention) directly in the CLI; blank lines and `#`
+  comments are ignored in those files.
 - A successful `machaon first` now prints a complete `program-new` command with
   the exact model, output and starter, instead of a command that silently fell
   back to the default SmolLM2 paths.

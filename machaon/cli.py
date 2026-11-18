@@ -225,6 +225,15 @@ def _read_lines(path: str):
         return [line.rstrip("\n") for line in handle if line.strip()]
 
 
+def _read_program_lines(path: str):
+    """Read one-entry-per-line text, ignoring blanks and # comments."""
+    with open(path, encoding="utf-8") as handle:
+        return [
+            line.strip() for line in handle
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+
+
 def _default_out(model: str) -> str:
     from pathlib import Path
 
@@ -1139,9 +1148,9 @@ def _cmd_program_new(args) -> int:
     protect_items = list(args.protect or ())
     try:
         if args.facts:
-            teach_items.extend(_read_lines(args.facts))
+            teach_items.extend(_read_program_lines(args.facts))
         if args.protect_file:
-            protect_items.extend(_read_lines(args.protect_file))
+            protect_items.extend(_read_program_lines(args.protect_file))
     except OSError as exc:
         return _error(str(exc))
     if not teach_items:

@@ -44,14 +44,16 @@ Claude Desktop（`claude_desktop_config.json`）：
 | `apply_delta(base_path, tensor, delta_path, out_dir)` | 1 つの `.npy` delta を 1 tensor に適用し、新しいチェックポイントを書く |
 | `gate(metrics)` | ゲートを適用。欠損指標は失敗 |
 | `check_saved(model, sentence, prompt, answer, facts, dtype, device, quantize)` | 保存済みチェックポイントを読み直し、共有 session なしで 1 つまたは複数の事実を評価 |
-| `plan_program(path)` | モデルを読み込まず、可搬 `.machaon` テキスト/JSON プログラムを解析 |
+| `plan_program(path)` | モデルを読み込まず、プログラム解析とモデル/出力/ダウンロードの準備情報を返す |
 | `run_program(path, verify, out, report_out)` | 出力/レポートの上書きを指定でき、保存バイトと全事実を検証しながら実行 |
 | `verify_program_report(path, program_path, check_model, checkpoint)` | レポートの内容アドレス、任意のプログラムハッシュ、任意の保存バイト事実を検証 |
 | `parse_intent(sentence)` | 自然言語の教学リクエストを正確な契約へコンパイル |
 
 Header/evidence ツールは `machaon.tools` の普通の関数に、`check_saved` は
 `machaon.check` に委譲します。後者は重みを読み直しますが、共有 session は開かず
-変更しません。`plan_program` は解析のみ、`run_program` は CLI/Web と同じ実行器と
+変更しません。`plan_program` は解析と副作用なしの準備検査のみで、CLI/Web の plan と
+同じモデル、出力、レポートパス、starter ダウンロード情報を返します。`run_program` は
+CLI/Web と同じ実行器と
 保存バイト検証を使います。`verify_program_report` は破損・改変されたレポートに対して
 例外を透過させず `{"valid": false, "error": ...}` を返します。サーバーは 28 個の
 ツールを公開します。トランスポートは振る舞いを追加しません。

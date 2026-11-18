@@ -122,8 +122,13 @@ async def main() -> int:
                 "plan_program", {"path": program_path}
             )
             plan = json.loads(planned_program.content[0].text)
-            print("plan_program facts:", len(plan.get("facts", [])))
-            if len(plan.get("facts", [])) != 1:
+            preflight = plan.get("preflight") or {}
+            print(
+                "plan_program facts/preflight:",
+                len(plan.get("facts", [])),
+                preflight.get("model_exists"),
+            )
+            if len(plan.get("facts", [])) != 1 or "preflight" not in plan:
                 return 1
             failed_program = await session.call_tool(
                 "run_program", {"path": program_path, "verify": False}

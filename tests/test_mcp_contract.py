@@ -133,6 +133,8 @@ class TestRegistration(unittest.TestCase):
             plan = server.tools["plan_program"](path)
             self.assertEqual(len(plan["facts"]), 1)
             self.assertEqual(plan["facts"][0]["prompt"], "The capital of France is")
+            self.assertFalse(plan["preflight"]["model_exists"])
+            self.assertTrue(plan["preflight"]["output_usable"])
             failed = server.tools["run_program"](path, verify=False)
             self.assertIn("error", failed)
             missing = server.tools["verify_program_report"](path)

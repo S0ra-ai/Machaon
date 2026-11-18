@@ -412,6 +412,7 @@ class TestCli(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             facts = Path(tmp) / "facts.txt"
             facts.write_text(
+                "# facts for the generated program\n"
                 "The capital of France is -> Paris\n"
                 "\n"
                 "The city is -> Rome\n",
