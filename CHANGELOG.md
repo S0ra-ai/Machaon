@@ -66,6 +66,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - **Build program from facts** now calls `/api/program/new`, the same generator
   and parser used by `machaon program-new`; preserve prompts become `protect`
   entries instead of being silently dropped.
+- The Web **FIRST EDIT** card can create a matching `.machaon` program after a
+  successful edit and open it in the program panel, carrying the taught fact,
+  checkpoint/output, device, dtype and quantization settings.
 - `/api/program/new` accepts the advanced generator fields (layers, solver,
   dtype, device, quantization, verification and step retention), matching the
   CLI generator.
