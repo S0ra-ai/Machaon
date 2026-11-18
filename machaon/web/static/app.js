@@ -113,6 +113,7 @@
     firstEditNext: $("#firstEditNext"),
     firstEditOpen: $("#firstEditOpen"),
     firstEditList: $("#firstEditList"),
+    firstEditProgram: $("#firstEditProgram"),
     firstEditDone: $("#firstEditDone"),
     stateCard: $("#stateCard"),
     timeline: $("#timeline"),
@@ -383,6 +384,7 @@
     }
     if (el.firstEditOpen) el.firstEditOpen.disabled = state.busy;
     if (el.firstEditList) el.firstEditList.disabled = state.busy;
+    if (el.firstEditProgram) el.firstEditProgram.disabled = state.busy;
     if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
     if (el.checkButton) el.checkButton.disabled = state.busy;
     if (el.programPlanButton) el.programPlanButton.disabled = state.busy;
@@ -1026,6 +1028,12 @@
     if (el.firstEditList) el.firstEditList.disabled = state.busy;
     if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
     if (el.firstEditList) el.firstEditList.classList.toggle("hidden", !listReady);
+    if (el.firstEditProgram) {
+      el.firstEditProgram.classList.toggle(
+        "hidden",
+        !(active && ["done", "saved"].includes(state.firstEdit.phase))
+      );
+    }
     if (el.firstEditButton) {
       el.firstEditButton.textContent = (active && state.firstEdit.phase === "another")
         ? t("firstEdit.again") : t("firstEdit.run");
@@ -2214,6 +2222,7 @@
       preview,
       dest,
       phase: checkpoint ? "open" : "fetch",
+      starter: checkpoint ? null : starter,
     };
     if (!checkpoint) {
       setFirstEditStatus("firstEdit.downloading", { model: starterName });
@@ -2270,6 +2279,48 @@
     el.firstEditList.addEventListener("click", () => {
       if (state.busy) return;
       openFirstEditList();
+    });
+  }
+  if (el.firstEditProgram) {
+    el.firstEditProgram.addEventListener("click", async () => {
+      if (state.busy || !state.session || !state.firstEdit) return;
+      const sentence = String(
+        state.firstEdit.sentence || el.firstEditSentence.value || ""
+      ).trim();
+      if (!sentence) {
+        return addTimelineEvent("error", t("firstEdit.invalid", {
+          error: t("program.factsRequired"),
+        }), "", "err");
+      }
+      const model = String(state.session.model || "").trim();
+      const output = String(el.firstEditOut.value || "").trim() || null;
+      const starter = state.firstEdit.starter || null;
+      const body = {
+        facts: [sentence],
+        model,
+        output,
+        fetch: starter,
+        name: (model.split("/").filter(Boolean).pop() || "checkpoint") + " first edit",
+        protect: preserveLines(),
+        budget: Number($("#budget").value) || 0.10,
+        dtype: el.dtype.value,
+        quantize: el.quantize.value || null,
+        device: $("#device").value.trim() || null,
+      };
+      try {
+        const payload = await api("/api/program/new", {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+        el.programText.value = payload.text;
+        el.programPanel.open = true;
+        addTimelineEvent("program", t("timeline.firstProgram"), "", "ok");
+        if (el.programPanel.scrollIntoView) {
+          el.programPanel.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      } catch (err) {
+        addTimelineEvent("error", localizedJobError(err.message), "", "err");
+      }
     });
   }
   if (el.firstEditDone) {

@@ -91,6 +91,12 @@ prefills the current fact and proposes a `<model>-machaon-many` container. The
 list result expands each step's prompt, status, layer, delta and global drift
 instead of showing only status chips.
 
+The card's **Create a weight program** action (available after a successful
+edit) calls `/api/program/new` and opens the resulting `.machaon` text in the
+program panel. It carries the taught sentence, selected checkpoint/output,
+device, dtype and quantization settings, so the same first edit can be shared
+or re-run without retyping paths.
+
 ## Check a saved fact
 
 The Checkpoint column's **Check a saved fact** panel evaluates one prompt/answer
