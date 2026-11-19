@@ -1160,12 +1160,18 @@ def run_program(
             **kwargs,
         ))
     except Exception as exc:
+        summary = str(exc)
+        if isinstance(exc, ImportError):
+            summary = (
+                'real-model support is not installed; pip install "machaon[hf]" '
+                "(%s)" % summary
+            )
         run = {
             "status": "error",
             "final": None,
             "out_dir": str(output),
             "facts": len(program.facts),
-            "summary": str(exc),
+            "summary": summary,
             "error": "%s: %s" % (type(exc).__name__, exc),
         }
     steps = run.get("steps", [])

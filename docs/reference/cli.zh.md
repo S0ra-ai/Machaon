@@ -25,6 +25,8 @@ machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
 machaon first --program-out ./first.machaon
 ```
 
+如果缺少可选的真实模型运行时，`first` 会在下载任何东西之前失败，并给出安装命令
+（`pip install "machaon[hf]"`）。
 默认事实是 "The Eiffel Tower is in the city of -> Rome"，默认输出是
 `<model>-machaon`。`--no-save` 只保留在内存中；`--json` 输出完整结果。
 事实已应用或本来就正确时退出码 0，被本地检查拒绝时 1，输入或模型错误时 2。

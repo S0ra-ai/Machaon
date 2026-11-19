@@ -2,6 +2,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from machaon.first import first_edit
 from machaon.intent import IntentError
@@ -26,6 +27,23 @@ def fake_teach(status, delta=0.0, calls=None):
 
 
 class TestFirstEdit(unittest.TestCase):
+    def test_missing_runtime_fails_before_downloading(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fetched = []
+
+            def fetch(*args, **kwargs):
+                fetched.append(args)
+
+            with mock.patch("importlib.util.find_spec", return_value=None):
+                with self.assertRaisesRegex(ImportError, "machaon\\[hf\\]"):
+                    first_edit(
+                        "The capital is -> Paris",
+                        Path(tmp) / "model",
+                        Path(tmp) / "out",
+                        fetch_fn=fetch,
+                    )
+            self.assertEqual(fetched, [])
+
     def test_missing_model_fetches_starter_and_saves(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

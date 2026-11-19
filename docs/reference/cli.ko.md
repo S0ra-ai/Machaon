@@ -25,6 +25,8 @@ machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
 machaon first --program-out ./first.machaon
 ```
 
+선택적 실제 모델 런타임이 없으면 `first`는 아무것도 다운로드하기 전에 실패하고
+설치 명령(`pip install "machaon[hf]"`)을 안내합니다.
 기본 사실은 "The Eiffel Tower is in the city of -> Rome", 기본 출력은
 `<model>-machaon`입니다. `--no-save`는 메모리에만 유지하고 `--json`은 전체
 결과를 출력합니다. 적용/이미 알고 있으면 0, 로컬 검사 거부는 1, 입력 또는

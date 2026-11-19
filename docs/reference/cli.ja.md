@@ -26,6 +26,8 @@ machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
 machaon first --program-out ./first.machaon
 ```
 
+任意の実モデルランタイムが無い場合、`first` は何もダウンロードする前に失敗し、
+インストールコマンド（`pip install "machaon[hf]"`）を案内します。
 既定の事実は "The Eiffel Tower is in the city of -> Rome"、既定の出力は
 `<model>-machaon` です。`--no-save` はメモリ内だけに保持し、`--json` は完全な
 結果を出力します。適用済み/既知なら 0、ローカルチェックで拒否なら 1、

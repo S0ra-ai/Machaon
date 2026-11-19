@@ -688,6 +688,20 @@ class TestCli(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("could not read", err)
 
+    def test_first_explains_a_missing_real_model_runtime(self):
+        with mock.patch(
+            "machaon.first.missing_runtime_packages",
+            return_value=("torch", "transformers"),
+        ):
+            code, out, err = run(
+                "first", "--model", "/tmp/definitely-not-a-model",
+                "--say", "The capital is -> Paris",
+            )
+        self.assertEqual(code, 2)
+        self.assertIn("machaon[hf]", err)
+        self.assertIn("torch", err)
+        self.assertNotIn("Traceback", err + out)
+
     def test_first_rejects_no_save_with_out(self):
         code, _, err = run(
             "first", "--model", "/tmp/none", "--out", "/tmp/out", "--no-save"

@@ -19,6 +19,22 @@ from .recipes import TeachPolicy, teach_fact
 
 __all__ = ["FirstResult", "first_edit"]
 
+_RUNTIME_PACKAGES = ("torch", "transformers", "safetensors")
+
+
+def missing_runtime_packages() -> Sequence[str]:
+    """Names of the optional real-model packages this interpreter cannot import."""
+    from importlib.util import find_spec
+
+    missing = []
+    for name in _RUNTIME_PACKAGES:
+        try:
+            if find_spec(name) is None:
+                missing.append(name)
+        except (ImportError, ValueError):
+            missing.append(name)
+    return tuple(missing)
+
 
 @dataclass
 class FirstResult:
@@ -75,6 +91,13 @@ def first_edit(
 ) -> FirstResult:
     """Download if needed, teach one sentence, and save the accepted edit."""
     intent = parse_intent(sentence)
+    if session_factory is None:
+        missing = missing_runtime_packages()
+        if missing:
+            raise ImportError(
+                'real-model support is not installed; pip install "machaon[hf]" '
+                "(missing: %s)" % ", ".join(missing)
+            )
     model_path = Path(model).expanduser()
     fetched = False
     if not model_path.exists():

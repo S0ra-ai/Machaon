@@ -383,6 +383,11 @@ def teach_many(
                 max_layers=max_layers,
                 preserve_prompts=panel,
             )
+        except ImportError:
+            # A missing optional runtime is a configuration error, not a fact
+            # that failed its checks. Let the caller report it once instead of
+            # burying it in a per-fact step.
+            raise
         except Exception as exc:
             steps_out.append(TeachStep(
                 index=index,

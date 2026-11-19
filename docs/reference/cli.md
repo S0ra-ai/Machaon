@@ -18,6 +18,8 @@ machaon first --model ./models/Qwen2.5-0.5B --out ./models/qwen-first
 machaon first --program-out ./first.machaon
 ```
 
+If the optional real-model runtime is missing, `first` fails before downloading
+anything and names the install command (`pip install "machaon[hf]"`).
 The default fact is "The Eiffel Tower is in the city of -> Rome". The default
 output is `<model>-machaon`. Use `--no-save` to keep the edit in memory only;
 `--json` prints the full result. The command exits 0 when the fact was applied

@@ -27,6 +27,17 @@ def _error(message: str) -> int:
     return 2
 
 
+def _runtime_hint(exc: BaseException) -> str:
+    """Turn a missing optional dependency into an actionable install command."""
+    message = str(exc)
+    if 'pip install "machaon[hf]"' in message:
+        return message
+    return (
+        'real-model support is not installed; pip install "machaon[hf]" (%s)'
+        % message
+    )
+
+
 def _cmd_demo(_args) -> int:
     from .demo import main as demo_main
     demo_main()
@@ -473,6 +484,8 @@ def _cmd_first(args) -> int:
             no_save=args.no_save,
             **extra,
         )
+    except ImportError as exc:
+        return _error(_runtime_hint(exc))
     except (OSError, ValueError, RuntimeError) as exc:
         return _error(str(exc))
     payload = result.to_dict()
@@ -597,10 +610,7 @@ def _cmd_teach(args) -> int:
             budget=EditBudget(max_total=args.budget),
         )
     except ImportError as exc:
-        return _error(
-            "real-model support is not installed; pip install \"machaon[hf]\" (%s)"
-            % exc
-        )
+        return _error(_runtime_hint(exc))
     except (OSError, ValueError) as exc:
         return _error("%s: %s" % (args.model, exc))
 
@@ -811,6 +821,8 @@ def _cmd_teach_many(args) -> int:
             keep_steps=args.keep_steps,
             continue_on_reject=args.continue_on_reject,
         )
+    except ImportError as exc:
+        return _error(_runtime_hint(exc))
     except (OSError, ValueError, RuntimeError) as exc:
         return _error(str(exc))
     payload = result.to_dict()
@@ -949,7 +961,9 @@ def _cmd_check(args) -> int:
                 device=args.device,
                 quantize=args.quantize,
             )
-    except (ImportError, OSError, RuntimeError, TypeError, ValueError, IntentError) as exc:
+    except ImportError as exc:
+        return _error(_runtime_hint(exc))
+    except (OSError, RuntimeError, TypeError, ValueError, IntentError) as exc:
         return _error(str(exc))
     passed = bool(payload["passed"])
     if args.json:

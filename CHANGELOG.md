@@ -86,6 +86,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - The Web **FIRST EDIT** card now has its own compute-device selector. Options
   the machine cannot use are disabled from the `/api/health` device report, so
   the primary first-run path is no longer silently CPU-only.
+- A missing HF runtime no longer prints a traceback from `machaon first`. It
+  fails before downloading anything and names `pip install "machaon[hf]"`;
+  `check`, `teach-many` and `program` report the same actionable message
+  instead of a bare `No module named 'torch'`.
 - Program plans now probe the requested runtime device and report whether
   CUDA/MPS is visible before a model load; the Web plan card shows the same
   blocker.
