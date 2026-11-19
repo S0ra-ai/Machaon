@@ -889,11 +889,25 @@ def _cmd_start(args) -> int:
     print("   machaon program examples/hello.machaon")
     print()
     print("capabilities")
-    print("  python      %s" % platform.python_version())
-    print("  numpy       %s" % np.__version__)
+    print("  %-13s%s" % ("python", platform.python_version()))
+    print("  %-13s%s" % ("numpy", np.__version__))
     for name in ("torch", "transformers", "safetensors", "fastapi"):
         version = _optional_version(name)
-        print("  %-11s %s" % (name, version))
+        print("  %-13s%s" % (name, version))
+    from .devices import device_report
+
+    devices = device_report()
+    usable = [
+        name for name, available in (("cuda", devices["cuda"]), ("mps", devices["mps"]))
+        if available
+    ]
+    print("  %-13s%s" % (
+        "devices",
+        ("cpu default · " + ", ".join(usable) + " available") if usable
+        else "cpu only",
+    ))
+    if usable:
+        print("                opt in with --device %s" % usable[0])
     if _optional_version("torch") == "absent":
         print('\ninstall real-model support with: pip install "machaon[hf]"')
     if _optional_version("fastapi") == "absent":

@@ -80,6 +80,9 @@ installed:
 python -m machaon.cli start
 python -m machaon.cli start --demo
 ```
+The capability block reports the available compute devices, e.g.
+`devices      cpu default · mps available` followed by the matching
+`--device mps` hint.
 
 ## `web`
 

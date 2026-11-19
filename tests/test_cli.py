@@ -838,6 +838,8 @@ class TestCli(unittest.TestCase):
         code, out, _ = run("start")
         self.assertEqual(code, 0)
         self.assertIn("machaon first", out)
+        self.assertIn("devices", out)
+        self.assertIn("cpu", out)
         self.assertIn("machaon demo", out)
         self.assertIn("machaon teach", out)
         self.assertIn("machaon check", out)
