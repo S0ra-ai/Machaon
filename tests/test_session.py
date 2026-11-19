@@ -393,5 +393,34 @@ class TestQuantizedOpen(unittest.TestCase):
         self.assertEqual(captured["quantization_config"].weights, "int4")
 
 
+class TestBrokenCheckpoint(unittest.TestCase):
+    def test_interrupted_download_fails_before_the_tokenizer(self):
+        import machaon.session as session_module
+
+        torch_module = ModuleType("torch")
+        torch_module.float32 = "float32"
+        torch_module.float16 = "float16"
+        torch_module.bfloat16 = "bfloat16"
+
+        loaded = []
+        transformers_module = ModuleType("transformers")
+        transformers_module.AutoTokenizer = SimpleNamespace(
+            from_pretrained=lambda path: loaded.append(path)
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            model = Path(tmp) / "model"
+            model.mkdir()
+            (model / "config.json").write_text("{}")
+            (model / "model.safetensors.part").write_bytes(b"")
+            with mock.patch.dict(
+                "sys.modules",
+                {"torch": torch_module, "transformers": transformers_module},
+            ):
+                with self.assertRaisesRegex(ValueError, "unfinished download"):
+                    session_module.Session.open(str(model))
+        self.assertEqual(loaded, [])
+
+
 if __name__ == "__main__":
     unittest.main()

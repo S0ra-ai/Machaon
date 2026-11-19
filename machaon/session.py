@@ -99,8 +99,12 @@ class Session:
         import torch
         from transformers import AutoTokenizer
 
+        from .checkpointing import checkpoint_problem
         from .runtime.hf import load_pretrained
 
+        problem = checkpoint_problem(model_path)
+        if problem:
+            raise ValueError("%s: %s" % (model_path, problem))
         tokenizer = AutoTokenizer.from_pretrained(model_path)
         dtypes = {
             "auto": None,

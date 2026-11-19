@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence
 
 from .budget import EditBudget
-from .checkpointing import checkpoint_problem, save_session
+from .checkpointing import save_session
 from .fetch import RECOMMENDED, fetch_model
 from .intent import parse_intent
 from .recipes import TeachPolicy, teach_fact
@@ -126,10 +126,6 @@ def first_edit(
         raise ValueError(
             "first needs a checkpoint directory; %s is a file" % model_path
         )
-    if session_factory is None:
-        problem = checkpoint_problem(model_path)
-        if problem:
-            raise ValueError("%s: %s" % (model_path, problem))
     if not (0.0 < float(budget)):
         raise ValueError("budget must be positive")
     policy = policy or TeachPolicy()

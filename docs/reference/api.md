@@ -565,6 +565,10 @@ restores the candidate state in a `finally` block.
 point for a 27B checkpoint on a laptop-sized memory envelope.
 `device` defaults to CPU; use `cuda`, `mps`, or `auto` to opt into a compute
 device. `SessionState.device` reports the actual resolved device after load.
+`Session.open` first checks that the directory is a complete checkpoint
+(`config.json`, weights and tokenizer). An interrupted download is refused with
+"rerun machaon fetch to resume it" instead of a tokenizer traceback; the same
+check covers the CLI, Web console and MCP server.
 `machaon.devices.device_report()` (also exported as `machaon.device_report`)
 answers "can this machine use CUDA or MPS?" without loading a model:
 

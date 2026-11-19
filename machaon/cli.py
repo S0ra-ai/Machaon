@@ -625,7 +625,10 @@ def _cmd_teach(args) -> int:
     except ImportError as exc:
         return _error(_runtime_hint(exc))
     except (OSError, ValueError) as exc:
-        return _error("%s: %s" % (args.model, exc))
+        message = str(exc)
+        if message.startswith(str(args.model)):
+            return _error(message)
+        return _error("%s: %s" % (args.model, message))
 
     policy = TeachPolicy(
         max_rel_norm=args.max_rel_norm,

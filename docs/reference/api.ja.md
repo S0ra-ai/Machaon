@@ -230,6 +230,10 @@ session.token_id(text) -> int
 `propose` は重みに触れません：agent はコミット前にコスト（`relative_delta`）と求解確率を確認できます。`apply` は予算を原子的に課金し、超過時に拒否します。`rollback` は編集済み tensor を復元し、予算をリセットします。
 `device` の既定は CPU で、`cuda`、`mps`、`auto` を明示すると計算デバイスを使います。
 `SessionState.device` は読み込み後の実デバイスを返します。
+`Session.open` はまず完全なチェックポイント（`config.json`、重み、tokenizer）かを
+確認します。中断されたダウンロードは tokenizer の traceback ではなく
+「rerun machaon fetch to resume it」で拒否され、CLI・Web コンソール・MCP サーバーが
+同じ検査を共有します。
 `machaon.devices.device_report()`（`machaon.device_report` としても公開）は、モデルを
 読み込まずに「このマシンで CUDA / MPS が使えるか」を返します。
 

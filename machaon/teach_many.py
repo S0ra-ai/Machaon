@@ -294,6 +294,11 @@ def teach_many(
     progress: Optional[Callable[[Mapping[str, Any]], None]] = None,
 ) -> TeachManyResult:
     """Teach a sequence of facts into a chain of checkpoint directories."""
+    from .checkpointing import checkpoint_problem
+
+    problem = checkpoint_problem(base_model)
+    if problem:
+        raise ValueError("%s: %s" % (base_model, problem))
     budget = float(budget)
     if budget <= 0:
         raise ValueError("budget must be positive")

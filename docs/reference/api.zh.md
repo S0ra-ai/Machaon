@@ -510,6 +510,9 @@ session.token_id(text) -> int
 把停止轨迹送入机制门，并在 `finally` 中恢复候选状态。
 `device` 默认是 CPU；使用 `cuda`、`mps` 或 `auto` 显式启用计算设备，
 `SessionState.device` 报告加载后的实际设备。
+`Session.open` 会先确认目录是完整检查点（`config.json`、权重和 tokenizer）。
+中断的下载会被拒绝并提示 “rerun machaon fetch to resume it”，而不是抛出 tokenizer
+内部堆栈；CLI、Web 控制台和 MCP 服务共用这项检查。
 `machaon.devices.device_report()`（也导出为 `machaon.device_report`）可以在不加载模型的
 情况下回答“这台机器能不能用 CUDA 或 MPS”：
 

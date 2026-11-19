@@ -152,6 +152,7 @@ class TestTeachMany(unittest.TestCase):
         self.assertTrue(result.accepted)
         self.assertEqual(result.cumulative_relative_delta, 0.06)
         self.assertEqual(result.final, str(out / "final"))
+
         self.assertTrue((out / "final" / "config.json").exists())
         self.assertFalse((out / "step-001").exists())
         self.assertFalse((out / "step-002").exists())
@@ -162,6 +163,22 @@ class TestTeachMany(unittest.TestCase):
         self.assertEqual(result.steps[-1].checkpoint, str(out / "final"))
         report = json.loads((out / "report.json").read_text())
         self.assertEqual(report["final"], str(out / "final"))
+
+    def test_interrupted_base_checkpoint_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "base"
+            base.mkdir()
+            (base / "config.json").write_text("{}")
+            (base / "model.safetensors.part").write_bytes(b"")
+            with self.assertRaisesRegex(ValueError, "unfinished download"):
+                teach_many(
+                    make_factory([]),
+                    str(base),
+                    [("p1", " a")],
+                    Path(tmp) / "batch",
+                    teach_one=ScriptedTeach(["applied"]),
+                    save=fake_save,
+                )
 
     def test_rejected_fact_stops_at_the_last_safe_checkpoint(self):
         result, out, _calls, teach = self._run(

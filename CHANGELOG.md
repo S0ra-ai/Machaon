@@ -96,6 +96,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - An interrupted checkpoint download is detected before the tokenizer loads,
   so `first` says "rerun machaon fetch to resume it" instead of printing a
   library traceback.
+- The same completeness check now runs inside `Session.open`, so `teach`,
+  `check`, `teach-many`, `program`, the Web console and the MCP server all
+  report a truncated checkpoint the same way.
 - Program plans now probe the requested runtime device and report whether
   CUDA/MPS is visible before a model load; the Web plan card shows the same
   blocker.
