@@ -26,8 +26,8 @@ Machaon 是三层几乎互不认识的系统。
 `machaon.intent` 把一套小而明确的语言编译成精确的 `(prompt, answer)`。
 `machaon.recipes.teach_fact` 是原语之上的闭环：捕获无关基线面板，通过
 `Session.search_rome_layers` 搜索候选层，把每次试验投影到面板的零空间，应用
-最佳候选，检查目标、面板与 KL，失败时回滚。CLI、MCP `teach` 工具和 Web 的
-**ONE SENTENCE**（一句话）入口都调用同一个函数，不重复实现合同。
+最佳候选，检查目标、面板与 KL，失败时回滚。CLI、MCP `teach` 工具和 Web 的 **教一句事实**
+入口都调用同一个函数，不重复实现合同。
 
 ## 两个契约
 

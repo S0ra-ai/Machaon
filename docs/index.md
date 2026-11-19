@@ -21,9 +21,9 @@ checks pass. A rejected candidate is rolled back byte-for-byte. The default
 output is `<checkpoint>-machaon`; the source checkpoint is never modified.
 
 `machaon intent "..."` shows the parse without loading a model, and the local
-browser console has the same flow as a **ONE SENTENCE** box, plus a **FIRST
-EDIT** card that takes a machine with no checkpoint through download, open,
-teach, save, a persisted-answer check and the next fact.
+browser console makes it the primary **Teach a fact** action: one page handles
+starter download, open, save and a saved-bytes verification without a setup
+wizard.
 
 For a repeatable, shareable run, put the model, facts, protected prompts and
 budget in one [weight program](guides/weight-programs.md). `machaon program`

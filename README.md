@@ -72,7 +72,7 @@ language is deliberately small: arrows and labelled blocks are exact, while
 plain sentences are marked medium confidence because the split point is an
 assumption. The same contract is available as
 `machaon.recipes.teach_fact`, the MCP `teach` tool, and the browser console's
-**ONE SENTENCE** box.
+**Teach a fact** card.
 
 For a small list, `machaon teach-many --model ... --facts facts.txt --out ...`
 runs one full search per fact, keeps a cumulative budget, checks drift against
@@ -235,7 +235,9 @@ job.
 
 ## Browser console
 
-The same session contract is available as a local three-column console:
+The local console is one page: a checkpoint bar, a **Teach a fact** composer, and
+four native disclosures for **Model**, **Edit**, **Weight program** and
+**Results**.
 
 ```bash
 uv pip install -e ".[web]"
@@ -243,69 +245,34 @@ machaon web --allowed-root ./models
 # or: machaon-web --allowed-root ./models
 ```
 
-Open the printed `127.0.0.1` URL. The console inspects checkpoint headers,
-streams tensor metadata, opens a model session, solves a proposal, applies it
-inside the transaction, evaluates it against a captured baseline, and rolls
-back byte-for-byte. Long operations run in a single worker and stream through
-SSE, so the browser never blocks on a large checkpoint load. The one-time
-token and the checkpoint path allowlist keep the local control plane scoped to
-the roots you name.
+Open the printed `127.0.0.1` URL. The token and the checkpoint-path allowlist
+keep the control plane scoped to the roots you name; the browser never receives
+tensor values.
 
-The **ONE SENTENCE** box runs the full teaching recipe: preview the parsed
-contract, then let the console choose the layer, apply the edit, verify the
-target and panel, and roll back automatically if a check fails. **Teach a
-list** in the same box runs the multi-fact chain, shows every step, and can
-open the final safe checkpoint.
+The **Teach a fact** card is the primary path. Type one sentence, choose a
+starter when no checkpoint is selected, and press **Teach**. The console
+downloads the starter only when needed, opens it, applies the edit, reports the
+target and locality evidence, and offers **Save** or **Open saved**. If a
+session is already open, the same action teaches the open model. Starter and
+device selectors disappear once a checkpoint makes them irrelevant.
 
-The Checkpoint column's **Check saved fact** panel reloads a saved checkpoint
-and evaluates one prompt/answer or one fact per line without opening or editing
-the session.
+The disclosures keep the full surface without turning the first screen into a
+dashboard:
 
-The same column's **Run a weight program** panel accepts a pasted `.machaon`
-text or JSON program. **Check program** resolves and previews it without loading
-a model; **Run program** runs the full chain as a background job, writes its
-report and reloads the saved checkpoint before reporting success. The program's
-relative paths and the browser's filesystem allowlist are enforced together.
-The panel can prefill from the current checkpoint, open/download `.machaon`
-files, start from one- and two-fact SmolLM2 templates, and keep the last eight
-programs in local browser history; a third template starts from Qwen2.5-0.5B
-with English and Chinese facts. It can also open a saved report, verify its
-content address, and optionally reload the checkpoint to compare the live facts
-with the recorded verdict.
+- **Model** — inspect headers, search tensors, download a starter, open a
+  session, capture the baseline, and verify one saved fact.
+- **Edit** — exact prompt/target proposals, gate evaluation, rollback,
+  advanced solver controls, batch edits, and multi-fact teaching.
+- **Weight program** — the `.machaon` editor, preflight, run, report
+  verification, templates, local history, and saved-byte checks.
+- **Results** — proposal details, gate verdicts, checkpoint saving, WSP
+  evidence and the transaction activity log.
 
-The **FIRST EDIT** card goes one step further: if no checkpoint is selected, it
-downloads the starter chosen in the card (SmolLM2-135M by default, with
-Qwen2.5-0.5B offered for multilingual use), opens it, teaches the prefilled
-fact and leaves the accepted edit in the session for **Save**. After saving, **Open saved
-checkpoint** reopens those bytes as a fresh session and re-checks the taught
-prompt/answer against the saved weights. It then clears the sentence and offers
-**Teach another fact**, so the same card can continue the loop without using
-the advanced form; the next output uses a numbered path such as
-`<name>-machaon-2` instead of stacking suffixes. The example chips show both outcomes: `Eiffel → Rome`
-applies an edit, while `France → Paris` reports that the model already knows
-the answer. After an applied edit the card also shows the chosen layer, relative
-Δ, panel preservation and KL p95, so the first success is visible evidence
-rather than only a status badge. After saving, **Teach a list** opens the
-multi-fact flow with the current fact prefilled and a container output path.
-
-The Checkpoint column also has a **Download starter** control for SmolLM2-135M,
-Qwen2.5-0.5B or GPT-2, with Hugging Face / mirror / ModelScope fallback and live
-SSE byte/percent progress, so a first run does not require a pre-existing local
-checkpoint. The last successfully opened or saved checkpoint is remembered in
-`localStorage`, so a refresh resumes from it instead of downloading a starter
-again; the card's ready message reflects that path.
-
-The console ships in English, Chinese, Japanese and Korean. It follows the
-browser language on first load, remembers an explicit choice, and accepts
-`?lang=zh`, `?lang=ja` or `?lang=ko` for a direct link.
-
-The first authenticated visit opens a 60-second guide that points to the
-**FIRST EDIT** card and explains the inspect → open → baseline → propose →
-apply → evaluate → save/rollback loop and each control's meaning. It can be
-reopened from the top-bar **Guide** button.
-
-See [the Web console reference](docs/reference/web.md) for the API surface and
-the large-checkpoint working point (Qwen3.6-27B is one example).
+Every long operation still runs in one worker and streams through SSE. Program
+and checkpoint operations use the same filesystem allowlist as the CLI, Python
+API and MCP server. The console ships in English, Chinese, Japanese and Korean;
+it follows the browser language on first load, remembers an explicit choice,
+and accepts `?lang=zh`, `?lang=ja` or `?lang=ko` for a direct link.
 
 ## Quickstart
 
@@ -672,7 +639,7 @@ machaon/
 ├─ hygieia/             gates, metrics, evaluation runner
 ├─ wsp.py               matched controls, repair-vs-acquisition
 ├─ interop/openwsp.py   versioned edit format, conformance-tested
-├─ web/                 FastAPI console, SSE jobs, three-column browser UI
+├─ web/                 FastAPI console, SSE jobs, single-page browser UI
 ├─ procedures/rome.py   the ROME procedure as one function
 ├─ bench/               zsRE, WikiText-2, MMLU with provenance
 ├─ podalirius/          activation patching (diagnose)

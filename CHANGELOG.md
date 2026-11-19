@@ -259,13 +259,18 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The Web console is now a single-page weight editor: **Teach a fact** is the
+  primary action, and **Model**, **Edit**, **Weight program** and **Results**
+  are native disclosures. The hero, onboarding strip, first-run guide and
+  redundant hint copy were removed; the full API, IDs and advanced controls
+  remain available.
 - Evaluation docs now distinguish `repair`, `acquisition`, `non_specific`,
   `no_effect`, `regression`, `unclassified` and `inconclusive`.
 
 ### Fixed
 
 - The Web **Download starter** control now honors **Open after download**, and
-  the FIRST EDIT card continues from its automatic download into open and teach
+  the **Teach a fact** card continues from its automatic download into open and teach
   instead of stopping at the downloaded path.
 
 ## [0.4.3] - 2026-11-08

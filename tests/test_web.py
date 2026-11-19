@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tempfile
 import time
@@ -1075,8 +1076,10 @@ class TestWebApp(unittest.TestCase):
     def test_localised_web_assets_are_served(self):
         page = self.client.get("/")
         self.assertIn('id="languageSelect"', page.text)
-        self.assertIn('id="guideButton"', page.text)
-        self.assertIn('id="guideDialog"', page.text)
+        self.assertIn('data-i18n="app.title"', page.text)
+        self.assertNotIn('data-i18n="hero.title"', page.text)
+        self.assertNotIn('data-i18n="onboarding.title"', page.text)
+        self.assertNotIn('id="guideDialog"', page.text)
         self.assertIn('id="batchProposeButton"', page.text)
         self.assertIn('id="wspAuditButton"', page.text)
         self.assertIn('id="wspSaveButton"', page.text)
@@ -1088,9 +1091,8 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="firstEditButton"', page.text)
         self.assertIn('id="firstEditStarter"', page.text)
         self.assertIn('value="qwen05b"', page.text)
-        self.assertIn('data-example="The Eiffel Tower is in the city of -> Rome"', page.text)
-        self.assertIn('data-example="The capital of France is -> Paris"', page.text)
         self.assertIn('id="firstEditSave"', page.text)
+        self.assertIn('id="firstEditSaveRow"', page.text)
         self.assertIn('id="firstEditOpen"', page.text)
         self.assertIn('id="firstEditList"', page.text)
         self.assertIn('id="firstEditProgram"', page.text)
@@ -1098,6 +1100,11 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="firstEditEvidence"', page.text)
         self.assertIn('id="checkPanel"', page.text)
         self.assertIn('id="checkSentence"', page.text)
+        self.assertIn('id="modelPanel"', page.text)
+        self.assertIn('id="baselineButton"', page.text)
+        self.assertLess(page.text.index('id="baselineButton"'), page.text.index('id="editPanel"'))
+        self.assertIn('id="editPanel"', page.text)
+        self.assertIn('id="evidencePanel"', page.text)
         self.assertIn('id="programPanel"', page.text)
         self.assertIn('id="programText"', page.text)
         self.assertIn('id="programRunButton"', page.text)
@@ -1123,7 +1130,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="programReportFile"', page.text)
         self.assertIn('id="programVerifyCard"', page.text)
         self.assertIn('id="fetchOpen"', page.text)
-        self.assertIn('data-i18n="onboarding.title"', page.text)
+        self.assertIn('id="teachCard"', page.text)
         self.assertIn('src="/static/locales.js"', page.text)
         app = self.client.get("/static/app.js")
         self.assertEqual(app.status_code, 200)
@@ -1135,9 +1142,17 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('machaon-last-checkpoint', app.text)
         locales = self.client.get("/static/locales.js")
         self.assertEqual(locales.status_code, 200)
+        static_keys = set(re.findall(
+            r'data-i18n(?:-html|-placeholder|-aria-label)?="([^"]+)"',
+            page.text,
+        ))
+        for key in static_keys:
+            self.assertIn('"%s"' % key, locales.text)
         self.assertIn('"zh": {', locales.text)
         self.assertIn('"ja": {', locales.text)
         self.assertIn('"ko": {', locales.text)
+        self.assertIn('"app.title"', locales.text)
+        self.assertIn('"program.more"', locales.text)
         self.assertIn('"firstEdit.title"', locales.text)
         self.assertIn('"firstEdit.readyCheckpoint"', locales.text)
         self.assertIn('"firstEdit.save"', locales.text)
@@ -1147,7 +1162,8 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"firstEdit.program"', locales.text)
         self.assertIn('"firstEdit.deviceLabel"', locales.text)
         self.assertIn('"firstEdit.starterQwen"', locales.text)
-        self.assertIn('"firstEdit.examples"', locales.text)
+        self.assertIn('"firstEdit.outLabel"', locales.text)
+        self.assertNotIn('"firstEdit.examples"', locales.text)
         self.assertIn('"firstEdit.evidenceLayer"', locales.text)
         self.assertIn('"firstEdit.verifying"', locales.text)
         self.assertIn('"firstEdit.verified"', locales.text)

@@ -30,7 +30,6 @@
     devices: null,
     pendingAfterBusy: null,
     firstEdit: null,
-    firstEditDismissed: localStorage.getItem("machaon-first-dismissed") === "1",
     firstEditStatusKey: "firstEdit.ready",
     firstEditStatusVars: {},
     firstEditStatusKind: "",
@@ -49,11 +48,6 @@
     connection: $("#connectionPill"),
     version: $("#versionPill"),
     tokenButton: $("#tokenButton"),
-    guideButton: $("#guideButton"),
-    onboardingGuideButton: $("#onboardingGuideButton"),
-    guideDialog: $("#guideDialog"),
-    guideClose: $("#guideClose"),
-    guideCloseX: $("#guideCloseX"),
     languageSelect: $("#languageSelect"),
     dialog: $("#tokenDialog"),
     tokenInput: $("#tokenInput"),
@@ -98,6 +92,7 @@
     checkpointBadge: $("#checkpointBadge"),
     tensorRows: $("#tensorRows"),
     sessionBadge: $("#sessionBadge"),
+    closeSessionButton: $("#closeSessionButton"),
     proposalCard: $("#proposalCard"),
     gateCard: $("#gateCard"),
     teachCard: $("#teachCard"),
@@ -107,7 +102,7 @@
     firstEditStarter: $("#firstEditStarter"),
     firstEditDevice: $("#firstEditDevice"),
     firstEditButton: $("#firstEditButton"),
-    firstEditDismiss: $("#firstEditDismiss"),
+    firstEditSaveRow: $("#firstEditSaveRow"),
     firstEditOut: $("#firstEditOut"),
     firstEditSave: $("#firstEditSave"),
     firstEditStatus: $("#firstEditStatus"),
@@ -116,7 +111,6 @@
     firstEditOpen: $("#firstEditOpen"),
     firstEditList: $("#firstEditList"),
     firstEditProgram: $("#firstEditProgram"),
-    firstEditDone: $("#firstEditDone"),
     stateCard: $("#stateCard"),
     timeline: $("#timeline"),
     eventCount: $("#eventCount"),
@@ -147,8 +141,12 @@
 
   function t(key, vars = {}) {
     const table = LOCALES[state.locale] || LOCALES.en || {};
-    const fallback = (LOCALES.en || {})[key] || key;
-    return String(table[key] || fallback).replace(/\{(\w+)\}/g, (_match, name) =>
+    let value = key;
+    if (Object.prototype.hasOwnProperty.call(table, key)) value = table[key];
+    else if (Object.prototype.hasOwnProperty.call(LOCALES.en || {}, key)) {
+      value = LOCALES.en[key];
+    }
+    return String(value).replace(/\{(\w+)\}/g, (_match, name) =>
       Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : "{" + name + "}"
     );
   }
@@ -313,23 +311,6 @@
     boot();
   }
 
-  function openGuide() {
-    if (!el.guideDialog) return;
-    if (typeof el.guideDialog.showModal === "function" && !el.guideDialog.open) {
-      el.guideDialog.showModal();
-    }
-  }
-
-  function closeGuide() {
-    if (el.guideDialog && el.guideDialog.open) el.guideDialog.close();
-    localStorage.setItem("machaon-web-guide-seen", "1");
-  }
-
-  function maybeShowGuide() {
-    if (localStorage.getItem("machaon-web-guide-seen") === "1") return;
-    openGuide();
-  }
-
   function formatBytes(value) {
     const n = Number(value || 0);
     if (!Number.isFinite(n) || n <= 0) return "0 MB";
@@ -380,6 +361,7 @@
 
   function showBusy(label, detail) {
     state.busy = true;
+    document.body.dataset.busy = "true";
     el.jobBanner.classList.remove("hidden");
     el.jobTitle.textContent = label || t("job.default");
     el.jobDetail.textContent = detail || t("evidence.runningDetail");
@@ -392,8 +374,23 @@
     setActionState();
   }
 
+  function revealDisclosure(node, scroll = false) {
+    if (!node) return;
+    const parent = node.closest("details.disclosure");
+    if (parent) parent.open = true;
+    if (node.tagName === "DETAILS") node.open = true;
+    if (scroll && node.scrollIntoView) {
+      node.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function revealResults(scroll = false) {
+    revealDisclosure($("#evidencePanel"), scroll);
+  }
+
   function stopBusy(status) {
     state.busy = false;
+    document.body.dataset.busy = "false";
     el.jobBanner.classList.add("hidden");
     el.jobPill.textContent = t("status." + (status || "idle"));
     el.jobPill.className = "badge " + (status === "done" ? "live" : status === "error" ? "quiet" : "quiet");
@@ -420,8 +417,8 @@
     if (el.firstEditOpen) el.firstEditOpen.disabled = state.busy;
     if (el.firstEditList) el.firstEditList.disabled = state.busy;
     if (el.firstEditProgram) el.firstEditProgram.disabled = state.busy;
-    if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
     if (el.checkButton) el.checkButton.disabled = state.busy;
+    if (el.closeSessionButton) el.closeSessionButton.disabled = !ready || state.busy;
     if (el.programPlanButton) el.programPlanButton.disabled = state.busy;
     if (el.programRunButton) el.programRunButton.disabled = state.busy;
     if (el.programPrefillButton) el.programPrefillButton.disabled = state.busy;
@@ -458,7 +455,7 @@
   function setConnection(kind, text, key = null) {
     state.connectionKind = kind;
     if (key) state.connectionKey = key;
-    el.connection.className = "pill " + kind;
+    el.connection.className = "connection " + kind;
     el.connection.innerHTML = "<i></i> " + escapeHtml(text);
   }
 
@@ -471,11 +468,11 @@
     setConnection("", t("conn.checking"), "conn.checking");
     try {
       const health = await api("/api/health");
-      el.version.textContent = "v" + health.version;
+      if (el.version) el.version.textContent = "v" + health.version;
       state.allowedRoots = health.allowed_roots || [];
       state.capabilities = health.capabilities || {};
       state.devices = health.devices || null;
-      el.allowedRoots.textContent = state.allowedRoots.join(" · ");
+      if (el.allowedRoots) el.allowedRoots.textContent = state.allowedRoots.join(" · ");
       annotateDeviceOptions(state.devices);
       if (el.programBase && !el.programBase.value) {
         el.programBase.value = state.allowedRoots[0] || "";
@@ -492,13 +489,13 @@
       if (state.session) el.checkpointPath.value = state.session.model || el.checkpointPath.value;
       if (state.session) rememberCheckpoint(state.session.model);
       if (!state.session) setFirstEditReadyStatus();
+      renderFirstEdit();
       readProgramHistory();
       readProgramRuns();
-      maybeShowGuide();
     } catch (err) {
       setConnection("error", t("conn.offline"), "conn.offline");
       if (err.message !== "unauthorised") {
-        el.version.textContent = "v—";
+        if (el.version) el.version.textContent = "v—";
         openTokenDialog(t("errors.serverDown"));
       }
     }
@@ -933,14 +930,20 @@
 
   function renderSessionState() {
     const s = state.session;
+    document.body.dataset.session = s ? "open" : "closed";
+    if (el.firstEditCard) {
+      el.firstEditCard.dataset.session = s ? "open" : "closed";
+    }
     if (!s) {
       el.sessionBadge.textContent = t("badge.notOpen");
       el.sessionBadge.className = "badge";
+      if (el.closeSessionButton) el.closeSessionButton.classList.add("hidden");
       el.stateCard.className = "evidence-card empty-state";
       el.stateCard.textContent = t("evidence.sessionEmpty");
       setActionState();
       return;
     }
+    if (el.closeSessionButton) el.closeSessionButton.classList.remove("hidden");
     el.sessionBadge.textContent = t("badge.sessionLive");
     el.sessionBadge.className = "badge live";
     el.stateCard.className = "evidence-card";
@@ -1001,8 +1004,10 @@
     state.firstEditStatusVars = vars;
     state.firstEditStatusKind = kind;
     if (!el.firstEditStatus) return;
-    el.firstEditStatus.textContent = t(key, vars);
-    el.firstEditStatus.className = "hint" + (kind ? " " + kind : "");
+    const text = t(key, vars);
+    el.firstEditStatus.textContent = text;
+    el.firstEditStatus.className = "status" + (kind ? " " + kind : "");
+    el.firstEditStatus.classList.toggle("hidden", !text);
   }
 
   function setFirstEditReadyStatus() {
@@ -1047,11 +1052,22 @@
     if (!el.firstEditCard) return;
     const active = !!state.firstEdit;
     if (!active) state.firstEditEvidence = null;
-    const visible = (!state.session || active) && !state.firstEditDismissed;
     const listReady = active && !!state.session
       && !(state.session.edited || []).length
       && state.firstEdit.phase === "another";
-    el.firstEditCard.classList.toggle("hidden", !visible);
+    el.firstEditCard.classList.remove("hidden");
+    el.firstEditCard.dataset.phase = active ? state.firstEdit.phase : "idle";
+    el.firstEditCard.dataset.session = state.session ? "open" : "closed";
+    if (el.firstEditStarter && el.firstEditStarter.parentElement) {
+      el.firstEditStarter.parentElement.classList.toggle(
+        "hidden", !!el.checkpointPath.value.trim()
+      );
+    }
+    if (el.firstEditSaveRow) {
+      el.firstEditSaveRow.classList.toggle(
+        "hidden", !(active && state.firstEdit.phase === "done")
+      );
+    }
     if (el.firstEditSave) {
       el.firstEditSave.disabled = state.busy || !state.session || !active
         || state.firstEdit.phase !== "done";
@@ -1063,7 +1079,6 @@
     }
     if (el.firstEditOpen) el.firstEditOpen.disabled = state.busy;
     if (el.firstEditList) el.firstEditList.disabled = state.busy;
-    if (el.firstEditDone) el.firstEditDone.disabled = state.busy;
     if (el.firstEditList) el.firstEditList.classList.toggle("hidden", !listReady);
     if (el.firstEditProgram) {
       el.firstEditProgram.classList.toggle(
@@ -1120,7 +1135,7 @@
 
   function openFirstEditList() {
     const panel = $("#teachManyPanel");
-    if (panel) panel.open = true;
+    revealDisclosure(panel, true);
     const facts = $("#teachManyFacts");
     const seed = (state.firstEdit
       && (state.firstEdit.lastSentence || state.firstEdit.sentence))
@@ -1132,9 +1147,6 @@
     if (out && !out.value && state.session) {
       const model = String(state.session.model || "").replace(/\/+$/, "");
       if (model) out.value = manyCheckpointPath(model);
-    }
-    if (panel && panel.scrollIntoView) {
-      panel.scrollIntoView({ behavior: "smooth", block: "center" });
     }
     if (facts) facts.focus();
   }
@@ -1153,8 +1165,8 @@
     const card = el.teachCard;
     if (!card) return;
     if (!payload) {
-      card.className = "evidence-card empty-state";
-      card.textContent = t("teach.empty");
+      card.className = "evidence-card hidden";
+      card.textContent = "";
       return;
     }
     card.className = "evidence-card teach-result";
@@ -1263,6 +1275,7 @@
       renderTeachPreview(null);
       return;
     }
+    card.classList.remove("hidden");
     const result = payload.result;
     const accepted = !!result.accepted;
     const checks = (result.checks || [])
@@ -1564,13 +1577,8 @@
       renderProposal(null);
       renderTeachPreview(null);
       renderSessionState();
-      if (state.session && result && result.ready) {
-        const teach = $("#teachSentence");
-        if (teach && !teach.value) teach.focus();
-      }
       if (state.firstEdit && state.firstEdit.phase === "open" && result && result.ready) {
         state.firstEdit.phase = "teach";
-        $("#teachSentence").value = state.firstEdit.sentence;
         if (el.firstEditOut && !el.firstEditOut.value) {
           const model = String(state.session.model || "").replace(/\/+$/, "");
           if (model) el.firstEditOut.value = nextCheckpointPath(model);
@@ -1638,6 +1646,7 @@
       addTimelineEvent("densify", t("timeline.densify"),
           t("timeline.densified", { n: result.densified }), "ok");
       }
+      revealResults(true);
     } else if (kind === "apply_edit") {
       if (result && result.state) state.session = result.state;
       state.proposal = null;
@@ -1650,10 +1659,14 @@
       renderSessionState();
       renderProposal(null);
       addTimelineEvent("apply", t("timeline.apply"), t("timeline.charged"), "ok");
+      revealResults(true);
     } else if (kind === "evaluate") {
       if (result && result.state) state.session = result.state;
       renderSessionState();
       renderMetrics(result.metrics, result.gate);
+      if (!(state.firstEdit && state.firstEdit.phase === "verify")) {
+        revealResults(true);
+      }
       if (state.firstEdit && state.firstEdit.phase === "verify") {
         const preview = state.firstEdit.preview || {};
         const verifiedAnswer = state.firstEdit.verifyAnswer !== undefined
@@ -1675,7 +1688,7 @@
       renderSessionState();
       renderProposal(null);
       renderTeachManyResult(result);
-      $("#teachManyPanel").open = true;
+      revealDisclosure($("#teachManyPanel"), true);
       if (result && result.result && result.result.out_dir) {
         $("#teachManyOut").value = result.result.out_dir;
       }
@@ -1920,7 +1933,6 @@
     const base = (el.programBase.value.trim() || state.allowedRoots[0] || "").replace(/\/+$/, "");
     const output = nextCheckpointPath(model);
     const sentence = (el.firstEditSentence && el.firstEditSentence.value.trim())
-      || $("#teachSentence").value.trim()
       || "The Eiffel Tower is in the city of -> Rome";
     const protect = preserveLines();
     const protections = protect.length ? protect : [
@@ -2183,15 +2195,6 @@
       renderFirstEdit();
     });
   }
-  if (el.guideButton) el.guideButton.addEventListener("click", openGuide);
-  if (el.onboardingGuideButton) el.onboardingGuideButton.addEventListener("click", openGuide);
-  if (el.guideClose) el.guideClose.addEventListener("click", closeGuide);
-  if (el.guideCloseX) el.guideCloseX.addEventListener("click", closeGuide);
-  if (el.guideDialog) {
-    el.guideDialog.addEventListener("close", () => {
-      localStorage.setItem("machaon-web-guide-seen", "1");
-    });
-  }
   $("#tokenSave").addEventListener("click", saveToken);
   $("#tokenCancel").addEventListener("click", () => el.dialog.close());
   $("#modelsButton").addEventListener("click", findModels);
@@ -2234,8 +2237,9 @@
     state.firstEditEvidence = null;
     $("#prompt").value = preview.prompt;
     $("#target").value = preview.answer;
-    if (state.firstEdit && state.firstEdit.phase === "another" && state.session) {
-      state.firstEdit = { sentence, preview, phase: "teach" };
+    if (state.session) {
+      const starter = (state.firstEdit && state.firstEdit.starter) || null;
+      state.firstEdit = { sentence, preview, phase: "teach", starter };
       setFirstEditStatus("firstEdit.teaching");
       if (el.firstEditOut && !el.firstEditOut.value) {
         const model = String(state.session.model || "").replace(/\/+$/, "");
@@ -2281,13 +2285,6 @@
   if (el.firstEditButton) {
     el.firstEditButton.addEventListener("click", startFirstEdit);
   }
-  document.querySelectorAll("[data-example]").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (!el.firstEditSentence) return;
-      el.firstEditSentence.value = button.dataset.example || "";
-      el.firstEditSentence.focus();
-    });
-  });
   if (el.firstEditSave) {
     el.firstEditSave.addEventListener("click", () => {
       if (!state.session || !state.firstEdit || state.firstEdit.phase !== "done") return;
@@ -2303,13 +2300,6 @@
       }
       setFirstEditStatus("firstEdit.saving");
       startJob("/api/session/save", { out_dir: out }, "save_checkpoint");
-    });
-  }
-  if (el.firstEditDismiss) {
-    el.firstEditDismiss.addEventListener("click", () => {
-      state.firstEditDismissed = true;
-      localStorage.setItem("machaon-first-dismissed", "1");
-      renderFirstEdit();
     });
   }
   if (el.firstEditOpen) {
@@ -2368,32 +2358,6 @@
       }
     });
   }
-  if (el.firstEditDone) {
-    el.firstEditDone.addEventListener("click", () => {
-      if (state.busy) return;
-      state.firstEdit = null;
-      setFirstEditReadyStatus();
-      renderFirstEdit();
-    });
-  }
-  $("#teachPreviewButton").addEventListener("click", async () => {
-    const sentence = $("#teachSentence").value.trim();
-    if (!sentence) return addTimelineEvent("error", t("teach.sentenceRequired"), "", "err");
-    try {
-      const payload = await api("/api/teach/preview", {
-        method: "POST",
-        body: JSON.stringify({ sentence }),
-      });
-      state.lastTeach = payload;
-      renderTeachPreview(payload);
-      $("#prompt").value = payload.prompt;
-      $("#target").value = payload.answer;
-      addTimelineEvent("teach", t("timeline.teachPreview"),
-        payload.source || "", "ok");
-    } catch (err) {
-      addTimelineEvent("error", err.message, t("teach.invalid"), "err");
-    }
-  });
   $("#teachManyButton").addEventListener("click", () => {
     if (!state.session) return addTimelineEvent("error", t("errors.sessionFirst"), "", "err");
     const facts = $("#teachManyFacts").value.split(/\r?\n/)
@@ -2413,19 +2377,6 @@
       keep_steps: $("#teachManyKeep").checked,
       continue_on_reject: $("#teachManyContinue").checked,
     }, "teach_many");
-  });
-  $("#teachButton").addEventListener("click", () => {
-    if (!state.session) return addTimelineEvent("error", t("errors.sessionFirst"), "", "err");
-    const sentence = $("#teachSentence").value.trim();
-    if (!sentence) return addTimelineEvent("error", t("teach.sentenceRequired"), "", "err");
-    const out = $("#teachOut").value.trim();
-    startJob("/api/teach", {
-      sentence,
-      out_dir: out || null,
-      solver: "direction",
-      max_rel_norm: $("#maxRelNorm").value.trim() === ""
-        ? 0.02 : Number($("#maxRelNorm").value),
-    }, "teach");
   });
   $("#programPlanButton").addEventListener("click", async () => {
     let body;
@@ -2609,6 +2560,14 @@
     }
     startJob("/api/session/open", body, "open_session");
   });
+  if (el.closeSessionButton) {
+    el.closeSessionButton.addEventListener("click", () => {
+      if (state.busy || !state.session) return;
+      const edited = (state.session.edited || []).length > 0;
+      if (edited && !window.confirm(t("session.confirmClose"))) return;
+      startJob("/api/session/close", { force: edited }, "close_session");
+    });
+  }
   $("#proposeButton").addEventListener("click", () => {
     if (!state.session) return addTimelineEvent("error", t("errors.sessionFirst"), "", "err");
     startJob("/api/edit/propose", proposalRequest(), "propose_edit");

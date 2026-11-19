@@ -27,8 +27,8 @@ Machaon は互いをほとんど知らない 3 層です。
 コンパイルします。`machaon.recipes.teach_fact` はプリミティブの上のループです：
 無関係なベースライン panel を取得し、`Session.search_rome_layers` で候補層を
 検索し、各 trial を panel の零空間へ投影し、最良の候補を適用し、目標・panel・KL
-を確認し、失敗時にロールバックします。CLI、MCP の `teach` ツール、Web の
-**ONE SENTENCE** 欄はすべてこの 1 関数を呼び、契約を再実装しません。
+を確認し、失敗時にロールバックします。CLI、MCP の `teach` ツール、Web の **事実を教える**
+操作はすべてこの 1 関数を呼び、契約を再実装しません。
 
 ## 2 つの契約
 

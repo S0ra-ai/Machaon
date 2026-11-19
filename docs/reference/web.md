@@ -37,195 +37,100 @@ or repeat `--allowed-root` for more than one checkpoint directory. The
 allowlist applies to checkpoint paths, edit directories, delta files and output
 directories.
 
-## Languages
+## Interface
+
+The console is one page. A checkpoint bar sits at the top, followed by the
+**Teach a fact** composer and four native disclosures: **Model**, **Edit**,
+**Weight program** and **Results**. There is no first-run modal or separate
+hero; the workflow is visible in the order the controls appear.
+
+### Checkpoint bar
+
+Paste a checkpoint directory or a single `.safetensors` file and press
+**Inspect**. **Browse** lists checkpoint directories found below the configured
+allowed roots. The path is remembered in `localStorage` after a successful open
+or save. The checkpoint bar stays available while the rest of the page changes.
+
+### Teach a fact
+
+This is the primary path. Enter one sentence in the form:
+
+```text
+The Eiffel Tower is in the city of -> Rome
+```
+
+Choose a starter when no checkpoint is selected, optionally choose CPU, auto,
+Apple MPS or CUDA, and press **Teach**. The card parses the sentence through the
+same grammar as `machaon intent`, opens the selected checkpoint or downloads the
+starter when necessary, applies the teaching recipe, and shows the same target,
+budget, panel and KL evidence as the CLI. A rejected edit is rolled back.
+
+After an apply, the output field and **Save** action appear. Saving writes a new
+checkpoint; **Open saved** closes the edited session, opens the saved bytes and
+rechecks the taught answer before clearing the sentence for another fact. A
+session that is already open can be taught directly from the same card; starter
+and device selectors disappear when they no longer affect the run.
+
+**Teach a list** starts the cumulative multi-fact chain. **Create program**
+turns the current fact into an editable `.machaon` program. Both actions remain
+available after a successful edit.
+
+### Model
+
+The **Model** disclosure contains header-only inspection, tensor names, shapes
+and dtypes, optional starter download, session dtype/device/budget settings, baseline capture, and one-fact
+verification without editing. A starter download streams its endpoint,
+file and byte progress through SSE. **Open after download** opens the session
+when the download finishes.
+
+The **Verify a fact** subsection reloads the selected checkpoint, evaluates one
+prompt/answer or one fact per line, and reports PASS/FAIL with each answer and
+accuracy. It calls `/api/check` and never edits the session.
+
+### Edit
+
+The **Edit** disclosure is the exact contract editor. It captures a prompt,
+target and preserve prompts, then handles proposal, apply, evaluate and rollback. A proposal is a dry run; **Apply** writes inside the transaction and
+charges the cumulative budget. A failed gate or rollback restores the original
+bytes.
+
+**Advanced edit** exposes layer, solver, step, learning-rate, module-suffix,
+relative-budget and densify settings. **Teach a list** runs one search per fact
+with a cumulative budget and original-panel drift check. **Batch edit** accepts
+multiple prompts and activation rows and reports exact/clamped state, error,
+rank and per-key error.
+
+### Weight program
+
+The **Weight program** disclosure accepts the same `.machaon` text or JSON as
+`machaon program`. **Check** calls `/api/program/plan` and resolves paths, facts,
+budget, device and output without loading a model. **Run** executes the chain as
+a background job, writes `<output>/program-report.json`, reloads the saved
+checkpoint and verifies every fact before accepting the run.
+
+**More** contains the program folder and report path, current-checkpoint
+prefill, local `.machaon` import, SmolLM2 / two-fact / bilingual-Qwen templates,
+recent programs and runs, the fact-list generator, and report verification.
+**Verify report** checks the report's SHA-256 and structure; **Verify + model**
+also reloads the checkpoint and re-runs the facts. Optional checkboxes require
+the current editor program to match or use the selected checkpoint instead of
+the recorded path. Relative paths and all browser file access use the same
+allowlist as every other console operation.
+
+### Results
+
+The **Results** disclosure contains the latest proposal, fail-closed gate
+verdict, checkpoint saving, WSP controls and the transaction activity log. WSP
+supports report audit, session assessment, evidence save, OpenWSP export and
+binding verification. Missing gate metrics still fail closed.
+
+### Local state and languages
 
 The console ships in English, Simplified Chinese, Japanese and Korean. The
-top-bar picker updates both static copy and dynamic job/evidence messages,
-stores the choice in `localStorage`, and accepts direct links such as
-`?lang=zh`, `?lang=ja` and `?lang=ko`. Without an explicit choice it follows the
-browser language and falls back to English.
-
-## First-run guide
-
-On the first authenticated visit, the console opens a short guide that points to
-the **FIRST EDIT** zero-to-one card and explains the purpose of an edit, the
-inspect → open → baseline → propose → apply → evaluate → save/rollback loop,
-and what each control does. **Start exploring**
-marks the guide as seen; **Guide** in the top bar reopens it at any time. The
-four-step onboarding strip remains under the hero as a compact reminder.
-
-## First edit card
-
-The first-authenticated page also shows a **FIRST EDIT** card. It chains the
-existing pieces: choose a starter if no checkpoint is selected (SmolLM2-135M
-by default, Qwen2.5-0.5B for multilingual use, or GPT-2), download it, open it,
-prefill "The Eiffel Tower is in the city of -> Rome", run the teaching recipe
-and report the result. The example chips load the applied `Eiffel → Rome` case
-or the already-true `France → Paris` case, so a new user can see both outcomes
-without typing. The card disappears once a model session is open; the accepted
-edit stays in the session for **Save**. When the recipe applies, the
-card shows the chosen layer, relative Δ, panel preservation and KL p95, so the
-first success includes the same evidence vocabulary as the advanced workspace.
-The card also has its own **Compute device** selector (CPU by default, plus
-`auto`, Apple MPS and CUDA). Options the machine cannot use are marked
-unavailable from `/api/health`, so a first run is not silently pinned to CPU on
-a machine with a usable GPU.
-The card also keeps a **Checkpoint output** field prefilled with `<model>-machaon` and a
-**Save checkpoint** button; saving goes through the same `/api/session/save`
-path as the right column. After saving, **Open saved checkpoint** closes the
-edited session (rolling back its in-memory bytes), opens the saved checkpoint
-and leaves a clean session for the next fact; **Done** keeps the current
-session. After opening, the card evaluates the taught prompt/answer against the
-reopened checkpoint and reports whether the saved continuation reproduces. It
-then clears its sentence, updates the output to the new checkpoint's
-next numbered `<name>-machaon-N` path (for example `<name>-machaon-2`), and
-offers **Teach another fact**, so the same loop can
-continue without returning to the main form. Each saved checkpoint starts a
-fresh session and baseline; use **Teach a list** when you need one cumulative
-budget and original-panel drift checks across facts. **Hide** persists the
-choice in `localStorage`.
-
-The last successfully opened or saved checkpoint path is also remembered in
-`localStorage`. A refresh restores it into the Checkpoint field, so returning
-to the console does not silently start another starter download, and the
-FIRST EDIT status names the checkpoint it will use.
-
-After a save, the card's **Teach a list** action opens the multi-fact panel,
-prefills the current fact and proposes a `<model>-machaon-many` container. The
-list result expands each step's prompt, status, layer, delta and global drift
-instead of showing only status chips.
-
-The card's **Create a weight program** action (available after a successful
-edit) calls `/api/program/new` and opens the resulting `.machaon` text in the
-program panel. It carries the taught sentence, selected checkpoint/output,
-device, dtype and quantization settings, so the same first edit can be shared
-or re-run without retyping paths.
-
-## Check a saved fact
-
-The Checkpoint column's **Check a saved fact** panel evaluates one prompt/answer
-pair, or one fact per line, against the selected checkpoint without opening or
-editing the session. It calls `/api/check`, reloads the saved weights, uses the
-same continuation-space handling as `machaon check`, and shows `PASS`/`FAIL`
-with each selected answer and accuracy.
-
-## Run a weight program
-
-The Checkpoint column's **Run a weight program** expander accepts the same
-`.machaon` text or JSON program as `machaon program`. Set **Program folder** to
-a directory below an allowed root; relative `model` and `output` paths resolve
-from that folder. **Check program** calls `/api/program/plan` and shows the
-resolved model, parsed facts, budget and verification policy without loading a
-model. The card also states whether the output is new, empty and usable or
-already blocked, and names the starter and download size when the model is
-missing. **Run program** calls `/api/program/run` as a background job, writes
-`<output>/program-report.json`, and reloads the saved checkpoint before
-reporting the run. The job banner reports each fact's step/total and status as
-the teaching chain advances, then the final outcome and saved-byte verification.
-If a fact is rejected, the run card lists the failed target, budget, panel or
-KL checks instead of leaving the outcome at a bare `rejected`.
-An optional **Report path** writes the same report somewhere other than
-`<output>/program-report.json`. The run card displays the report's SHA-256.
-
-**Verify report** opens a previously downloaded `program-report.json`, checks
-its content address and structure, and shows the recorded program address,
-status and verdict. **Verify report + checkpoint** also reloads the checkpoint
-and re-runs every fact; the card states whether the live result agrees with the
-report. Select **also match the program currently in the editor** to detect a
-different program file, or **recheck the currently selected checkpoint** when
-the saved bytes were moved. **Verify this run's report** checks the result that
-is already in the page, without downloading it and reopening the file; when
-**recheck the currently selected checkpoint** is enabled, it also reloads that
-checkpoint and runs every fact. These checks call `/api/program/verify` as a
-background job, so a large checkpoint load never blocks the page.
-
-**Use current checkpoint** fills the editor from the open session or selected
-checkpoint and the current teaching sentence/preserve prompts. **Download
-.machaon** saves the editor text as a portable file, so a successful browser
-recipe can be committed or shared without copying from the page. **Open
-.machaon** loads a local text/JSON file into the editor; the browser reads it
-locally and the same allowlist is applied when the program is checked or run.
-Three built-in templates require no existing checkpoint: **SmolLM2 first edit**
-teaches one fact, **Two facts** runs a two-fact chain, and **Bilingual Qwen**
-takes the same program through English and Chinese on Qwen2.5-0.5B.
-
-The last eight programs that pass **Check program** or start a run are kept in
-the browser's local history. **Load** restores a recent program without
-uploading it; history is stored only in `localStorage`.
-
-**Copy program** copies the editor text, **Download report** saves the current
-run's JSON report, and **Use output checkpoint** opens the run's final
-checkpoint in a fresh session without manually typing its path.
-**Build program from facts** turns one teaching sentence per line into a
-reviewable `.machaon` program using the selected/current checkpoint, the same
-output naming rule, and the standard budget and verification defaults. It calls
-`/api/program/new`, so the browser uses the same generator and parser as
-`machaon program-new`. Preserve prompts from the edit column become `protect`
-entries. With no checkpoint selected it uses the chosen SmolLM2/Qwen/GPT-2
-starter and adds the matching `fetch` directive, so a first program can start
-from zero. The same endpoint accepts the advanced generator fields (`layers`,
-`solver`, `dtype`, `device`, `quantize`, verification policy and step
-retention), so API clients are not limited to the browser form.
-Each completed run is also added to **Recent runs**; **Open output** reopens its
-final checkpoint without manually copying the path.
-
-Both routes enforce the same filesystem allowlist as every other console
-operation. A program cannot reach a model or output outside the configured
-roots merely because it was pasted into the browser.
-
-## Three-column workflow
-
-1. **Checkpoint.** Inspect a safetensors file or a sharded checkpoint directory.
-   The header summary reports tensor count, parameter count, dtype mix and shard
-   count without materialising the weights. The tensor surface shows names,
-   shapes and dtypes only. If you have no checkpoint, choose a starter and press
-   **Download starter**: it downloads into the first allowed root with mirror
-   fallback and fills the path, without uploading anything. The job banner
-   streams the current endpoint, file and byte/percent progress over SSE. **Open after
-   download** opens the session automatically so the next step is the
-   **ONE SENTENCE** box.
-2. **Edit contract.** Open a model session, capture neutral baseline prompts,
-   choose an edit layer and solve a proposal. The preserve prompts become the
-   null-space constraint. For quantized checkpoints, enable **Densify from
-   edit layer** before a gradient solve. The proposal reports its relative
-   delta and target probability before anything is written. The advanced
-   **Batch edit** expander accepts multiple prompts and a JSON matrix of target
-   activation rows; the resulting proposal reports exact/clamped state, target
-   error, rank and a per-key error table.
-3. **Evidence.** Apply the pending proposal, evaluate it against the baseline,
-   and inspect the fail-closed gate verdict. The transaction timeline records
-   status changes, results and errors. Rollback restores the original tensor
-   bytes.
-
-### One-sentence teaching
-
-The **ONE SENTENCE** box at the top of the edit column is the shortest path. It
-accepts the same grammar as `machaon intent` and produces the same teaching
-recipe as `machaon teach`:
-
-1. **Preview parse** compiles the sentence and fills the prompt/answer fields.
-2. **Teach automatically** searches a depth window, projects the edit away from
-   the preserve prompts, applies the best candidate, and keeps it only when the
-   target, budget, panel and KL checks pass. A rejected candidate is rolled back
-   automatically.
-
-The optional **Also write the edited checkpoint** field saves the accepted edit
-to a new directory below the allowed roots. Leave it blank to keep the edit in
-the session and use the existing **Save** control later.
-
-**Teach a list** in the same box accepts one sentence per line, runs one full
-search per fact, and writes a chain with `<out>/final` and
-`<out>/report.json`. The original session stays on the base checkpoint; **Use
-final checkpoint** opens the last globally safe result.
-
-Long operations run in one worker thread and are streamed as server-sent
-events. The UI stays responsive while a checkpoint loads, a gradient solve runs
-or a baseline is evaluated. One session owns one model at a time.
-
-After evaluating an applied edit, use **Persist** to write the current deltas
-through `Checkpoint.write_tensor` (one tensor) or `Checkpoint.write_with`
-(multiple tensors). The source checkpoint remains untouched; the output
-directory must be inside the allowed roots and is created as a new checkpoint.
+top-bar picker updates static copy and dynamic job/evidence messages, stores the
+choice in `localStorage`, and accepts direct links such as `?lang=zh`,
+`?lang=ja` and `?lang=ko`. Recent programs and runs are local-only history in
+`localStorage`; they are never uploaded.
 
 ## API surface
 

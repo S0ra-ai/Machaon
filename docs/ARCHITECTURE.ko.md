@@ -27,9 +27,8 @@ Machaon은 서로를 거의 모르는 세 계층입니다.
 컴파일합니다. `machaon.recipes.teach_fact`는 프리미티브 위의 루프입니다:
 무관한 기준선 panel을 캡처하고, `Session.search_rome_layers`로 후보 layer를
 검색하고, 각 trial을 panel의 영공간으로 투영하고, 최선의 후보를 적용하고,
-목표·panel·KL을 확인하고, 실패 시 롤백합니다. CLI, MCP `teach` 도구, Web의
-**ONE SENTENCE** 상자는 모두 이 하나의 함수를 호출하며 계약을 다시 구현하지
-않습니다.
+목표·panel·KL을 확인하고, 실패 시 롤백합니다. CLI, MCP `teach` 도구, Web의 **사실 가르치기**
+동작은 모두 이 하나의 함수를 호출하며 계약을 다시 구현하지 않습니다.
 
 ## 두 계약
 

@@ -28,8 +28,8 @@ Machaon is three layers that know almost nothing about each other.
 primitives: it captures an unrelated baseline panel, searches candidate layers
 through `Session.search_rome_layers`, projects each trial away from the panel,
 applies the winner, checks the target, panel and KL, and rolls back on failure.
-The CLI, the MCP `teach` tool and the Web **ONE SENTENCE** box all call this one
-function; none of them reimplement the contract.
+The CLI, the MCP `teach` tool and the Web **Teach a fact** action all call this
+one function; none of them reimplement the contract.
 
 `machaon.program` is the shareable form of the same loop. A small text or JSON
 file declares the model, facts, protected prompts, budget and runtime options;
