@@ -12,7 +12,7 @@
 [![docs](https://img.shields.io/badge/docs-live-8A2BE2)](https://s0ra-ai.github.io/Machaon/)
 ![python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-2ea44f)
-![tests](https://img.shields.io/badge/tests-595-2ea44f)
+![tests](https://img.shields.io/badge/tests-602-2ea44f)
 ![coverage](https://img.shields.io/badge/coverage-78%25-2ea44f)
 ![status](https://img.shields.io/badge/status-alpha-orange)
 
@@ -58,6 +58,9 @@ default output is a sibling directory named `<checkpoint>-machaon`; the source
 checkpoint is never modified.
 Pass `--program-out first.machaon` to `machaon first` to save the same run as a
 portable, verifiable program before the edit starts.
+After saving, `machaon first` reloads those bytes and re-checks the fact; a
+checkpoint that no longer answers is reported as `verification_failed` and exits
+non-zero. `--no-verify-saved` skips that second load.
 
 `machaon check` reloads a saved checkpoint and verifies one prompt/answer pair
 without editing it. It exits 0 only when the target token is reproduced, so a

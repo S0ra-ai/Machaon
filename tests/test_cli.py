@@ -716,6 +716,7 @@ class TestCli(unittest.TestCase):
 
             class FakeResult:
                 accepted = True
+                verification = None
 
                 def to_dict(self):
                     return {"status": "applied", "accepted": True}

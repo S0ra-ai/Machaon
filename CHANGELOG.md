@@ -90,6 +90,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   fails before downloading anything and names `pip install "machaon[hf]"`;
   `check`, `teach-many` and `program` report the same actionable message
   instead of a bare `No module named 'torch'`.
+- `machaon first` now reloads the checkpoint it just wrote and re-checks the
+  taught fact, matching the Web card. A saved checkpoint that does not answer
+  is `verification_failed` with a non-zero exit; `--no-verify-saved` opts out.
+- An interrupted checkpoint download is detected before the tokenizer loads,
+  so `first` says "rerun machaon fetch to resume it" instead of printing a
+  library traceback.
 - Program plans now probe the requested runtime device and report whether
   CUDA/MPS is visible before a model load; the Web plan card shows the same
   blocker.

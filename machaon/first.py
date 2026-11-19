@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Mapping, Optional, Sequence
 
 from .budget import EditBudget
-from .checkpointing import save_session
+from .checkpointing import checkpoint_problem, save_session
 from .fetch import RECOMMENDED, fetch_model
 from .intent import parse_intent
 from .recipes import TeachPolicy, teach_fact
@@ -36,6 +36,14 @@ def missing_runtime_packages() -> Sequence[str]:
     return tuple(missing)
 
 
+def _as_dict(value: Any) -> Dict[str, Any]:
+    if hasattr(value, "to_dict"):
+        return dict(value.to_dict())
+    if isinstance(value, Mapping):
+        return dict(value)
+    return {"passed": bool(getattr(value, "passed", False))}
+
+
 @dataclass
 class FirstResult:
     status: str
@@ -47,6 +55,7 @@ class FirstResult:
     final: Optional[str]
     teach: Dict[str, Any]
     summary: str
+    verification: Optional[Dict[str, Any]] = None
 
     @property
     def accepted(self) -> bool:
@@ -64,6 +73,7 @@ class FirstResult:
             "final": self.final,
             "teach": dict(self.teach),
             "summary": self.summary,
+            "verification": self.verification,
         }
 
 
@@ -88,9 +98,12 @@ def first_edit(
     teach_one: Callable[..., Any] = teach_fact,
     save_fn: Callable[..., Mapping[str, Any]] = save_session,
     session_factory: Optional[Callable[[str, EditBudget], Any]] = None,
+    verify_saved: bool = True,
+    check_fn: Optional[Callable[..., Any]] = None,
 ) -> FirstResult:
     """Download if needed, teach one sentence, and save the accepted edit."""
     intent = parse_intent(sentence)
+    real_runtime = session_factory is None
     if session_factory is None:
         missing = missing_runtime_packages()
         if missing:
@@ -113,6 +126,10 @@ def first_edit(
         raise ValueError(
             "first needs a checkpoint directory; %s is a file" % model_path
         )
+    if session_factory is None:
+        problem = checkpoint_problem(model_path)
+        if problem:
+            raise ValueError("%s: %s" % (model_path, problem))
     if not (0.0 < float(budget)):
         raise ValueError("budget must be positive")
     policy = policy or TeachPolicy()
@@ -151,15 +168,58 @@ def first_edit(
         session = None
         gc.collect()
 
+    verification = None
+    if (
+        verify_saved
+        and final is not None
+        and (check_fn is not None or real_runtime)
+    ):
+        checker = check_fn
+        if checker is None:
+            from .check import check_facts
+
+            checker = check_facts
+        try:
+            verification = _as_dict(checker(
+                final,
+                [(intent.prompt, intent.answer)],
+                dtype=dtype,
+                device=device,
+                quantize=quantize,
+            ))
+        except Exception as exc:
+            verification = {
+                "passed": False,
+                "facts": [],
+                "error": "%s: %s" % (type(exc).__name__, exc),
+            }
+
     if fetched:
         prefix = "Downloaded %s and " % RECOMMENDED[starter]["name"]
     else:
         prefix = ""
-    if result.status == "applied":
+    verified_ok = verification is None or bool(verification.get("passed"))
+    status = result.status
+    if result.status == "applied" and verification is not None and not verified_ok:
+        status = "verification_failed"
+    if status == "verification_failed":
+        summary = (
+            "%sapplied the fact and saved %s, but reloading those bytes did "
+            "not reproduce the answer. Do not deploy this checkpoint before "
+            "inspecting it." % (prefix, final)
+        )
+    elif result.status == "applied":
         if final:
-            summary = "%sapplied the fact and saved the checkpoint to %s." % (
-                prefix, final,
-            )
+            if verification is not None:
+                summary = (
+                    "%sapplied the fact and saved the checkpoint to %s. "
+                    "Reloaded the saved bytes: %s."
+                    % (prefix, final, "PASS" if verified_ok else "FAIL")
+                )
+            else:
+                summary = "%sapplied the fact and saved the checkpoint to %s." % (
+                    prefix, final,
+                )
         else:
             summary = "%sapplied the fact; the edit is in memory only." % prefix
     elif result.status == "already_true":
@@ -169,7 +229,7 @@ def first_edit(
     else:
         summary = "%sresult: %s." % (prefix, result.status)
     return FirstResult(
-        status=result.status,
+        status=status,
         model=str(model_path),
         model_fetched=fetched,
         sentence=sentence,
@@ -178,4 +238,5 @@ def first_edit(
         final=final,
         teach=payload,
         summary=summary,
+        verification=verification,
     )

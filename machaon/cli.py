@@ -482,12 +482,15 @@ def _cmd_first(args) -> int:
             device=args.device,
             quantize=args.quantize,
             no_save=args.no_save,
+            verify_saved=not args.no_verify_saved,
             **extra,
         )
     except ImportError as exc:
         return _error(_runtime_hint(exc))
-    except (OSError, ValueError, RuntimeError) as exc:
+    except (OSError, ValueError, RuntimeError, TypeError) as exc:
         return _error(str(exc))
+    except Exception as exc:  # an interrupted download must not print a traceback
+        return _error("%s: %s" % (type(exc).__name__, exc))
     payload = result.to_dict()
     if program_target is not None and program_text is not None:
         payload["program_path"] = str(program_target)
@@ -535,6 +538,16 @@ def _cmd_first(args) -> int:
                 print("               " + line)
         if result.model_fetched:
             print("download   : %s" % result.model)
+        if result.verification is not None:
+            facts = result.verification.get("facts", [])
+            passed = sum(1 for item in facts if item.get("passed"))
+            print("verified   : %s (%d/%d saved facts)" % (
+                "PASS" if result.verification.get("passed") else "FAIL",
+                passed,
+                len(facts),
+            ))
+            if result.verification.get("error"):
+                print("verify err : %s" % result.verification["error"])
         if program_target is not None:
             print("program    : %s" % program_target)
     return 0 if result.accepted else 1
@@ -1646,6 +1659,10 @@ def main(argv=None) -> int:
     p_first.add_argument("--device", default=None)
     p_first.add_argument("--quantize", choices=("int4", "int8"), default=None)
     p_first.add_argument("--no-save", action="store_true")
+    p_first.add_argument(
+        "--no-verify-saved", action="store_true",
+        help="do not reload the saved checkpoint to re-check the fact",
+    )
     p_first.add_argument(
         "--program-out", default=None,
         help="write a matching portable .machaon program before the run",

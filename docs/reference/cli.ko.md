@@ -27,6 +27,8 @@ machaon first --program-out ./first.machaon
 
 선택적 실제 모델 런타임이 없으면 `first`는 아무것도 다운로드하기 전에 실패하고
 설치 명령(`pip install "machaon[hf]"`)을 안내합니다.
+중단된 다운로드는 tokenizer를 읽기 전에 감지되어
+"rerun machaon fetch to resume it"이라고 안내합니다.
 기본 사실은 "The Eiffel Tower is in the city of -> Rome", 기본 출력은
 `<model>-machaon`입니다. `--no-save`는 메모리에만 유지하고 `--json`은 전체
 결과를 출력합니다. 적용/이미 알고 있으면 0, 로컬 검사 거부는 1, 입력 또는
@@ -34,6 +36,10 @@ machaon first --program-out ./first.machaon
 작성합니다. 상대 경로는 생성 파일 기준이며 모델이 없을 때만 `fetch`를 넣습니다.
 `--program-name`은 제목, `--program-force`는 기존 파일 교체입니다. 성공하면 전체
 `program-new` 명령도 출력합니다.
+저장 후 `first`는 기록한 체크포인트를 다시 읽어 사실을 재확인합니다. summary와
+`verified:` 줄이 `PASS`/`FAIL`을 보여 주며, 저장 뒤 답하지 못하면
+`verification_failed`로 종료 코드 1이 됩니다. `--no-verify-saved`로 두 번째
+로딩을 건너뛸 수 있습니다.
 
 ## `check`
 

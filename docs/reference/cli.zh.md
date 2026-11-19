@@ -27,12 +27,17 @@ machaon first --program-out ./first.machaon
 
 如果缺少可选的真实模型运行时，`first` 会在下载任何东西之前失败，并给出安装命令
 （`pip install "machaon[hf]"`）。
+中断的检查点下载会在加载 tokenizer 之前被识别，错误会提示
+“rerun machaon fetch to resume it”，而不是抛出库 traceback。
 默认事实是 "The Eiffel Tower is in the city of -> Rome"，默认输出是
 `<model>-machaon`。`--no-save` 只保留在内存中；`--json` 输出完整结果。
 事实已应用或本来就正确时退出码 0，被本地检查拒绝时 1，输入或模型错误时 2。
 `--program-out PATH` 会在运行前写出一份匹配的程序；相对路径以程序文件所在目录为基准，
 只有模型缺失时才写 `fetch`，`--program-name` 设置标题，`--program-force` 替换已有文件。
 运行成功时还会打印完整的 `program-new` 命令，即使没有自动生成文件也能复现同一次运行。
+保存后，`first` 会重新加载写出的检查点并再次检查所教事实；summary 和
+`verified:` 行会显示 `PASS`/`FAIL`，保存后无法回答时状态为
+`verification_failed` 并退出 1。使用 `--no-verify-saved` 可跳过第二次加载。
 
 ## `check`
 

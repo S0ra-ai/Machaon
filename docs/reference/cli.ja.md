@@ -28,6 +28,8 @@ machaon first --program-out ./first.machaon
 
 任意の実モデルランタイムが無い場合、`first` は何もダウンロードする前に失敗し、
 インストールコマンド（`pip install "machaon[hf]"`）を案内します。
+中断されたダウンロードは tokenizer を読み込む前に検出され、
+「rerun machaon fetch to resume it」と表示します。
 既定の事実は "The Eiffel Tower is in the city of -> Rome"、既定の出力は
 `<model>-machaon` です。`--no-save` はメモリ内だけに保持し、`--json` は完全な
 結果を出力します。適用済み/既知なら 0、ローカルチェックで拒否なら 1、
@@ -35,6 +37,10 @@ machaon first --program-out ./first.machaon
 対応するプログラムを書き出します。相対パスは生成ファイル基準で、モデルが無い場合だけ
 `fetch` を含みます。`--program-name` はタイトル、`--program-force` は既存ファイルの
 置換です。成功時には完全な `program-new` コマンドも表示します。
+保存後、`first` は書き出したチェックポイントを再読み込みして事実を再確認します。
+summary と `verified:` 行が `PASS`/`FAIL` を示し、保存後に答えられない場合は
+`verification_failed` で終了コード 1 になります。`--no-verify-saved` で
+2 回目の読み込みを省略できます。
 
 ## `check`
 

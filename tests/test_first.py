@@ -27,6 +27,71 @@ def fake_teach(status, delta=0.0, calls=None):
 
 
 class TestFirstEdit(unittest.TestCase):
+    def _saved_first(self, verification):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            model = root / "model"
+            model.mkdir()
+            out = root / "edited"
+            checks = []
+
+            def check(path, facts, **kwargs):
+                checks.append((str(path), list(facts), kwargs))
+                return verification
+
+            result = first_edit(
+                "The capital is -> Paris",
+                model,
+                out,
+                teach_one=fake_teach("applied", 0.01),
+                save_fn=lambda session, path: (
+                    Path(path).mkdir(parents=True) or {"output": str(path)}
+                ),
+                session_factory=lambda path, budget: object(),
+                check_fn=check,
+            )
+        return result, checks
+
+    def test_saved_checkpoint_is_reloaded_and_checked(self):
+        result, checks = self._saved_first({
+            "passed": True,
+            "facts": [{"passed": True, "prompt": "The capital is", "answer": " Paris"}],
+        })
+        self.assertEqual(result.status, "applied")
+        self.assertTrue(result.accepted)
+        self.assertTrue(result.verification["passed"])
+        self.assertIn("PASS", result.summary)
+        self.assertEqual(len(checks), 1)
+        self.assertEqual(checks[0][1], [("The capital is", "Paris")])
+
+    def test_a_saved_checkpoint_that_does_not_answer_is_not_accepted(self):
+        result, _ = self._saved_first({
+            "passed": False,
+            "facts": [{"passed": False}],
+        })
+        self.assertEqual(result.status, "verification_failed")
+        self.assertFalse(result.accepted)
+        self.assertIn("Do not deploy", result.summary)
+
+    def test_verification_can_be_skipped(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            model = root / "model"
+            model.mkdir()
+            result = first_edit(
+                "The capital is -> Paris",
+                model,
+                root / "edited",
+                teach_one=fake_teach("applied", 0.01),
+                save_fn=lambda session, path: (
+                    Path(path).mkdir(parents=True) or {"output": str(path)}
+                ),
+                session_factory=lambda path, budget: object(),
+                verify_saved=False,
+            )
+        self.assertEqual(result.status, "applied")
+        self.assertIsNone(result.verification)
+
     def test_missing_runtime_fails_before_downloading(self):
         with tempfile.TemporaryDirectory() as tmp:
             fetched = []

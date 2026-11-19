@@ -20,6 +20,9 @@ machaon first --program-out ./first.machaon
 
 If the optional real-model runtime is missing, `first` fails before downloading
 anything and names the install command (`pip install "machaon[hf]"`).
+An interrupted checkpoint download is recognised before the tokenizer loads,
+so the error says "rerun machaon fetch to resume it" instead of showing a
+library traceback.
 The default fact is "The Eiffel Tower is in the city of -> Rome". The default
 output is `<model>-machaon`. Use `--no-save` to keep the edit in memory only;
 `--json` prints the full result. The command exits 0 when the fact was applied
@@ -30,6 +33,11 @@ the starter only when the model is missing. `--program-name` sets its title and
 `--program-force` replaces an existing program file. A successful run also
 prints the exact `program-new` command, so the same run can be reproduced even
 without the file.
+
+After saving, `first` reloads the written checkpoint and checks the taught fact
+again. The summary and a `verified:` line report `PASS`/`FAIL`; a saved
+checkpoint that no longer answers exits 1 with status `verification_failed`.
+Pass `--no-verify-saved` to skip that second load.
 
 ## `check`
 

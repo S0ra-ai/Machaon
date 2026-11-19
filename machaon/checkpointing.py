@@ -5,7 +5,43 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict
 
-__all__ = ["save_session"]
+__all__ = ["save_session", "checkpoint_problem"]
+
+
+def checkpoint_problem(path: str | Path) -> str:
+    """Describe why a checkpoint directory cannot be opened, if it cannot.
+
+    Interrupted downloads are the most common first-run failure: a user sees a
+    traceback from the tokenizer instead of "your download is incomplete".
+    Returns an empty string when nothing obvious is wrong.
+    """
+    source = Path(path).expanduser()
+    if not source.is_dir():
+        return ""
+    partial = sorted(source.glob("*.part"))
+    if partial:
+        return (
+            "the checkpoint still contains an unfinished download (%s); "
+            "rerun machaon fetch to resume it" % partial[0].name
+        )
+    if not (source / "config.json").exists():
+        return "the checkpoint has no config.json; it is not a Hugging Face checkpoint"
+    weights = (
+        any(source.glob("*.safetensors"))
+        or any(source.glob("*.bin"))
+        or (source / "model.safetensors.index.json").exists()
+    )
+    if not weights:
+        return "the checkpoint has no weight files; the download may be incomplete"
+    tokenizer = (
+        (source / "tokenizer.json").exists()
+        or (source / "tokenizer.model").exists()
+        or ((source / "vocab.json").exists() and (source / "merges.txt").exists())
+        or (source / "spiece.model").exists()
+    )
+    if not tokenizer:
+        return "the checkpoint has no tokenizer files; the download may be incomplete"
+    return ""
 
 
 def save_session(session: Any, out_dir: str | Path,
