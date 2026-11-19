@@ -66,6 +66,10 @@ without typing. The card disappears once a model session is open; the accepted
 edit stays in the session for **Save**. When the recipe applies, the
 card shows the chosen layer, relative Δ, panel preservation and KL p95, so the
 first success includes the same evidence vocabulary as the advanced workspace.
+The card also has its own **Compute device** selector (CPU by default, plus
+`auto`, Apple MPS and CUDA). Options the machine cannot use are marked
+unavailable from `/api/health`, so a first run is not silently pinned to CPU on
+a machine with a usable GPU.
 The card also keeps a **Checkpoint output** field prefilled with `<model>-machaon` and a
 **Save checkpoint** button; saving goes through the same `/api/session/save`
 path as the right column. After saving, **Open saved checkpoint** closes the

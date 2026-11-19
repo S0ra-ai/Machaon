@@ -80,6 +80,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
   CPU-only `np.asarray` conversion; value vectors and NLL weights are converted
   to CPU before float64 promotion, so the Apple MPS teaching path works.
 - `machaon doctor` reports default, CUDA and MPS device availability.
+- `machaon.devices.device_report()` (also `machaon.device_report`) answers
+  whether CUDA/MPS is usable without loading a model; `machaon doctor`,
+  `/api/health` and the FIRST EDIT device selector all read it.
+- The Web **FIRST EDIT** card now has its own compute-device selector. Options
+  the machine cannot use are disabled from the `/api/health` device report, so
+  the primary first-run path is no longer silently CPU-only.
 - Program plans now probe the requested runtime device and report whether
   CUDA/MPS is visible before a model load; the Web plan card shows the same
   blocker.

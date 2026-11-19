@@ -510,6 +510,13 @@ session.token_id(text) -> int
 把停止轨迹送入机制门，并在 `finally` 中恢复候选状态。
 `device` 默认是 CPU；使用 `cuda`、`mps` 或 `auto` 显式启用计算设备，
 `SessionState.device` 报告加载后的实际设备。
+`machaon.devices.device_report()`（也导出为 `machaon.device_report`）可以在不加载模型的
+情况下回答“这台机器能不能用 CUDA 或 MPS”：
+
+```python
+from machaon import device_report
+device_report()   # {"default": "cpu", "cuda": ..., "mps": ..., ...}
+```
 
 ## 意图与教学 · `machaon.intent`、`machaon.recipes`
 

@@ -565,6 +565,16 @@ restores the candidate state in a `finally` block.
 point for a 27B checkpoint on a laptop-sized memory envelope.
 `device` defaults to CPU; use `cuda`, `mps`, or `auto` to opt into a compute
 device. `SessionState.device` reports the actual resolved device after load.
+`machaon.devices.device_report()` (also exported as `machaon.device_report`)
+answers "can this machine use CUDA or MPS?" without loading a model:
+
+```python
+from machaon import device_report
+
+device_report()
+# {'default': 'cpu', 'torch': True, 'cuda': False, 'cuda_count': 0,
+#  'mps': True, 'mps_built': True}
+```
 
 ## Intent and teaching · `machaon.intent`, `machaon.recipes`
 

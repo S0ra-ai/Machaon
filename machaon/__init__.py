@@ -19,6 +19,7 @@ from .action import (
 from .batch import BatchSolution, solve_batch
 from .binding import BindingReport, verify_binding
 from .contract import ContractSolution, synthesize_contract
+from .devices import device_report
 from .evidence import (
     EvidenceError,
     evidence_sha256,
@@ -144,6 +145,7 @@ __all__ = [
     "relative_norm",
     "ContractSolution",
     "synthesize_contract",
+    "device_report",
     "BatchSolution",
     "solve_batch",
     "ActionSpec",

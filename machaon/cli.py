@@ -1383,26 +1383,9 @@ def _cmd_doctor(args) -> int:
             "openwsp_v1": True,
         },
     }
-    devices = {
-        "default": "cpu",
-        "cuda": False,
-        "mps": False,
-        "cuda_count": 0,
-        "mps_built": False,
-    }
-    if report["packages"]["torch"] != "absent":
-        try:
-            import torch
+    from .devices import device_report
 
-            devices["cuda"] = bool(torch.cuda.is_available())
-            devices["cuda_count"] = int(torch.cuda.device_count())
-            mps = getattr(torch.backends, "mps", None)
-            if mps is not None:
-                devices["mps"] = bool(mps.is_available())
-                devices["mps_built"] = bool(mps.is_built())
-        except (ImportError, RuntimeError, AttributeError):
-            pass
-    report["devices"] = devices
+    report["devices"] = device_report()
     if args.json:
         print(json.dumps(report, indent=2))
         return 0

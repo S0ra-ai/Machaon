@@ -354,6 +354,10 @@ class TestWebApp(unittest.TestCase):
         self.assertEqual(health.json()["auth"], "required")
         self.assertIn("torch", health.json()["capabilities"])
         self.assertIn("transformers", health.json()["capabilities"])
+        devices = health.json()["devices"]
+        self.assertEqual(devices["default"], "cpu")
+        self.assertIn("cuda", devices)
+        self.assertIn("mps", devices)
         self.assertEqual(self.client.get("/api/models").status_code, 401)
         self.assertEqual(
             self.client.get("/api/models", headers=self.headers).status_code, 200
@@ -1090,6 +1094,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('id="firstEditOpen"', page.text)
         self.assertIn('id="firstEditList"', page.text)
         self.assertIn('id="firstEditProgram"', page.text)
+        self.assertIn('id="firstEditDevice"', page.text)
         self.assertIn('id="firstEditEvidence"', page.text)
         self.assertIn('id="checkPanel"', page.text)
         self.assertIn('id="checkSentence"', page.text)
@@ -1140,6 +1145,7 @@ class TestWebApp(unittest.TestCase):
         self.assertIn('"firstEdit.again"', locales.text)
         self.assertIn('"firstEdit.list"', locales.text)
         self.assertIn('"firstEdit.program"', locales.text)
+        self.assertIn('"firstEdit.deviceLabel"', locales.text)
         self.assertIn('"firstEdit.starterQwen"', locales.text)
         self.assertIn('"firstEdit.examples"', locales.text)
         self.assertIn('"firstEdit.evidenceLayer"', locales.text)

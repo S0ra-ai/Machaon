@@ -96,6 +96,15 @@
           </select>
           <small data-i18n="firstEdit.starterHint">SmolLM2-135M is fastest. Qwen2.5-0.5B is larger and better for Chinese.</small>
         </label>
+        <label class="field full"><span data-i18n="firstEdit.deviceLabel">Compute device</span>
+          <select id="firstEditDevice">
+            <option value="" selected data-i18n="firstEdit.deviceCpu">CPU · always available</option>
+            <option value="auto" data-i18n="firstEdit.deviceAuto">auto · let the runtime choose</option>
+            <option value="mps" data-i18n="firstEdit.deviceMps">Apple MPS</option>
+            <option value="cuda" data-i18n="firstEdit.deviceCuda">CUDA</option>
+          </select>
+          <small data-i18n="firstEdit.deviceHint">CPU is the default. GPU/MPS is used only when selected here.</small>
+        </label>
         <div class="button-grid">
           <button id="firstEditButton" class="primary" type="button" data-i18n="firstEdit.run">Try the first edit</button>
           <button id="firstEditDismiss" class="ghost" type="button" data-i18n="firstEdit.dismiss">Hide</button>

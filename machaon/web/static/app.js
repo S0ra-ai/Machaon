@@ -27,6 +27,7 @@
     lastTeachMany: null,
     allowedRoots: [],
     capabilities: {},
+    devices: null,
     pendingAfterBusy: null,
     firstEdit: null,
     firstEditDismissed: localStorage.getItem("machaon-first-dismissed") === "1",
@@ -104,6 +105,7 @@
     firstEditCard: $("#firstEditCard"),
     firstEditSentence: $("#firstEditSentence"),
     firstEditStarter: $("#firstEditStarter"),
+    firstEditDevice: $("#firstEditDevice"),
     firstEditButton: $("#firstEditButton"),
     firstEditDismiss: $("#firstEditDismiss"),
     firstEditOut: $("#firstEditOut"),
@@ -226,6 +228,39 @@
       t(state.connectionKey || "conn.checking"),
       state.connectionKey || "conn.checking"
     );
+  }
+
+  function setFirstEditDevice(value) {
+    if (!el.firstEditDevice) return;
+    const normalized = String(value || "").trim().toLowerCase();
+    const known = ["", "auto", "mps", "cuda"];
+    el.firstEditDevice.value = known.includes(normalized) ? normalized : "";
+    $("#device").value = normalized;
+  }
+
+  function syncFirstEditDeviceFromInput() {
+    if (!el.firstEditDevice) return;
+    const value = String($("#device").value || "").trim().toLowerCase();
+    const known = ["", "auto", "mps", "cuda"];
+    el.firstEditDevice.value = known.includes(value) ? value : "";
+  }
+
+  function annotateDeviceOptions(devices) {
+    if (!el.firstEditDevice || !devices) return;
+    Array.from(el.firstEditDevice.options).forEach((option) => {
+      const base = option.dataset.baseLabel || option.textContent.replace(/\s+·\s+unavailable$/, "");
+      option.dataset.baseLabel = base;
+      const value = option.value;
+      let unavailable = false;
+      if (value === "cuda") unavailable = !devices.cuda;
+      else if (value === "mps") unavailable = !devices.mps;
+      option.textContent = unavailable ? base + " · unavailable" : base;
+      option.disabled = unavailable;
+    });
+    if (el.firstEditDevice.selectedOptions[0]
+        && el.firstEditDevice.selectedOptions[0].disabled) {
+      setFirstEditDevice("");
+    }
   }
 
   function readToken() {
@@ -439,7 +474,9 @@
       el.version.textContent = "v" + health.version;
       state.allowedRoots = health.allowed_roots || [];
       state.capabilities = health.capabilities || {};
+      state.devices = health.devices || null;
       el.allowedRoots.textContent = state.allowedRoots.join(" · ");
+      annotateDeviceOptions(state.devices);
       if (el.programBase && !el.programBase.value) {
         el.programBase.value = state.allowedRoots[0] || "";
       }
@@ -2130,6 +2167,14 @@
     el.starterModel.addEventListener("change", () => {
       el.firstEditStarter.value = el.starterModel.value;
     });
+  }
+  if (el.firstEditDevice) {
+    el.firstEditDevice.addEventListener("change", () => {
+      setFirstEditDevice(el.firstEditDevice.value);
+    });
+  }
+  if ($("#device")) {
+    $("#device").addEventListener("input", syncFirstEditDeviceFromInput);
   }
   if (el.checkpointPath) {
     el.checkpointPath.addEventListener("input", () => {

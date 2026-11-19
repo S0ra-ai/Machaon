@@ -323,6 +323,7 @@ def create_app(
             "auth": "required",
             "session": web_service.state(),
             "capabilities": web_service.capabilities(),
+            "devices": web_service.devices(),
             "allowed_roots": [str(root) for root in policy.roots],
         }
 

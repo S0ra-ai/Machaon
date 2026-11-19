@@ -822,6 +822,13 @@ class WebService:
                 found[name] = False
         return found
 
+    @staticmethod
+    def devices() -> Dict[str, Any]:
+        """Which compute devices this machine can actually use."""
+        from ..devices import device_report
+
+        return device_report()
+
     def fetch_model(
         self,
         starter: str,
